@@ -78,8 +78,6 @@ export default function App() {
       apiServerUrl="http://localhost:8000"
       trajectoryServerUrl="http://localhost:8006"
       authenticator={new StubAuthenticator()}
-      helpLink="https://osrf.github.io/ros2multirobotbook/rmf-core.html"
-      reportIssueLink="https://github.com/open-rmf/rmf-web/issues"
       resources={{ fleets: {}, logos: { header: '/resources/defaultLogo.png' } }}
       tasks={{
         allowedTasks: [

@@ -82,14 +82,14 @@ export interface RmfDashboardProps {
   authenticator: Authenticator;
 
   /**
-   * Url to be linked for the "help" button.
+   * Url to be linked for the "help" button. If not provided, the help button will be hidden.
    */
-  helpLink: string;
+  helpLink?: string;
 
   /**
-   * Url to be linked for the "report issue" button.
+   * Url to be linked for the "report issue" button. If not provided, the report issue button will be hidden.
    */
-  reportIssueLink: string;
+  reportIssueLink?: string;
 
   themes?: DashboardThemes;
 

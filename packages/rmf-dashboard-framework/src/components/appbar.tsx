@@ -90,8 +90,8 @@ export interface AppBarProps {
   tabs: React.ReactElement<React.ComponentProps<typeof Tab>>[];
   tabValue: string;
   themes?: DashboardThemes;
-  helpLink: string;
-  reportIssueLink: string;
+  helpLink?: string;
+  reportIssueLink?: string;
   extraToolbarItems?: React.ReactNode;
 }
 
@@ -365,26 +365,30 @@ export const AppBar = React.memo(
                 </ToolbarIconButton>
               </Tooltip>
             )}
-            <Tooltip title="Help">
-              <ToolbarIconButton
-                id="show-help-btn"
-                aria-label="help"
-                color="inherit"
-                onClick={() => window.open(helpLink, '_blank')}
-              >
-                <Help />
-              </ToolbarIconButton>
-            </Tooltip>
-            <Tooltip title="Report issues">
-              <ToolbarIconButton
-                id="show-warning-btn"
-                aria-label="warning"
-                color="inherit"
-                onClick={() => window.open(reportIssueLink, '_blank')}
-              >
-                <Issue />
-              </ToolbarIconButton>
-            </Tooltip>
+            {helpLink && (
+              <Tooltip title="Help">
+                <ToolbarIconButton
+                  id="show-help-btn"
+                  aria-label="help"
+                  color="inherit"
+                  onClick={() => window.open(helpLink, '_blank')}
+                >
+                  <Help />
+                </ToolbarIconButton>
+              </Tooltip>
+            )}
+            {reportIssueLink && (
+              <Tooltip title="Report issues">
+                <ToolbarIconButton
+                  id="show-warning-btn"
+                  aria-label="warning"
+                  color="inherit"
+                  onClick={() => window.open(reportIssueLink, '_blank')}
+                >
+                  <Issue />
+                </ToolbarIconButton>
+              </Tooltip>
+            )}
             <Tooltip title="Profile">
               <ToolbarIconButton
                 id="user-btn"
