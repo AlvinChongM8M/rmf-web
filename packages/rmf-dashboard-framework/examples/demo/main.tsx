@@ -18,6 +18,7 @@ import {
   robotMutexGroupsApp,
   robotsApp,
   tasksApp,
+  tasksCompactApp,
 } from 'rmf-dashboard-framework/micro-apps';
 import { StubAuthenticator } from 'rmf-dashboard-framework/services';
 
@@ -35,6 +36,7 @@ const appRegistry: MicroAppManifest[] = [
   robotsApp,
   robotMutexGroupsApp,
   tasksApp,
+  tasksCompactApp,
 ];
 
 const homeWorkspace: InitialWindow[] = [
@@ -60,6 +62,16 @@ const tasksWorkspace: InitialWindow[] = [
   { layout: { x: 8, y: 0, w: 5, h: 8 }, microApp: mapApp },
 ];
 
+const overviewWorkspace: InitialWindow[] = [
+  {
+    layout: { x: 0, y: 0, w: 6, h: 2 },
+    microApp: robotsApp,
+  },
+  { layout: { x: 7, y: 0, w: 6, h: 2 }, microApp: tasksCompactApp },
+  { layout: { x: 0, y: 0, w: 12, h: 5 }, microApp: mapApp },
+  // { layout: { x: 0, y: 0, w: 12, h: 2 }, microApp: liftsApp },
+];
+
 export default function App() {
   return (
     <RmfDashboard
@@ -81,32 +93,37 @@ export default function App() {
       }}
       tabs={[
         {
-          name: 'Map',
-          route: '',
-          element: <Workspace initialWindows={homeWorkspace} />,
+          name: 'Overview',
+          route: 'overview',
+          element: <Workspace initialWindows={overviewWorkspace} />,
         },
-        {
-          name: 'Robots',
-          route: 'robots',
-          element: <Workspace initialWindows={robotsWorkspace} />,
-        },
-        {
-          name: 'Tasks',
-          route: 'tasks',
-          element: <Workspace initialWindows={tasksWorkspace} />,
-        },
-        {
-          name: 'Custom',
-          route: 'custom',
-          element: (
-            <LocallyPersistentWorkspace
-              defaultWindows={[]}
-              allowDesignMode
-              appRegistry={appRegistry}
-              storageKey="custom-workspace"
-            />
-          ),
-        },
+        // {
+        //   name: 'Map',
+        //   route: '',
+        //   element: <Workspace initialWindows={homeWorkspace} />,
+        // },
+        // {
+        //   name: 'Robots',
+        //   route: 'robots',
+        //   element: <Workspace initialWindows={robotsWorkspace} />,
+        // },
+        // {
+        //   name: 'Tasks',
+        //   route: 'tasks',
+        //   element: <Workspace initialWindows={tasksWorkspace} />,
+        // },
+        // {
+        //   name: 'Custom',
+        //   route: 'custom',
+        //   element: (
+        //     <LocallyPersistentWorkspace
+        //       defaultWindows={[]}
+        //       allowDesignMode
+        //       appRegistry={appRegistry}
+        //       storageKey="custom-workspace"
+        //     />
+        //   ),
+        // },
       ]}
     />
   );
