@@ -1,6 +1,6 @@
 import React, { Suspense } from 'react';
 
-import { Window, WindowProps } from '../components/window';
+import { Window, WindowCloseButton, WindowProps } from '../components/window';
 import { useAppController, useSettings } from '../hooks';
 import { Settings } from '../services';
 
@@ -12,6 +12,13 @@ export interface MicroAppManifest {
   Component: React.ComponentType<MicroAppProps>;
 }
 
+export interface CreateMicroAppOptions {
+  /**
+   * If true, the toolbar (including title) will be hidden, showing only a close button.
+   */
+  hideToolbar?: boolean;
+}
+
 /**
  * Creates a micro app from a component. The component must be loaded using dynamic import.
  * Note that the micro app should be created in a different module than the component.
@@ -19,6 +26,8 @@ export interface MicroAppManifest {
  * Example:
  * ```ts
  * createMicroApp('Map', 'Map', () => import('./map'), config);
+ * // Or with options to hide the toolbar:
+ * createMicroApp('Map', 'Map', () => import('./map'), config, { hideToolbar: true });
  * ```
  */
 export function createMicroApp<P>(
@@ -29,17 +38,33 @@ export function createMicroApp<P>(
     settings: Settings,
     updateSettings: (settings: Settings) => void,
   ) => React.PropsWithoutRef<P> & React.Attributes,
+  options?: CreateMicroAppOptions,
 ): MicroAppManifest {
   const LazyComponent = React.lazy(loadComponent);
+  const hideToolbar = options?.hideToolbar ?? false;
+
   return {
     appId,
     displayName,
     Component: React.forwardRef<HTMLDivElement>(
-      ({ children, ...otherProps }: React.PropsWithChildren<MicroAppProps>, ref) => {
+      ({ children, onClose, ...otherProps }: React.PropsWithChildren<MicroAppProps>, ref) => {
         const settings = useSettings();
         const { updateSettings } = useAppController();
+
+        const minimalToolbar = (
+          <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '4px' }}>
+            <WindowCloseButton onClick={() => onClose && onClose()} />
+          </div>
+        );
+
         return (
-          <Window ref={ref} title={displayName} {...otherProps}>
+          <Window
+            ref={ref}
+            title={displayName}
+            toolbar={hideToolbar ? minimalToolbar : undefined}
+            onClose={onClose}
+            {...otherProps}
+          >
             <Suspense fallback={null}>
               <LazyComponent {...props(settings, updateSettings)} />
             </Suspense>
