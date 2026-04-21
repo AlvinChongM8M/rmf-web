@@ -7,7 +7,8 @@ run_dir = f"{here}/run"
 
 config.update(
     {
-        "db_url": f"sqlite://{run_dir}/db.sqlite3",
+        "db_url": f"sqlite://{run_dir}/db.sqlite3",  # uncomment to use sqlite db
+        # "db_url": "postgres://app_user:strong_password@localhost:5432/rmf_db",    # uncomment to use postgres db
         "cache_directory": f"{run_dir}/cache",  # The directory where cached files should be stored.
         "ros_args": ["-p", "use_sim_time:=true"],
         "log_level": "INFO",
