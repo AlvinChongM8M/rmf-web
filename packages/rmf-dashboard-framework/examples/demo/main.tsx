@@ -77,6 +77,8 @@ export default function App() {
     <RmfDashboard
       apiServerUrl="http://localhost:8000"
       trajectoryServerUrl="http://localhost:8006"
+      // apiServerUrl="http://10.10.10.2:8000"
+      // trajectoryServerUrl="http://10.10.10.2:8006"
       authenticator={new StubAuthenticator()}
       resources={{ fleets: {}, logos: { header: '/resources/defaultLogo.png' } }}
       tasks={{

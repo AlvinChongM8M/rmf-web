@@ -35,6 +35,7 @@ outdir = f"{args.output}"
 os.makedirs(outdir, exist_ok=True)
 
 base_url = "http://localhost:8000"
+# base_url = "http://10.10.10.2:8000"
 with urlopen(f"{base_url}/docs") as resp:
     html: bytes = resp.read()
     with open(f"{outdir}/index.html", "bw") as f:

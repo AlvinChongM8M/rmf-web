@@ -7,6 +7,7 @@
     "prepack": "../../.venv/bin/pipenv run python setup.py bdist_wheel",
     "restart": "RMF_API_SERVER_CONFIG=sqlite_local_config.py ../../.venv/bin/pipenv run python -m api_server",
     "start": "rm -rf run && mkdir -p run/cache && RMF_API_SERVER_CONFIG=${RMF_API_SERVER_CONFIG:-sqlite_local_config.py} ../../.venv/bin/pipenv run python -m api_server",
+    "start:host": "rm -rf run && mkdir -p run/cache && RMF_API_SERVER_CONFIG=${RMF_API_SERVER_CONFIG:-sqlite_local_config.py} ../../.venv/bin/pipenv run uvicorn api_server.app:app --host 0.0.0.0 --port 8000",
     "start:psql": "rm -rf run && mkdir -p run/cache && RMF_API_SERVER_CONFIG=psql_local_config.py ../../.venv/bin/pipenv run python -m api_server",
     "test": "../../.venv/bin/pipenv run python scripts/test.py",
     "test:cov": "../../.venv/bin/pipenv run python -m coverage run scripts/test.py",
