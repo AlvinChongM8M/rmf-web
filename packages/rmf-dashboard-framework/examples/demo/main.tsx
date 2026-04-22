@@ -139,6 +139,7 @@ export default function App() {
       trajectoryServerUrl="http://localhost:8006"
       // apiServerUrl="http://10.10.10.2:8000"
       // trajectoryServerUrl="http://10.10.10.2:8006"
+      hideNewTaskButton={true}
       authenticator={new StubAuthenticator()}
       themes={{ default: createTheme(), dark: nordTheme }}
       resources={{ fleets: {}, logos: { header: '/resources/defaultLogo.png' } }}

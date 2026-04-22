@@ -93,10 +93,22 @@ export interface AppBarProps {
   helpLink?: string;
   reportIssueLink?: string;
   extraToolbarItems?: React.ReactNode;
+  /**
+   * If true, the "New Task" button will be hidden from the AppBar.
+   */
+  hideNewTaskButton?: boolean;
 }
 
 export const AppBar = React.memo(
-  ({ tabs, tabValue, themes, helpLink, reportIssueLink, extraToolbarItems }: AppBarProps) => {
+  ({
+    tabs,
+    tabValue,
+    themes,
+    helpLink,
+    reportIssueLink,
+    extraToolbarItems,
+    hideNewTaskButton,
+  }: AppBarProps) => {
     const authenticator = useAuthenticator();
     const rmfApi = useRmfApi();
     const resources = useResources();
@@ -268,16 +280,18 @@ export const AppBar = React.memo(
           <Toolbar variant="dense">
             <Box display="flex" alignItems="center" gap={2}>
               <Typography variant="subtitle1">Powered by M8M</Typography>
-              <Button
-                id="create-new-task-button"
-                aria-label="new task"
-                color="secondary"
-                variant="contained"
-                sx={{ marginRight: 2 }}
-                onClick={() => setOpenCreateTaskForm(true)}
-              >
-                New Task
-              </Button>
+              {!hideNewTaskButton && (
+                <Button
+                  id="create-new-task-button"
+                  aria-label="new task"
+                  color="secondary"
+                  variant="contained"
+                  sx={{ marginRight: 2 }}
+                  onClick={() => setOpenCreateTaskForm(true)}
+                >
+                  New Task
+                </Button>
+              )}
             </Box>
             <Divider orientation="vertical" flexItem />
             <Tooltip title="Notifications">

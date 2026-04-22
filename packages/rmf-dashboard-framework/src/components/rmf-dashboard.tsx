@@ -125,6 +125,11 @@ export interface RmfDashboardProps {
    * Url to a file to be played when an alert occurs on the dashboard.
    */
   alertAudioPath?: string;
+
+  /**
+   * If true, the "New Task" button will be hidden from the AppBar.
+   */
+  hideNewTaskButton?: boolean;
 }
 
 export function RmfDashboard(props: RmfDashboardProps) {
@@ -311,6 +316,7 @@ function DashboardContents({
   tabs,
   baseUrl = import.meta.env.BASE_URL,
   extraAppbarItems,
+  hideNewTaskButton,
 }: DashboardContentsProps) {
   const location = useLocation();
   const currentTab = tabs.find((t) => matchPath(`${baseUrl}${t.route}`, location.pathname));
@@ -368,6 +374,7 @@ function DashboardContents({
                 helpLink={helpLink}
                 reportIssueLink={reportIssueLink}
                 extraToolbarItems={extraAppbarItems}
+                hideNewTaskButton={hideNewTaskButton}
               />
               {!pendingTransition && <Outlet />}
             </>
