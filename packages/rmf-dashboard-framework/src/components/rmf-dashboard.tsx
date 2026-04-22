@@ -45,6 +45,13 @@ export interface DashboardTab {
   name: string;
   route: string;
   element: React.ReactNode;
+  /**
+   * Optional group identifier. Tabs sharing the same `tabGroup` value will only be visible
+   * together — i.e. the AppBar will show only the tabs that belong to the same group as the
+   * currently active tab. Tabs without a `tabGroup` are always shown together.
+   * Can be a single string or an array of strings to make a tab appear in multiple groups.
+   */
+  tabGroup?: string | string[];
 }
 
 export interface AllowedTask {
@@ -318,6 +325,24 @@ function DashboardContents({
   //   [tabs],
   // );
 
+  // Only show tabs that belong to the same tabGroup as the active tab.
+  // If the active tab has no group, show all tabs that have no group.
+  const visibleTabs = React.useMemo(() => {
+    const activeGroups = currentTab?.tabGroup
+      ? Array.isArray(currentTab.tabGroup)
+        ? currentTab.tabGroup
+        : [currentTab.tabGroup]
+      : [];
+    if (activeGroups.length > 0) {
+      return allTabs.filter((t) => {
+        if (!t.tabGroup) return false;
+        const groups = Array.isArray(t.tabGroup) ? t.tabGroup : [t.tabGroup];
+        return groups.some((g) => activeGroups.includes(g));
+      });
+    }
+    return allTabs.filter((t) => !t.tabGroup);
+  }, [allTabs, currentTab]);
+
   return (
     <Routes>
       <Route path={baseUrl}>
@@ -325,7 +350,7 @@ function DashboardContents({
           element={
             <>
               <AppBar
-                tabs={allTabs.map((t) => (
+                tabs={visibleTabs.map((t) => (
                   <Tab
                     key={t.name}
                     sx={{ height: APP_BAR_HEIGHT }}

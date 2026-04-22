@@ -122,12 +122,17 @@ const overviewWorkspace: InitialWindow[] = [
     layout: { x: 0, y: 0, w: 6, h: 2 },
     microApp: robotsApp,
   },
-  { layout: { x: 7, y: 0, w: 6, h: 2 }, microApp: tasksCompactApp },
-  { layout: { x: 0, y: 0, w: 12, h: 5 }, microApp: mapApp },
+  { layout: { x: 7, y: 0, w: 6, h: 2 }, microApp: tasksCompactApp, hideToolbar: false },
+  { layout: { x: 0, y: 0, w: 12, h: 5 }, microApp: mapApp, hideToolbar: false },
   // { layout: { x: 0, y: 0, w: 12, h: 2 }, microApp: liftsApp },
 ];
 
 export default function App() {
+  const mapWorkspace: InitialWindow[] = [
+    { layout: { x: 0, y: 0, w: 12, h: 2.5 }, microApp: mapApp, hideToolbar: false },
+    { layout: { x: 0, y: 0, w: 12, h: 2.5 }, microApp: mapApp, hideToolbar: false },
+  ];
+
   return (
     <RmfDashboard
       apiServerUrl="http://localhost:8000"
@@ -149,11 +154,32 @@ export default function App() {
       }}
       tabs={[
         {
-          name: 'Overview',
-          route: 'overview',
+          // Arrival group — only these tabs appear in the AppBar when on an /arrival* route
+          name: 'Arrival Overview',
+          route: 'arrival-overview',
+          tabGroup: 'arrival',
           element: <Workspace initialWindows={overviewWorkspace} />,
         },
         // {
+        {
+          name: 'Maps',
+          route: 'arrival-maps',
+          tabGroup: 'arrival',
+          element: <Workspace initialWindows={mapWorkspace} />,
+        },
+        // Departure group — only these tabs appear in the AppBar when on a /departure* route
+        {
+          name: 'Departure Overview',
+          route: 'departure-overview',
+          tabGroup: 'departure',
+          element: <Workspace initialWindows={overviewWorkspace} />,
+        },
+        {
+          name: 'Maps',
+          route: 'departure-maps',
+          tabGroup: 'departure',
+          element: <Workspace initialWindows={mapWorkspace} />,
+        },
         //   name: 'Map',
         //   route: '',
         //   element: <Workspace initialWindows={homeWorkspace} />,
