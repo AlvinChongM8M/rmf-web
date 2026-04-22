@@ -10,6 +10,10 @@ import { WindowContainer, WindowLayout } from './window';
 export interface InitialWindow {
   layout: Omit<WindowLayout, 'i'>;
   microApp: MicroAppManifest;
+  /**
+   * If true, the toolbar (including title) will be hidden, showing only a close button.
+   */
+  hideToolbar?: boolean;
 }
 
 export interface WorkspaceProps {
@@ -43,10 +47,12 @@ export const Workspace = React.memo(
     const appController = useAppController();
     const windowId = React.useRef(0);
     const windowApps = React.useRef<Record<string, MicroAppManifest>>({});
+    const windowSettings = React.useRef<Record<string, { hideToolbar?: boolean }>>({});
     const [layout, setLayout] = React.useState(() =>
       initialWindows.map<WindowLayout>((w) => {
         const l = { i: `window-${windowId.current}`, ...w.layout };
         windowApps.current[l.i] = w.microApp;
+        windowSettings.current[l.i] = { hideToolbar: w.hideToolbar };
         ++windowId.current;
         return l;
       }),
@@ -89,9 +95,11 @@ export const Workspace = React.memo(
             if (!microApp) {
               return null;
             }
+            const settings = windowSettings.current[l.i];
             return (
               <microApp.Component
                 key={l.i}
+                hideToolbar={settings?.hideToolbar}
                 onClose={() => {
                   const newLayout = layout.filter((l2) => l2.i !== l.i);
                   console.log(layout, newLayout);
@@ -101,6 +109,7 @@ export const Workspace = React.memo(
                     );
                   setLayout(newLayout);
                   delete windowApps.current[l.i];
+                  delete windowSettings.current[l.i];
                 }}
               />
             );

@@ -5,5 +5,4 @@ export default createMicroApp(
   'Robots',
   () => import('../components/robots/robots-table'),
   () => ({}),
-  { hideToolbar: true },
 );

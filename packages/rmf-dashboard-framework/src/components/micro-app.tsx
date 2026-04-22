@@ -4,19 +4,17 @@ import { Window, WindowCloseButton, WindowProps } from '../components/window';
 import { useAppController, useSettings } from '../hooks';
 import { Settings } from '../services';
 
-export type MicroAppProps = Omit<WindowProps, 'title' | 'children'>;
+export interface MicroAppProps extends Omit<WindowProps, 'title' | 'children'> {
+  /**
+   * If true, the toolbar (including title) will be hidden, showing only a close button.
+   */
+  hideToolbar?: boolean;
+}
 
 export interface MicroAppManifest {
   appId: string;
   displayName: string;
   Component: React.ComponentType<MicroAppProps>;
-}
-
-export interface CreateMicroAppOptions {
-  /**
-   * If true, the toolbar (including title) will be hidden, showing only a close button.
-   */
-  hideToolbar?: boolean;
 }
 
 /**
@@ -26,8 +24,6 @@ export interface CreateMicroAppOptions {
  * Example:
  * ```ts
  * createMicroApp('Map', 'Map', () => import('./map'), config);
- * // Or with options to hide the toolbar:
- * createMicroApp('Map', 'Map', () => import('./map'), config, { hideToolbar: true });
  * ```
  */
 export function createMicroApp<P>(
@@ -38,16 +34,17 @@ export function createMicroApp<P>(
     settings: Settings,
     updateSettings: (settings: Settings) => void,
   ) => React.PropsWithoutRef<P> & React.Attributes,
-  options?: CreateMicroAppOptions,
 ): MicroAppManifest {
   const LazyComponent = React.lazy(loadComponent);
-  const hideToolbar = options?.hideToolbar ?? false;
 
   return {
     appId,
     displayName,
     Component: React.forwardRef<HTMLDivElement>(
-      ({ children, onClose, ...otherProps }: React.PropsWithChildren<MicroAppProps>, ref) => {
+      (
+        { children, onClose, hideToolbar, ...otherProps }: React.PropsWithChildren<MicroAppProps>,
+        ref,
+      ) => {
         const settings = useSettings();
         const { updateSettings } = useAppController();
 

@@ -24,7 +24,7 @@ const QueryLimit = 100;
 export const TasksWindowCompact = React.memo(
   React.forwardRef(
     (
-      { onClose, children, ...otherProps }: React.PropsWithChildren<MicroAppProps>,
+      { onClose, children, hideToolbar, ...otherProps }: React.PropsWithChildren<MicroAppProps>,
       ref: React.Ref<HTMLDivElement>,
     ) => {
       const rmfApi = useRmfApi();
@@ -214,108 +214,52 @@ export const TasksWindowCompact = React.memo(
         setAnchorExportElement(null);
       };
 
+      const minimalToolbar = (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '4px' }}>
+          <WindowCloseButton onClick={() => onClose && onClose()} />
+        </div>
+      );
+
+      const fullToolbar = (
+        <WindowToolbar title="Tasks">
+          <WindowCloseButton onClick={() => onClose && onClose()} />
+        </WindowToolbar>
+      );
+
       return (
         <Window
           ref={ref}
           title="Tasks"
           onClose={onClose}
-          toolbar={
-            <WindowToolbar title="Tasks">
-              <Box display="flex" gap={1} marginRight={1}>
-                <Tooltip title="Export task history of the past 31 days" placement="top">
-                  <Button
-                    id="export-button"
-                    aria-controls={openExportMenu ? 'export-menu' : undefined}
-                    aria-haspopup="true"
-                    aria-expanded={openExportMenu ? 'true' : undefined}
-                    variant="outlined"
-                    onClick={handleClickExportMenu}
-                    color="inherit"
-                    startIcon={<DownloadIcon />}
-                  >
-                    Export past 31 days
-                  </Button>
-                </Tooltip>
-                <Menu
-                  id="export-menu"
-                  MenuListProps={{
-                    'aria-labelledby': 'export-button',
-                  }}
-                  anchorEl={anchorExportElement}
-                  open={openExportMenu}
-                  onClose={handleCloseExportMenu}
-                >
-                  <MenuItem
-                    onClick={() => {
-                      exportTasksToCsv(true);
-                      handleCloseExportMenu();
-                    }}
-                    disableRipple
-                  >
-                    Export Minimal
-                  </MenuItem>
-                  <MenuItem
-                    onClick={() => {
-                      exportTasksToCsv(false);
-                      handleCloseExportMenu();
-                    }}
-                    disableRipple
-                  >
-                    Export Full
-                  </MenuItem>
-                </Menu>
-                <Tooltip title="Refreshes the task queue table" color="inherit" placement="top">
-                  <Button
-                    id="refresh-button"
-                    data-testid="refresh-button"
-                    variant="outlined"
-                    onClick={() => {
-                      AppEvents.refreshTaskApp.next();
-                    }}
-                    aria-label="Refresh"
-                    color="inherit"
-                    startIcon={<RefreshIcon />}
-                  >
-                    Refresh Task Queue
-                  </Button>
-                </Tooltip>
-              </Box>
-              <WindowCloseButton onClick={() => onClose && onClose()} />
-            </WindowToolbar>
-          }
+          toolbar={hideToolbar ? minimalToolbar : fullToolbar}
           {...otherProps}
         >
-          <Grid container direction="column" wrap="nowrap" height="100%">
-            <Box sx={{ p: 2 }} flexGrow={1}>
-              <TableContainer sx={{ height: '100%' }}>
-                <TaskDataGridTable
-                  tasks={tasksState}
-                  onTaskClick={(_: MuiMouseEvent, task: TaskState) => {
-                    setSelectedTask(task);
-                    if (task.assigned_to) {
-                      AppEvents.robotSelect.next([task.assigned_to.group, task.assigned_to.name]);
-                    }
-                    setOpenTaskSummary(true);
-                  }}
-                  setFilterFields={setFilterFields}
-                  setSortFields={setSortFields}
-                  onPageChange={(newPage: number) =>
-                    setTasksState((old: Tasks) => ({ ...old, page: newPage + 1 }))
-                  }
-                  onPageSizeChange={(newPageSize: number) =>
-                    setTasksState((old: Tasks) => ({ ...old, pageSize: newPageSize }))
-                  }
-                />
-              </TableContainer>
-            </Box>
-            <input type="file" style={{ display: 'none' }} ref={uploadFileInputRef} />
-            {openTaskSummary && (
-              <TaskSummary
-                onClose={() => setOpenTaskSummary(false)}
-                task={selectedTask ?? undefined}
-              />
-            )}
-          </Grid>
+          <TableContainer sx={{ height: '100%' }}>
+            <TaskDataGridTable
+              tasks={tasksState}
+              onTaskClick={(_: MuiMouseEvent, task: TaskState) => {
+                setSelectedTask(task);
+                if (task.assigned_to) {
+                  AppEvents.robotSelect.next([task.assigned_to.group, task.assigned_to.name]);
+                }
+                setOpenTaskSummary(true);
+              }}
+              setFilterFields={setFilterFields}
+              setSortFields={setSortFields}
+              onPageChange={(newPage: number) =>
+                setTasksState((old: Tasks) => ({ ...old, page: newPage + 1 }))
+              }
+              onPageSizeChange={(newPageSize: number) =>
+                setTasksState((old: Tasks) => ({ ...old, pageSize: newPageSize }))
+              }
+            />
+          </TableContainer>
+          {openTaskSummary && (
+            <TaskSummary
+              onClose={() => setOpenTaskSummary(false)}
+              task={selectedTask ?? undefined}
+            />
+          )}
           {children}
         </Window>
       );
