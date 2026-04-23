@@ -97,6 +97,10 @@ export interface AppBarProps {
    * If true, the "New Task" button will be hidden from the AppBar.
    */
   hideNewTaskButton?: boolean;
+  /**
+   * Optional actions rendered in the toolbar, specific to the currently active tab group.
+   */
+  tabActions?: React.ReactNode;
 }
 
 export const AppBar = React.memo(
@@ -108,6 +112,7 @@ export const AppBar = React.memo(
     reportIssueLink,
     extraToolbarItems,
     hideNewTaskButton,
+    tabActions,
   }: AppBarProps) => {
     const authenticator = useAuthenticator();
     const rmfApi = useRmfApi();
@@ -361,6 +366,7 @@ export const AppBar = React.memo(
                 ))
               )}
             </Menu>
+            {tabActions}
             {extraToolbarItems}
             {themes?.dark && (
               <Tooltip title="Toggle Dark Mode">

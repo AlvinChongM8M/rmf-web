@@ -9,6 +9,7 @@ import {
   InitialWindow,
   LocallyPersistentWorkspace,
   MicroAppManifest,
+  QuickDispatchButton,
   RmfDashboard,
   Workspace,
 } from 'rmf-dashboard-framework/components';
@@ -156,29 +157,69 @@ export default function App() {
       tabs={[
         {
           // Arrival group — only these tabs appear in the AppBar when on an /arrival* route
-          name: 'Arrival Overview',
-          route: 'arrival-overview',
-          tabGroup: 'arrival',
+          name: 'MB1A Overview',
+          route: 'mb1a-overview',
+          tabGroup: 'mb1a',
+          tabActions: (
+            <QuickDispatchButton
+              label="Transfer to LPier"
+              taskRequest={{
+                category: 'patrol',
+                description: { places: ['lounge', 'pantry'] },
+                unix_millis_earliest_start_time: 0,
+              }}
+            />
+          ),
           element: <Workspace initialWindows={overviewWorkspace} />,
         },
         // {
         {
           name: 'Maps',
-          route: 'arrival-maps',
-          tabGroup: 'arrival',
+          route: 'mb1a-maps',
+          tabGroup: 'mb1a',
+          tabActions: (
+            <QuickDispatchButton
+              label="Transfer to LPier"
+              taskRequest={{
+                category: 'patrol',
+                description: { places: ['lounge', 'pantry'] },
+                unix_millis_earliest_start_time: 0,
+              }}
+            />
+          ),
           element: <Workspace initialWindows={mapWorkspace} />,
         },
         // Departure group — only these tabs appear in the AppBar when on a /departure* route
         {
-          name: 'Departure Overview',
-          route: 'departure-overview',
-          tabGroup: 'departure',
+          name: 'LPier Overview',
+          route: 'lpier-overview',
+          tabGroup: 'lpier',
+          tabActions: (
+            <QuickDispatchButton
+              label="Transfer to MB1A"
+              taskRequest={{
+                category: 'patrol',
+                description: { places: ['pantry', 'lounge'] },
+                unix_millis_earliest_start_time: 0,
+              }}
+            />
+          ),
           element: <Workspace initialWindows={overviewWorkspace} />,
         },
         {
           name: 'Maps',
-          route: 'departure-maps',
-          tabGroup: 'departure',
+          route: 'lpier-maps',
+          tabGroup: 'lpier',
+          tabActions: (
+            <QuickDispatchButton
+              label="Transfer to MB1A"
+              taskRequest={{
+                category: 'patrol',
+                description: { places: ['pantry', 'lounge'] },
+                unix_millis_earliest_start_time: 0,
+              }}
+            />
+          ),
           element: <Workspace initialWindows={mapWorkspace} />,
         },
         //   name: 'Map',

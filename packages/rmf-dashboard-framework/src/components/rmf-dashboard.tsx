@@ -52,6 +52,11 @@ export interface DashboardTab {
    * Can be a single string or an array of strings to make a tab appear in multiple groups.
    */
   tabGroup?: string | string[];
+  /**
+   * Optional actions (e.g. buttons) rendered in the AppBar when this tab's group is active.
+   * All tabs in the same group should provide the same `tabActions` to ensure a consistent UI.
+   */
+  tabActions?: React.ReactNode;
 }
 
 export interface AllowedTask {
@@ -375,6 +380,7 @@ function DashboardContents({
                 reportIssueLink={reportIssueLink}
                 extraToolbarItems={extraAppbarItems}
                 hideNewTaskButton={hideNewTaskButton}
+                tabActions={currentTab?.tabActions}
               />
               {!pendingTransition && <Outlet />}
             </>
