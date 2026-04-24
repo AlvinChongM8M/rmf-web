@@ -1,5 +1,6 @@
 import { Html, Text } from '@react-three/drei';
 import { MeshProps, ThreeEvent, useLoader } from '@react-three/fiber';
+import { useTheme } from '@mui/material';
 import React from 'react';
 import { Color, Euler, Texture, TextureLoader, Vector3 } from 'three';
 
@@ -90,6 +91,7 @@ export const RobotThreeMaker = ({
   robotLabel,
 }: RobotThreeMakerProps): JSX.Element => {
   const [isHovered, setIsHovered] = React.useState(false);
+  const theme = useTheme();
 
   const debouncedHandlePointerOver = debounce(() => {
     setIsHovered(true);
@@ -108,7 +110,8 @@ export const RobotThreeMaker = ({
           <Html zIndexRange={[1]}>
             <div
               style={{
-                backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                backgroundColor: theme.palette.background.paper,
+                color: theme.palette.text.primary,
                 padding: '0.2rem 0.5rem',
                 borderRadius: '4px',
                 fontSize: '0.6rem',

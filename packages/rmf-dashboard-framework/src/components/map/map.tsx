@@ -53,6 +53,18 @@ export interface MapProps {
   defaultZoom: number;
   defaultRobotZoom: number;
   attributionPrefix: string;
+  waypointStyle?: {
+    color?: string;
+    size?: number;
+    labelColor?: string;
+    labelFontSize?: string;
+  };
+  pickupDropoffStyle?: {
+    color?: string;
+    size?: number;
+    labelColor?: string;
+    labelFontSize?: string;
+  };
 }
 
 export const Map = styled((props: MapProps) => {
@@ -536,7 +548,8 @@ export const Map = styled((props: MapProps) => {
               <ShapeThreeRendering
                 key={index}
                 position={[place.vertex.x, place.vertex.y, 0]}
-                color="yellow"
+                color={props.pickupDropoffStyle?.color ?? 'yellow'}
+                size={props.pickupDropoffStyle?.size}
                 text={place.vertex.name}
                 circleShape={false}
               />
@@ -549,6 +562,8 @@ export const Map = styled((props: MapProps) => {
                 key={index}
                 position={[place.vertex.x, place.vertex.y, 0]}
                 text={place.vertex.name}
+                color={props.pickupDropoffStyle?.labelColor}
+                fontSize={props.pickupDropoffStyle?.labelFontSize}
               />
             ))}
         {!disabledLayers['Waypoints'] &&
@@ -558,7 +573,8 @@ export const Map = styled((props: MapProps) => {
               <ShapeThreeRendering
                 key={index}
                 position={[place.vertex.x, place.vertex.y, 0]}
-                color="yellow"
+                color={props.waypointStyle?.color ?? 'yellow'}
+                size={props.waypointStyle?.size}
                 text={place.vertex.name}
                 circleShape={false}
               />
@@ -571,6 +587,8 @@ export const Map = styled((props: MapProps) => {
                 key={index}
                 position={[place.vertex.x, place.vertex.y, 0]}
                 text={place.vertex.name}
+                color={props.waypointStyle?.labelColor}
+                fontSize={props.waypointStyle?.labelFontSize}
               />
             ))}
         {buildingMap.lifts.length > 0

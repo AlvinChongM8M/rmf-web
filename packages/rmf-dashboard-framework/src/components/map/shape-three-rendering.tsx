@@ -1,4 +1,5 @@
 import { Circle, Html } from '@react-three/drei';
+import { useTheme } from '@mui/material';
 import React from 'react';
 
 interface ShapeThreeRenderingProps {
@@ -6,6 +7,9 @@ interface ShapeThreeRenderingProps {
   color: string;
   text?: string;
   circleShape: boolean;
+  size?: number;
+  labelColor?: string;
+  labelFontSize?: string;
 }
 
 export const debounce = (callback: () => void, delay: number): (() => void) => {
@@ -27,7 +31,13 @@ export const ShapeThreeRendering = ({
   color,
   text,
   circleShape,
+  size = 0.3,
+  labelColor,
+  labelFontSize = '0.6rem',
 }: ShapeThreeRenderingProps): JSX.Element => {
+  const theme = useTheme();
+  const bgColor = labelColor ?? theme.palette.background.paper;
+  const textColor = theme.palette.text.primary;
   const HEIGHT = 8;
   const ELEVATION = 0;
   const positionZ = HEIGHT / 2 + ELEVATION;
@@ -46,7 +56,7 @@ export const ShapeThreeRendering = ({
   return (
     <>
       {circleShape ? (
-        <Circle args={[0.3, 64]} position={[position[0], position[1], positionZ]}>
+        <Circle args={[size, 64]} position={[position[0], position[1], positionZ]}>
           <meshBasicMaterial color={color} />
         </Circle>
       ) : (
@@ -61,10 +71,11 @@ export const ShapeThreeRendering = ({
               <Html zIndexRange={[1]}>
                 <div
                   style={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                    backgroundColor: bgColor,
+                    color: textColor,
                     padding: '0.2rem 0.5rem',
                     borderRadius: '4px',
-                    fontSize: '0.6rem',
+                    fontSize: labelFontSize,
                     transform: `scale(${scaleFactor})`,
                     transition: 'transform 0.3s',
                   }}
@@ -73,7 +84,7 @@ export const ShapeThreeRendering = ({
                 </div>
               </Html>
             )}
-            <boxGeometry args={[1.3, 1.3, 1.3]} />
+            <boxGeometry args={[size * 4, size * 4, size * 4]} />
             <meshStandardMaterial color={color} opacity={0.6} transparent />
           </mesh>
         </group>
