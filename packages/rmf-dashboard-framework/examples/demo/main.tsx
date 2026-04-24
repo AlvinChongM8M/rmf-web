@@ -78,15 +78,23 @@ const nordTheme = createTheme({
   },
 });
 
-const mapApp = createMapApp({
+const mapL1App = createMapApp({
   attributionPrefix: 'M8M',
   defaultMapLevel: 'L1',
   defaultRobotZoom: 20,
-  defaultZoom: 6,
+  defaultZoom: 26,
+});
+
+const mapL2App = createMapApp({
+  attributionPrefix: 'M8M',
+  defaultMapLevel: 'L2',
+  defaultRobotZoom: 20,
+  defaultZoom: 26,
 });
 
 const appRegistry: MicroAppManifest[] = [
-  mapApp,
+  mapL1App,
+  mapL2App,
   doorsApp,
   liftsApp,
   robotsApp,
@@ -98,7 +106,7 @@ const appRegistry: MicroAppManifest[] = [
 const homeWorkspace: InitialWindow[] = [
   {
     layout: { x: 0, y: 0, w: 12, h: 6 },
-    microApp: mapApp,
+    microApp: mapL1App,
   },
 ];
 
@@ -107,7 +115,7 @@ const robotsWorkspace: InitialWindow[] = [
     layout: { x: 0, y: 0, w: 7, h: 4 },
     microApp: robotsApp,
   },
-  { layout: { x: 8, y: 0, w: 5, h: 8 }, microApp: mapApp },
+  { layout: { x: 8, y: 0, w: 5, h: 8 }, microApp: mapL1App },
   { layout: { x: 0, y: 0, w: 7, h: 4 }, microApp: doorsApp },
   { layout: { x: 0, y: 0, w: 7, h: 4 }, microApp: liftsApp },
   { layout: { x: 8, y: 0, w: 5, h: 4 }, microApp: robotMutexGroupsApp },
@@ -115,7 +123,7 @@ const robotsWorkspace: InitialWindow[] = [
 
 const tasksWorkspace: InitialWindow[] = [
   { layout: { x: 0, y: 0, w: 7, h: 8 }, microApp: tasksApp },
-  { layout: { x: 8, y: 0, w: 5, h: 8 }, microApp: mapApp },
+  { layout: { x: 8, y: 0, w: 5, h: 8 }, microApp: mapL1App },
 ];
 
 const overviewWorkspace: InitialWindow[] = [
@@ -124,15 +132,20 @@ const overviewWorkspace: InitialWindow[] = [
     microApp: robotsApp,
   },
   { layout: { x: 7, y: 0, w: 6, h: 2 }, microApp: tasksCompactApp, hideToolbar: false },
-  { layout: { x: 0, y: 0, w: 12, h: 5 }, microApp: mapApp, hideToolbar: false },
+  { layout: { x: 0, y: 0, w: 12, h: 5 }, microApp: mapL1App, hideToolbar: false },
   // { layout: { x: 0, y: 0, w: 12, h: 2 }, microApp: liftsApp },
 ];
 
+const mapWorkspace: InitialWindow[] = [
+  { layout: { x: 0, y: 0, w: 12, h: 2.5 }, microApp: mapL1App, hideToolbar: false },
+  { layout: { x: 0, y: 0, w: 12, h: 2.5 }, microApp: mapL2App, hideToolbar: false },
+];
+
 export default function App() {
-  const mapWorkspace: InitialWindow[] = [
-    { layout: { x: 0, y: 0, w: 12, h: 2.5 }, microApp: mapApp, hideToolbar: false },
-    { layout: { x: 0, y: 0, w: 12, h: 2.5 }, microApp: mapApp, hideToolbar: false },
-  ];
+  // const mapWorkspace: InitialWindow[] = [
+  //   { layout: { x: 0, y: 0, w: 12, h: 2.5 }, microApp: mapL1App, hideToolbar: false },
+  //   { layout: { x: 0, y: 0, w: 12, h: 2.5 }, microApp: mapL2App, hideToolbar: false },
+  // ];
 
   return (
     <RmfDashboard

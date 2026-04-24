@@ -18,6 +18,7 @@ import {
 } from '../../hooks';
 import { ColorManager, TrajectoryData } from '../../services';
 import { AppEvents } from '../app-events';
+import { useMapEvents } from './map-events-context';
 import { DoorSummary } from '../doors/door-summary';
 import { LiftSummary } from '../lifts/lift-summary';
 import { getPlaces, Place } from '../place';
@@ -55,6 +56,7 @@ export interface MapProps {
 }
 
 export const Map = styled((props: MapProps) => {
+  const mapEvents = useMapEvents();
   const authenticator = useAuthenticator();
   const { fleets: fleetResources } = useResources();
   const rmfApi = useRmfApi();
@@ -163,15 +165,12 @@ export const Map = styled((props: MapProps) => {
 
     const handleBuildingMap = (newMap: BuildingMap) => {
       setBuildingMap(newMap);
-      const loggedInDisplayLevel = AppEvents.justLoggedIn.value
-        ? levelByName(newMap, props.defaultMapLevel)
-        : undefined;
-      const currentLevel = loggedInDisplayLevel || AppEvents.levelSelect.value || newMap.levels[0];
-      AppEvents.levelSelect.next(currentLevel);
+      const defaultLevel = levelByName(newMap, props.defaultMapLevel);
+      const currentLevel = defaultLevel || mapEvents.levelSelect.value || newMap.levels[0];
+      mapEvents.levelSelect.next(currentLevel);
       setWaypoints(
         getPlaces(newMap).filter((p) => p.level === currentLevel.name && p.vertex.name.length > 0),
       );
-      AppEvents.justLoggedIn.next(false);
     };
 
     (async () => {
@@ -202,12 +201,12 @@ export const Map = styled((props: MapProps) => {
   React.useEffect(() => {
     const subs: Subscription[] = [];
     subs.push(
-      AppEvents.zoom.subscribe((currentValue) => {
+      mapEvents.zoom.subscribe((currentValue) => {
         setZoom(currentValue || props.defaultZoom);
       }),
     );
     subs.push(
-      AppEvents.levelSelect.subscribe((currentValue) => {
+      mapEvents.levelSelect.subscribe((currentValue) => {
         const newSceneBoundingBox = currentValue
           ? findSceneBoundingBoxFromThreeFiber(currentValue)
           : undefined;
@@ -216,7 +215,7 @@ export const Map = styled((props: MapProps) => {
           const size = newSceneBoundingBox.getSize(new Vector3());
           const distance = Math.max(size.x, size.y, size.z) * 0.7;
           const newZoom = props.defaultZoom;
-          AppEvents.resetCamera.next([center.x, center.y, center.z + distance, newZoom]);
+          mapEvents.resetCamera.next([center.x, center.y, center.z + distance, newZoom]);
         }
         setCurrentLevel(currentValue ?? undefined);
         setSceneBoundingBox(newSceneBoundingBox);
@@ -352,7 +351,7 @@ export const Map = styled((props: MapProps) => {
 
   //Accumulate values over time to persist between tabs
   React.useEffect(() => {
-    const sub = AppEvents.disabledLayers
+    const sub = mapEvents.disabledLayers
       .pipe(scan((acc, value) => ({ ...acc, ...value }), {}))
       .subscribe((layers) => {
         setDisabledLayers(layers);
@@ -381,13 +380,13 @@ export const Map = styled((props: MapProps) => {
         const mapName = robotLocation[3];
         let newSceneBoundingBox = sceneBoundingBox;
         if (
-          AppEvents.levelSelect.value &&
-          AppEvents.levelSelect.value.name !== mapName &&
+          mapEvents.levelSelect.value &&
+          mapEvents.levelSelect.value.name !== mapName &&
           buildingMap
         ) {
           const robotLevel =
             buildingMap.levels.find((l: Level) => l.name === mapName) || buildingMap.levels[0];
-          AppEvents.levelSelect.next(robotLevel);
+          mapEvents.levelSelect.next(robotLevel);
 
           const robotLevelSceneBoundingBox = findSceneBoundingBoxFromThreeFiber(robotLevel);
           if (!robotLevelSceneBoundingBox) {
@@ -400,7 +399,7 @@ export const Map = styled((props: MapProps) => {
         const size = newSceneBoundingBox.getSize(new Vector3());
         const distance = Math.max(size.x, size.y, size.z) * 0.7;
         const newZoom = props.defaultRobotZoom;
-        AppEvents.resetCamera.next([
+        mapEvents.resetCamera.next([
           robotLocation[0],
           robotLocation[1],
           robotLocation[2] + distance,
@@ -420,13 +419,13 @@ export const Map = styled((props: MapProps) => {
 
         let newSceneBoundingBox = sceneBoundingBox;
         if (
-          AppEvents.levelSelect.value &&
-          AppEvents.levelSelect.value.name !== mapName &&
+          mapEvents.levelSelect.value &&
+          mapEvents.levelSelect.value.name !== mapName &&
           buildingMap
         ) {
           const doorLevel =
             buildingMap.levels.find((l: Level) => l.name === mapName) || buildingMap.levels[0];
-          AppEvents.levelSelect.next(doorLevel);
+          mapEvents.levelSelect.next(doorLevel);
 
           const doorLevelSceneBoundingBox = findSceneBoundingBoxFromThreeFiber(doorLevel);
           if (!doorLevelSceneBoundingBox) {
@@ -439,7 +438,7 @@ export const Map = styled((props: MapProps) => {
         const size = newSceneBoundingBox.getSize(new Vector3());
         const distance = Math.max(size.x, size.y, size.z) * 0.7;
         const newZoom = props.defaultRobotZoom;
-        AppEvents.resetCamera.next([
+        mapEvents.resetCamera.next([
           (doorInfo.v1_x + doorInfo.v2_x) / 2,
           (doorInfo.v1_y + doorInfo.v2_y) / 2,
           distance,
@@ -458,7 +457,7 @@ export const Map = styled((props: MapProps) => {
         const size = sceneBoundingBox.getSize(new Vector3());
         const distance = Math.max(size.x, size.y, size.z) * 0.7;
         const newZoom = props.defaultRobotZoom;
-        AppEvents.resetCamera.next([lift.ref_x, lift.ref_y, distance, newZoom]);
+        mapEvents.resetCamera.next([lift.ref_x, lift.ref_y, distance, newZoom]);
       }),
     );
 
@@ -485,7 +484,7 @@ export const Map = styled((props: MapProps) => {
         levels={buildingMap.levels}
         currentLevel={currentLevel}
         onChange={(_event: ChangeEvent<HTMLInputElement>, value: string) => {
-          AppEvents.levelSelect.next(
+          mapEvents.levelSelect.next(
             buildingMap.levels.find((l: Level) => l.name === value) || buildingMap.levels[0],
           );
         }}
@@ -497,10 +496,10 @@ export const Map = styled((props: MapProps) => {
           const size = sceneBoundingBox.getSize(new Vector3());
           const distance = Math.max(size.x, size.y, size.z) * 0.7;
           const newZoom = props.defaultZoom;
-          AppEvents.resetCamera.next([center.x, center.y, center.z + distance, newZoom]);
+          mapEvents.resetCamera.next([center.x, center.y, center.z + distance, newZoom]);
         }}
-        handleZoomIn={() => AppEvents.zoomIn.next()}
-        handleZoomOut={() => AppEvents.zoomOut.next()}
+        handleZoomIn={() => mapEvents.zoomIn.next()}
+        handleZoomOut={() => mapEvents.zoomOut.next()}
       />
       <Box
         sx={{
