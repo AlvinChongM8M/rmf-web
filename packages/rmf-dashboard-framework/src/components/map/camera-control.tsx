@@ -4,7 +4,7 @@ import { Subscription } from 'rxjs';
 import { MOUSE, Vector3 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
-import { AppEvents } from '../app-events';
+import { useMapEvents } from './map-events-context';
 
 const DEFAULT_ZOOM_IN_CONSTANT = 1.2;
 const DEFAULT_ZOOM_OUT_CONSTANT = 0.8;
@@ -16,6 +16,7 @@ interface CameraControlProps {
 export const CameraControl: React.FC<CameraControlProps> = ({ zoom }) => {
   const { camera, gl } = useThree();
   const controlsRef = useRef<OrbitControls | null>(null);
+  const mapEvents = useMapEvents();
 
   useEffect(() => {
     const controls = new OrbitControls(camera, gl.domElement);
@@ -32,26 +33,26 @@ export const CameraControl: React.FC<CameraControlProps> = ({ zoom }) => {
 
     const subs: Subscription[] = [];
     subs.push(
-      AppEvents.zoomIn.subscribe(() => {
+      mapEvents.zoomIn.subscribe(() => {
         const newZoom = camera.zoom * DEFAULT_ZOOM_IN_CONSTANT;
         camera.zoom = newZoom;
-        AppEvents.zoom.next(newZoom);
+        mapEvents.zoom.next(newZoom);
         camera.updateProjectionMatrix();
       }),
     );
     subs.push(
-      AppEvents.zoomOut.subscribe(() => {
+      mapEvents.zoomOut.subscribe(() => {
         const newZoom = camera.zoom * DEFAULT_ZOOM_OUT_CONSTANT;
         camera.zoom = newZoom;
-        AppEvents.zoom.next(newZoom);
+        mapEvents.zoom.next(newZoom);
         camera.updateProjectionMatrix();
       }),
     );
     subs.push(
-      AppEvents.resetCamera.subscribe((data) => {
+      mapEvents.resetCamera.subscribe((data) => {
         camera.position.set(data[0], data[1], data[2]);
         camera.zoom = data[3];
-        AppEvents.zoom.next(data[3]);
+        mapEvents.zoom.next(data[3]);
         camera.updateProjectionMatrix();
       }),
     );
@@ -67,7 +68,7 @@ export const CameraControl: React.FC<CameraControlProps> = ({ zoom }) => {
         event.deltaY > 0
           ? camera.zoom * DEFAULT_ZOOM_OUT_CONSTANT
           : camera.zoom * DEFAULT_ZOOM_IN_CONSTANT;
-      AppEvents.zoom.next(newZoom * SENSITIVITY);
+      mapEvents.zoom.next(newZoom * SENSITIVITY);
     };
 
     gl.domElement.addEventListener('wheel', handleScroll);
@@ -79,23 +80,23 @@ export const CameraControl: React.FC<CameraControlProps> = ({ zoom }) => {
       gl.domElement.removeEventListener('wheel', handleScroll);
       controls.dispose();
     };
-  }, [camera, gl.domElement]);
+  }, [camera, gl.domElement, mapEvents]);
 
   useEffect(() => {
     camera.zoom = zoom;
-    if (AppEvents.cameraPosition.value) {
+    if (mapEvents.cameraPosition.value) {
       camera.position.set(
-        AppEvents.cameraPosition.value.x,
-        AppEvents.cameraPosition.value.y,
-        AppEvents.cameraPosition.value.z,
+        mapEvents.cameraPosition.value.x,
+        mapEvents.cameraPosition.value.y,
+        mapEvents.cameraPosition.value.z,
       );
     }
-  }, [camera, zoom]);
+  }, [camera, zoom, mapEvents]);
 
   useFrame(() => {
     if (controlsRef.current) {
       controlsRef.current.update();
-      AppEvents.cameraPosition.next(new Vector3().copy(camera.position));
+      mapEvents.cameraPosition.next(new Vector3().copy(camera.position));
     }
   });
 

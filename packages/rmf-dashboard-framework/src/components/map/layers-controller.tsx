@@ -10,17 +10,17 @@ import {
   FormGroup,
   IconButton,
   MenuItem,
+  Portal,
   TextField,
 } from '@mui/material';
 import { Level } from 'api-client';
 import { ChangeEvent } from 'react';
 import React from 'react';
 
-import { AppEvents } from '../app-events';
-
 interface LayersControllerProps {
   disabledLayers: Record<string, boolean>;
   onChange: (event: ChangeEvent<HTMLInputElement>, value: string) => void;
+  onLayerToggle: (updatedLayers: Record<string, boolean>) => void;
   levels: Level[];
   currentLevel: Level;
   handleFullView: () => void;
@@ -31,6 +31,7 @@ interface LayersControllerProps {
 export const LayersController = ({
   disabledLayers,
   onChange,
+  onLayerToggle,
   levels,
   currentLevel,
   handleFullView,
@@ -38,6 +39,16 @@ export const LayersController = ({
   handleZoomOut,
 }: LayersControllerProps) => {
   const [isHovered, setIsHovered] = React.useState(false);
+  const buttonRef = React.useRef<HTMLDivElement>(null);
+  const [panelPos, setPanelPos] = React.useState({ top: 0, left: 0 });
+
+  const handleMouseEnter = () => {
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setPanelPos({ top: rect.top, left: rect.right + 4 });
+    }
+    setIsHovered(true);
+  };
 
   return (
     <Box
@@ -90,33 +101,52 @@ export const LayersController = ({
           <ZoomOutIcon fontSize="large" />
         </IconButton>
       </div>
-      <div onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
+      <div ref={buttonRef} onMouseEnter={handleMouseEnter} onMouseLeave={() => setIsHovered(false)}>
         <IconButton size="small" data-testid="layers" sx={{ padding: 2 }}>
           <LayersIcon fontSize="large" />
         </IconButton>
         {isHovered && (
-          <div>
-            {Object.keys(disabledLayers).map((layerName) => (
-              <FormGroup key={layerName}>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      sx={{ padding: 1.5 }}
-                      size="small"
-                      checked={!disabledLayers[layerName]}
-                      onChange={() => {
-                        const updatedLayers = { ...disabledLayers };
-                        updatedLayers[layerName] = !updatedLayers[layerName];
-                        AppEvents.disabledLayers.next(updatedLayers);
-                      }}
-                    />
-                  }
-                  label={layerName}
-                  sx={{ margin: '0' }}
-                />
-              </FormGroup>
-            ))}
-          </div>
+          <Portal>
+            <Box
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
+              sx={{
+                position: 'fixed',
+                top: panelPos.top,
+                left: panelPos.left,
+                backgroundColor: 'background.paper',
+                borderRadius: 1,
+                boxShadow: 3,
+                px: 1,
+                py: 0.5,
+                zIndex: 9999,
+                minWidth: '180px',
+                maxHeight: `${window.innerHeight - panelPos.top - 8}px`,
+                overflowY: 'auto',
+              }}
+            >
+              {Object.keys(disabledLayers).map((layerName) => (
+                <FormGroup key={layerName}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        sx={{ padding: 1.5 }}
+                        size="small"
+                        checked={!disabledLayers[layerName]}
+                        onChange={() => {
+                          const updatedLayers = { ...disabledLayers };
+                          updatedLayers[layerName] = !updatedLayers[layerName];
+                          onLayerToggle(updatedLayers);
+                        }}
+                      />
+                    }
+                    label={layerName}
+                    sx={{ margin: '0' }}
+                  />
+                </FormGroup>
+              ))}
+            </Box>
+          </Portal>
         )}
       </div>
     </Box>

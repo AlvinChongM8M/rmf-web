@@ -481,6 +481,7 @@ export const Map = styled((props: MapProps) => {
     <Suspense fallback={null}>
       <LayersController
         disabledLayers={disabledLayers}
+        onLayerToggle={(updatedLayers) => mapEvents.disabledLayers.next(updatedLayers)}
         levels={buildingMap.levels}
         currentLevel={currentLevel}
         onChange={(_event: ChangeEvent<HTMLInputElement>, value: string) => {
