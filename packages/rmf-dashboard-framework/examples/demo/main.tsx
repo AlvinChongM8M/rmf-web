@@ -83,13 +83,31 @@ const mapL1App = createMapApp({
   defaultMapLevel: 'L1',
   defaultRobotZoom: 20,
   defaultZoom: 26,
+  defaultHiddenLayers: [
+    'Pickup & Dropoff labels',
+    // 'Waypoint labels',   // leave this out to show waypoints by default
+    'Doors labels',
+    'Robots labels',
+    'Trajectories',
+    // 'Waypoints',         // leave this out to show waypoints by default
+    // 'Robots',            // leave this out to show robots by default
+  ],
 });
 
 const mapL2App = createMapApp({
   attributionPrefix: 'M8M',
-  defaultMapLevel: 'L2',
+  defaultMapLevel: 'L1',
   defaultRobotZoom: 20,
   defaultZoom: 26,
+  defaultHiddenLayers: [
+    'Pickup & Dropoff labels',
+    // 'Waypoint labels',  // leave this out to show waypoints by default
+    'Doors labels',
+    'Robots labels',
+    'Trajectories',
+    // 'Waypoints',         // leave this out to show waypoints by default
+    // 'Robots',            // leave this out to show robots by default
+  ],
 });
 
 const appRegistry: MicroAppManifest[] = [
@@ -132,13 +150,13 @@ const overviewWorkspace: InitialWindow[] = [
     microApp: robotsApp,
   },
   { layout: { x: 7, y: 0, w: 6, h: 2 }, microApp: tasksCompactApp, hideToolbar: false },
-  { layout: { x: 0, y: 0, w: 12, h: 5 }, microApp: mapL1App, hideToolbar: false },
+  { layout: { x: 0, y: 0, w: 12, h: 5 }, microApp: mapL1App, hideToolbar: true },
   // { layout: { x: 0, y: 0, w: 12, h: 2 }, microApp: liftsApp },
 ];
 
 const mapWorkspace: InitialWindow[] = [
-  { layout: { x: 0, y: 0, w: 12, h: 2.5 }, microApp: mapL1App, hideToolbar: false },
-  { layout: { x: 0, y: 0, w: 12, h: 2.5 }, microApp: mapL2App, hideToolbar: false },
+  { layout: { x: 0, y: 0, w: 12, h: 2.5 }, microApp: mapL1App, hideToolbar: true },
+  { layout: { x: 0, y: 0, w: 12, h: 2.5 }, microApp: mapL2App, hideToolbar: true },
 ];
 
 export default function App() {

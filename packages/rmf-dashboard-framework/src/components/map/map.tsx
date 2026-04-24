@@ -53,6 +53,13 @@ export interface MapProps {
   defaultZoom: number;
   defaultRobotZoom: number;
   attributionPrefix: string;
+  /**
+   * List of layer names that should be hidden by default.
+   * Available layers: 'Pickup & Dropoff waypoints', 'Pickup & Dropoff labels',
+   * 'Waypoints', 'Waypoint labels', 'Doors & Lifts', 'Doors labels',
+   * 'Robots', 'Robots labels', 'Trajectories'
+   */
+  defaultHiddenLayers?: string[];
   waypointStyle?: {
     color?: string;
     size?: number;
@@ -74,7 +81,7 @@ export const Map = styled((props: MapProps) => {
   const rmfApi = useRmfApi();
   const { showAlert } = useAppController();
   const [currentLevel, setCurrentLevel] = React.useState<Level | undefined>(undefined);
-  const [disabledLayers, setDisabledLayers] = React.useState<Record<string, boolean>>({
+  const defaultLayers: Record<string, boolean> = {
     'Pickup & Dropoff waypoints': false,
     'Pickup & Dropoff labels': true,
     Waypoints: true,
@@ -84,7 +91,18 @@ export const Map = styled((props: MapProps) => {
     Robots: false,
     'Robots labels': true,
     Trajectories: false,
-  });
+  };
+  if (props.defaultHiddenLayers) {
+    for (const layer of props.defaultHiddenLayers) {
+      if (layer in defaultLayers) defaultLayers[layer] = true;
+    }
+    // also allow explicitly un-hiding layers that are hidden by default
+    for (const layer of Object.keys(defaultLayers)) {
+      if (!props.defaultHiddenLayers.includes(layer)) defaultLayers[layer] = false;
+    }
+  }
+  const [disabledLayers, setDisabledLayers] =
+    React.useState<Record<string, boolean>>(defaultLayers);
   const [openRobotSummary, setOpenRobotSummary] = React.useState(false);
   const [openDoorSummary, setOpenDoorSummary] = React.useState(false);
   const [openLiftSummary, setOpenLiftSummary] = React.useState(false);
