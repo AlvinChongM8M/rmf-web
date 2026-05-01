@@ -21,6 +21,7 @@ import {
   robotsApp,
   tasksApp,
   tasksCompactApp,
+  createTasksCompactApp,
 } from 'rmf-dashboard-framework/micro-apps';
 import { StubAuthenticator } from 'rmf-dashboard-framework/services';
 
@@ -110,6 +111,11 @@ const mapL2App = createMapApp({
   ],
 });
 
+const doneTasksApp = createTasksCompactApp({ statusFilter: 'cancelled,completed' });
+const activeTasksApp = createTasksCompactApp({
+  statusFilter: 'uninitialized,blocked,error,failed,queued,standby,underway,delayed,skipped,killed',
+});
+
 const appRegistry: MicroAppManifest[] = [
   mapL1App,
   mapL2App,
@@ -119,6 +125,8 @@ const appRegistry: MicroAppManifest[] = [
   robotMutexGroupsApp,
   tasksApp,
   tasksCompactApp,
+  doneTasksApp,
+  activeTasksApp,
 ];
 
 const homeWorkspace: InitialWindow[] = [
@@ -149,7 +157,7 @@ const overviewWorkspace: InitialWindow[] = [
     layout: { x: 0, y: 0, w: 6, h: 2 },
     microApp: robotsApp,
   },
-  { layout: { x: 7, y: 0, w: 6, h: 2 }, microApp: tasksCompactApp, hideToolbar: false },
+  { layout: { x: 7, y: 0, w: 6, h: 2 }, microApp: activeTasksApp, hideToolbar: false },
   { layout: { x: 0, y: 0, w: 12, h: 5 }, microApp: mapL1App, hideToolbar: true },
   // { layout: { x: 0, y: 0, w: 12, h: 2 }, microApp: liftsApp },
 ];
@@ -171,7 +179,7 @@ export default function App() {
       trajectoryServerUrl="http://localhost:8006"
       // apiServerUrl="http://10.10.10.2:8000"
       // trajectoryServerUrl="http://10.10.10.2:8006"
-      hideNewTaskButton={true}
+      hideNewTaskButton={false}
       authenticator={new StubAuthenticator()}
       themes={{ default: createTheme(), dark: nordTheme }}
       resources={{ fleets: {}, logos: { header: '/resources/defaultLogo.png' } }}

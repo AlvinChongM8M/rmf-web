@@ -21,10 +21,24 @@ import { exportCsvFull, exportCsvMinimal } from './utils';
 const RefreshTaskQueueTableInterval = 15000;
 const QueryLimit = 100;
 
+export interface TasksWindowCompactProps extends MicroAppProps {
+  /**
+   * Comma-separated list of task statuses to pre-filter by (e.g. "cancelled,completed").
+   * This filter is applied whenever the user has not set their own status filter.
+   */
+  statusFilter?: string;
+}
+
 export const TasksWindowCompact = React.memo(
   React.forwardRef(
     (
-      { onClose, children, hideToolbar, ...otherProps }: React.PropsWithChildren<MicroAppProps>,
+      {
+        onClose,
+        children,
+        hideToolbar,
+        statusFilter,
+        ...otherProps
+      }: React.PropsWithChildren<TasksWindowCompactProps>,
       ref: React.Ref<HTMLDivElement>,
     ) => {
       const rmfApi = useRmfApi();
@@ -107,13 +121,17 @@ export const TasksWindowCompact = React.memo(
             labelFilter = `${filterColumn.substring(6)}=${filterValue}`;
           }
 
+          // Use the pre-configured statusFilter when the user has not applied their own status filter
+          const activeStatusFilter =
+            filterColumn === 'status' ? filterValue : statusFilter ?? undefined;
+
           try {
             const resp = await rmfApi.tasksApi.queryTaskStatesTasksGet(
               filterColumn && filterColumn === 'id_' ? filterValue : undefined,
               filterColumn && filterColumn === 'category' ? filterValue : undefined,
               filterColumn && filterColumn === 'requester' ? filterValue : undefined,
               filterColumn && filterColumn === 'assigned_to' ? filterValue : undefined,
-              filterColumn && filterColumn === 'status' ? filterValue : undefined,
+              activeStatusFilter,
               labelFilter,
               filterColumn && filterColumn === 'unix_millis_request_time' ? filterValue : undefined,
               filterColumn && filterColumn === 'unix_millis_start_time' ? filterValue : undefined,
