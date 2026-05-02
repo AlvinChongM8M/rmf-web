@@ -7,7 +7,7 @@ import { createTheme } from '@mui/material';
 import ReactDOM from 'react-dom/client';
 import {
   InitialWindow,
-  LocallyPersistentWorkspace,
+  // LocallyPersistentWorkspace,
   MicroAppManifest,
   QuickDispatchButton,
   RmfDashboard,
@@ -112,39 +112,45 @@ const mapL2App = createMapApp({
 });
 
 const doneTasksApp = createTasksCompactApp({ statusFilter: 'cancelled,completed' });
+
 const activeTasksApp = createTasksCompactApp({
   statusFilter: 'uninitialized,blocked,error,failed,queued,standby,underway,delayed,skipped,killed',
 });
 
-const appRegistry: MicroAppManifest[] = [
-  mapL1App,
-  mapL2App,
-  doorsApp,
-  liftsApp,
-  robotsApp,
-  robotMutexGroupsApp,
-  tasksApp,
-  tasksCompactApp,
-  doneTasksApp,
-  activeTasksApp,
+// const appRegistry: MicroAppManifest[] = [
+//   mapL1App,
+//   mapL2App,
+//   doorsApp,
+//   liftsApp,
+//   robotsApp,
+//   robotMutexGroupsApp,
+//   tasksApp,
+//   tasksCompactApp,
+//   doneTasksApp,
+//   activeTasksApp,
+// ];
+
+const overviewWorkspace: InitialWindow[] = [
+  { layout: { x: 0, y: 0, w: 6, h: 2 }, microApp: robotsApp, hideToolbar: false },
+  { layout: { x: 7, y: 0, w: 6, h: 2 }, microApp: activeTasksApp, hideToolbar: false },
+  { layout: { x: 0, y: 0, w: 12, h: 5 }, microApp: mapL1App, hideToolbar: true },
+  // { layout: { x: 0, y: 0, w: 12, h: 2 }, microApp: liftsApp },
 ];
 
-const homeWorkspace: InitialWindow[] = [
-  {
-    layout: { x: 0, y: 0, w: 12, h: 6 },
-    microApp: mapL1App,
-  },
+const mapFullscreenWorkspace: InitialWindow[] = [
+  { layout: { x: 0, y: 0, w: 12, h: 6 }, microApp: mapL1App, hideToolbar: true },
+];
+
+const mapMultiFloorWorkspace: InitialWindow[] = [
+  { layout: { x: 0, y: 0, w: 12, h: 2.5 }, microApp: mapL1App, hideToolbar: true },
+  { layout: { x: 0, y: 0, w: 12, h: 2.5 }, microApp: mapL2App, hideToolbar: true },
 ];
 
 const robotsWorkspace: InitialWindow[] = [
-  {
-    layout: { x: 0, y: 0, w: 7, h: 4 },
-    microApp: robotsApp,
-  },
-  { layout: { x: 8, y: 0, w: 5, h: 8 }, microApp: mapL1App },
-  { layout: { x: 0, y: 0, w: 7, h: 4 }, microApp: doorsApp },
-  { layout: { x: 0, y: 0, w: 7, h: 4 }, microApp: liftsApp },
-  { layout: { x: 8, y: 0, w: 5, h: 4 }, microApp: robotMutexGroupsApp },
+  { layout: { x: 0, y: 0, w: 7, h: 4 }, microApp: robotsApp, hideToolbar: false },
+  { layout: { x: 8, y: 0, w: 5, h: 8 }, microApp: mapL1App, hideToolbar: false },
+  { layout: { x: 0, y: 0, w: 7, h: 4 }, microApp: liftsApp, hideToolbar: false },
+  // { layout: { x: 8, y: 0, w: 5, h: 4 }, microApp: robotMutexGroupsApp, hideToolbar: false },
 ];
 
 const tasksWorkspace: InitialWindow[] = [
@@ -152,50 +158,26 @@ const tasksWorkspace: InitialWindow[] = [
   { layout: { x: 8, y: 0, w: 5, h: 8 }, microApp: mapL1App },
 ];
 
-const overviewWorkspace: InitialWindow[] = [
-  {
-    layout: { x: 0, y: 0, w: 6, h: 2 },
-    microApp: robotsApp,
-  },
-  { layout: { x: 7, y: 0, w: 6, h: 2 }, microApp: activeTasksApp, hideToolbar: false },
-  { layout: { x: 0, y: 0, w: 12, h: 5 }, microApp: mapL1App, hideToolbar: true },
-  // { layout: { x: 0, y: 0, w: 12, h: 2 }, microApp: liftsApp },
-];
-
-const mapWorkspace: InitialWindow[] = [
-  { layout: { x: 0, y: 0, w: 12, h: 2.5 }, microApp: mapL1App, hideToolbar: true },
-  { layout: { x: 0, y: 0, w: 12, h: 2.5 }, microApp: mapL2App, hideToolbar: true },
-];
-
 export default function App() {
-  // const mapWorkspace: InitialWindow[] = [
-  //   { layout: { x: 0, y: 0, w: 12, h: 2.5 }, microApp: mapL1App, hideToolbar: false },
-  //   { layout: { x: 0, y: 0, w: 12, h: 2.5 }, microApp: mapL2App, hideToolbar: false },
-  // ];
-
   return (
     <RmfDashboard
       apiServerUrl="http://localhost:8000"
       trajectoryServerUrl="http://localhost:8006"
       // apiServerUrl="http://10.10.10.2:8000"
       // trajectoryServerUrl="http://10.10.10.2:8006"
+
       hideNewTaskButton={false}
       authenticator={new StubAuthenticator()}
       themes={{ default: createTheme(), dark: nordTheme }}
       resources={{ fleets: {}, logos: { header: '/resources/defaultLogo.png' } }}
       tasks={{
-        allowedTasks: [
-          { taskDefinitionId: 'patrol' },
-          { taskDefinitionId: 'delivery' },
-          { taskDefinitionId: 'compose-clean' },
-          { taskDefinitionId: 'custom_compose' },
-        ],
+        allowedTasks: [{ taskDefinitionId: 'patrol' }, { taskDefinitionId: 'custom_compose' }],
         pickupZones: [],
         cartIds: [],
       }}
       tabs={[
         {
-          // Arrival group — only these tabs appear in the AppBar when on an /arrival* route
+          // MB1A group — only these tabs appear in the AppBar when on an /mb1a* route
           name: 'MB1A Overview',
           route: 'mb1a-overview',
           tabGroup: 'mb1a',
@@ -211,7 +193,7 @@ export default function App() {
           ),
           element: <Workspace initialWindows={overviewWorkspace} />,
         },
-        // {
+
         {
           name: 'Maps',
           route: 'mb1a-maps',
@@ -226,9 +208,27 @@ export default function App() {
               }}
             />
           ),
-          element: <Workspace initialWindows={mapWorkspace} />,
+          element: <Workspace initialWindows={mapMultiFloorWorkspace} />,
         },
-        // Departure group — only these tabs appear in the AppBar when on a /departure* route
+
+        {
+          name: 'Tasks',
+          route: 'mb1a-tasks',
+          tabGroup: 'mb1a',
+          tabActions: (
+            <QuickDispatchButton
+              label="Transfer to LPier"
+              taskRequest={{
+                category: 'patrol',
+                description: { places: ['lounge', 'pantry'] },
+                unix_millis_earliest_start_time: 0,
+              }}
+            />
+          ),
+          element: <Workspace initialWindows={tasksWorkspace} />,
+        },
+
+        // LPier group — only these tabs appear in the AppBar when on a /lpier* route
         {
           name: 'LPier Overview',
           route: 'lpier-overview',
@@ -245,6 +245,7 @@ export default function App() {
           ),
           element: <Workspace initialWindows={overviewWorkspace} />,
         },
+
         {
           name: 'Maps',
           route: 'lpier-maps',
@@ -259,34 +260,25 @@ export default function App() {
               }}
             />
           ),
-          element: <Workspace initialWindows={mapWorkspace} />,
+          element: <Workspace initialWindows={mapMultiFloorWorkspace} />,
         },
-        //   name: 'Map',
-        //   route: '',
-        //   element: <Workspace initialWindows={homeWorkspace} />,
-        // },
-        // {
-        //   name: 'Robots',
-        //   route: 'robots',
-        //   element: <Workspace initialWindows={robotsWorkspace} />,
-        // },
-        // {
-        //   name: 'Tasks',
-        //   route: 'tasks',
-        //   element: <Workspace initialWindows={tasksWorkspace} />,
-        // },
-        // {
-        //   name: 'Custom',
-        //   route: 'custom',
-        //   element: (
-        //     <LocallyPersistentWorkspace
-        //       defaultWindows={[]}
-        //       allowDesignMode
-        //       appRegistry={appRegistry}
-        //       storageKey="custom-workspace"
-        //     />
-        //   ),
-        // },
+
+        {
+          name: 'Tasks',
+          route: 'lpier-tasks',
+          tabGroup: 'lpier',
+          tabActions: (
+            <QuickDispatchButton
+              label="Transfer to MB1A"
+              taskRequest={{
+                category: 'patrol',
+                description: { places: ['pantry', 'lounge'] },
+                unix_millis_earliest_start_time: 0,
+              }}
+            />
+          ),
+          element: <Workspace initialWindows={tasksWorkspace} />,
+        },
       ]}
     />
   );
