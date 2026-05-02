@@ -153,9 +153,11 @@ const robotsWorkspace: InitialWindow[] = [
   // { layout: { x: 8, y: 0, w: 5, h: 4 }, microApp: robotMutexGroupsApp, hideToolbar: false },
 ];
 
-const tasksWorkspace: InitialWindow[] = [
+const multipurposeWorkspace: InitialWindow[] = [
   { layout: { x: 0, y: 0, w: 7, h: 8 }, microApp: tasksApp },
   { layout: { x: 8, y: 0, w: 5, h: 8 }, microApp: mapL1App },
+  { layout: { x: 0, y: 0, w: 6, h: 4 }, microApp: liftsApp },
+  { layout: { x: 8, y: 0, w: 6, h: 4 }, microApp: robotMutexGroupsApp, hideToolbar: false },
 ];
 
 export default function App() {
@@ -212,8 +214,8 @@ export default function App() {
         },
 
         {
-          name: 'Tasks',
-          route: 'mb1a-tasks',
+          name: 'Multipurpose',
+          route: 'mb1a-multipurpose',
           tabGroup: 'mb1a',
           tabActions: (
             <QuickDispatchButton
@@ -225,7 +227,7 @@ export default function App() {
               }}
             />
           ),
-          element: <Workspace initialWindows={tasksWorkspace} />,
+          element: <Workspace initialWindows={multipurposeWorkspace} />,
         },
 
         // LPier group — only these tabs appear in the AppBar when on a /lpier* route
@@ -264,8 +266,8 @@ export default function App() {
         },
 
         {
-          name: 'Tasks',
-          route: 'lpier-tasks',
+          name: 'Multipurpose',
+          route: 'lpier-multipurpose',
           tabGroup: 'lpier',
           tabActions: (
             <QuickDispatchButton
@@ -277,7 +279,7 @@ export default function App() {
               }}
             />
           ),
-          element: <Workspace initialWindows={tasksWorkspace} />,
+          element: <Workspace initialWindows={multipurposeWorkspace} />,
         },
       ]}
     />
