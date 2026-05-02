@@ -111,10 +111,10 @@ const mapL2App = createMapApp({
   ],
 });
 
-const doneTasksApp = createTasksCompactApp({ statusFilter: 'cancelled,completed' });
+const doneTasksApp = createTasksCompactApp({ statusFilter: 'cancelled,completed,failed' });
 
 const activeTasksApp = createTasksCompactApp({
-  statusFilter: 'uninitialized,blocked,error,failed,queued,standby,underway,delayed,skipped,killed',
+  statusFilter: 'uninitialized,blocked,error,queued,standby,underway,delayed,skipped,killed',
 });
 
 // const appRegistry: MicroAppManifest[] = [
