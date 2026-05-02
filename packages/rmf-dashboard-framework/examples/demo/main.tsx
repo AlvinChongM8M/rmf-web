@@ -188,9 +188,10 @@ export default function App() {
               label="Transfer to LPier"
               taskRequest={{
                 category: 'patrol',
-                description: { places: ['lounge', 'pantry'] },
+                description: { places: ['patrol_D2'] },
                 unix_millis_earliest_start_time: 0,
               }}
+              // robotTarget={{ fleet: 'tinyRobot', robot: 'tinyRobot1' }}
             />
           ),
           element: <Workspace initialWindows={overviewWorkspace} />,
