@@ -103,34 +103,34 @@ export function RobotDataGridTable({ onRobotClick, robots }: RobotDataGridTableP
       width: 150,
       editable: false,
       valueGetter: (params: GridValueGetterParams) => params.row.name,
-      flex: 1,
+      flex: 1.2,  // original = 1
       filterable: true,
     },
-    {
-      field: 'fleet',
-      headerName: 'Fleet',
-      width: 90,
-      valueGetter: (params: GridValueGetterParams) => params.row.fleet,
-      flex: 1,
-      filterable: true,
-    },
-    {
-      field: 'estFinishTime',
-      headerName: 'Est. Task Finish Time',
-      width: 150,
-      editable: false,
-      valueGetter: (params: GridValueGetterParams) =>
-        params.row.estFinishTime ? new Date(params.row.estFinishTime).toLocaleString() : '-',
-      flex: 1,
-      filterable: true,
-    },
+    // {
+    //   field: 'fleet',
+    //   headerName: 'Fleet',
+    //   width: 90,
+    //   valueGetter: (params: GridValueGetterParams) => params.row.fleet,
+    //   flex: 1,
+    //   filterable: true,
+    // },
+    // {
+    //   field: 'estFinishTime',
+    //   headerName: 'Est. Task Finish Time',
+    //   width: 150,
+    //   editable: false,
+    //   valueGetter: (params: GridValueGetterParams) =>
+    //     params.row.estFinishTime ? new Date(params.row.estFinishTime).toLocaleString() : '-',
+    //   flex: 1,
+    //   filterable: true,
+    // },
     {
       field: 'level',
       headerName: 'Level',
       width: 150,
       editable: false,
       valueGetter: (params: GridValueGetterParams) => params.row.level,
-      flex: 1,
+      flex: 0.7,  // original = 1
       filterable: true,
     },
     {
@@ -148,8 +148,8 @@ export function RobotDataGridTable({ onRobotClick, robots }: RobotDataGridTableP
       width: 150,
       editable: false,
       valueGetter: (params: GridValueGetterParams) =>
-        params.row.lastUpdateTime ? new Date(params.row.lastUpdateTime).toLocaleString() : '-',
-      flex: 1,
+        params.row.lastUpdateTime ? new Date(params.row.lastUpdateTime).toLocaleTimeString() : '-',
+      flex: 1.2,  // original = 1
       filterable: true,
     },
     {
@@ -167,7 +167,7 @@ export function RobotDataGridTable({ onRobotClick, robots }: RobotDataGridTableP
       getRowId={(r) => r.name}
       rows={robots}
       pageSize={5}
-      rowHeight={38}
+      rowHeight={25}  // original = 38
       columns={columns}
       rowsPerPageOptions={[5]}
       density={'standard'}

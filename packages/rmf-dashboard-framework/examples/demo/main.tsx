@@ -25,6 +25,11 @@ import {
 } from 'rmf-dashboard-framework/micro-apps';
 import { StubAuthenticator } from 'rmf-dashboard-framework/services';
 
+import { Box, Button, Fab, Tooltip } from '@mui/material';
+import { clamp } from 'date-fns';
+import { ViewWeek } from '@mui/icons-material';
+import { red } from '@mui/material/colors';
+
 /* eslint-disable @typescript-eslint/no-unused-vars,@typescript-eslint/ban-ts-comment */
 // Polar Night
 const nord0 = '#2e3440'; // @ts-ignore
@@ -82,14 +87,14 @@ const nordTheme = createTheme({
 const mapL1App = createMapApp({
   attributionPrefix: 'M8M',
   defaultMapLevel: 'L1',
-  defaultRobotZoom: 20,
-  defaultZoom: 26,
+  defaultRobotZoom: 10,
+  defaultZoom: 4,
   defaultHiddenLayers: [
     'Pickup & Dropoff labels',
-    // 'Waypoint labels',   // leave this out to show waypoints by default
+    'Waypoint labels',   // leave this out to show waypoints by default
     'Doors labels',
     'Robots labels',
-    'Trajectories',
+    // 'Trajectories',
     // 'Waypoints',         // leave this out to show waypoints by default
     // 'Robots',            // leave this out to show robots by default
   ],
@@ -102,10 +107,10 @@ const mapL2App = createMapApp({
   defaultZoom: 26,
   defaultHiddenLayers: [
     'Pickup & Dropoff labels',
-    // 'Waypoint labels',  // leave this out to show waypoints by default
+    'Waypoint labels',  // leave this out to show waypoints by default
     'Doors labels',
     'Robots labels',
-    'Trajectories',
+    // 'Trajectories',
     // 'Waypoints',         // leave this out to show waypoints by default
     // 'Robots',            // leave this out to show robots by default
   ],
@@ -114,7 +119,7 @@ const mapL2App = createMapApp({
 const doneTasksApp = createTasksCompactApp({ statusFilter: 'cancelled,completed,failed' });
 
 const activeTasksApp = createTasksCompactApp({
-  statusFilter: 'uninitialized,blocked,error,queued,standby,underway,delayed,skipped,killed',
+  statusFilter: 'uninitialized,blocked,queued,standby,underway,delayed,skipped,killed',
 });
 
 // const appRegistry: MicroAppManifest[] = [
@@ -131,14 +136,20 @@ const activeTasksApp = createTasksCompactApp({
 // ];
 
 const overviewWorkspace: InitialWindow[] = [
-  { layout: { x: 0, y: 0, w: 6, h: 2 }, microApp: robotsApp, hideToolbar: false },
-  { layout: { x: 7, y: 0, w: 6, h: 2 }, microApp: activeTasksApp, hideToolbar: false },
-  { layout: { x: 0, y: 0, w: 12, h: 5 }, microApp: mapL1App, hideToolbar: true },
+  { layout: { x: 0, y: 0, w: 6, h: 1.4 }, microApp: robotsApp, hideToolbar: true },
+  { layout: { x: 7, y: 0, w: 6, h: 1.4 }, microApp: activeTasksApp, hideToolbar: true },
+  // { layout: { x: 0, y: 0, w: 12, h: 2.4 }, microApp: mapL1App, hideToolbar: true },
+  // { layout: { x: 0, y: 0, w: 12, h: 2 }, microApp: liftsApp },
+];
+
+const taskMapWorkspace: InitialWindow[] = [
+  { layout: { x: 0, y: 0, w: 12, h: 1.5 }, microApp: activeTasksApp, hideToolbar: true },
+  { layout: { x: 0, y: 0, w: 12, h: 2.0 }, microApp: mapL1App, hideToolbar: true },
   // { layout: { x: 0, y: 0, w: 12, h: 2 }, microApp: liftsApp },
 ];
 
 const mapFullscreenWorkspace: InitialWindow[] = [
-  { layout: { x: 0, y: 0, w: 12, h: 6 }, microApp: mapL1App, hideToolbar: true },
+  { layout: { x: 0, y: 0, w: 12, h: 4 }, microApp: mapL1App, hideToolbar: true },
 ];
 
 const mapMultiFloorWorkspace: InitialWindow[] = [
@@ -160,13 +171,21 @@ const multipurposeWorkspace: InitialWindow[] = [
   { layout: { x: 8, y: 0, w: 6, h: 4 }, microApp: robotMutexGroupsApp, hideToolbar: false },
 ];
 
+function openMB1AMES() {
+  window.location.href = 'rmf-mes-mb1a://launch';
+}
+
+function openLpierMES() {
+  window.location.href = 'rmf-mes-lpier://launch';
+}
+
 export default function App() {
   return (
     <RmfDashboard
       apiServerUrl="http://localhost:8000"
       trajectoryServerUrl="http://localhost:8006"
-      // apiServerUrl="http://10.10.10.2:8000"
-      // trajectoryServerUrl="http://10.10.10.2:8006"
+      // apiServerUrl="http://10.160.55.13:8000"
+      // trajectoryServerUrl="http://10.160.55.13:8006"
 
       hideNewTaskButton={false}
       authenticator={new StubAuthenticator()}
@@ -179,54 +198,84 @@ export default function App() {
       }}
       tabs={[
         {
-          // MB1A group — only these tabs appear in the AppBar when on an /mb1a* route
           name: 'MB1A Overview',
           route: 'mb1a-overview',
           tabGroup: 'mb1a',
-          tabActions: (
-            <QuickDispatchButton
-              label="Transfer to LPier"
-              taskRequest={{
-                category: 'patrol',
-                description: { places: ['patrol_D2'] },
-                unix_millis_earliest_start_time: 0,
-              }}
-              // robotTarget={{ fleet: 'tinyRobot', robot: 'tinyRobot1' }}
-            />
+          element: (
+            <>
+            <Box sx={{ position: 'relative', height: '90vh', width: '100%' }}>
+              <Workspace initialWindows={overviewWorkspace} />
+              <QuickDispatchButton
+                confirm
+                label="Transfer to LPier"
+                sx={{ position: 'relative', width: '100%', height: '61%', fontSize: 'clamp(32px,6vw, 96px)' }}
+                taskRequest={{
+                  category: 'patrol',
+                  description: { places: ['MB1A-load', 'Lpier-Unload'] },
+                  labels: ['task_definition_id=patrol', 'destination=Lpier-Unload'],
+                  unix_millis_earliest_start_time: 0,
+                  unix_millis_request_time: Date.now(),
+                }}
+              />
+            </Box>
+            <Tooltip title="Open MES" placement="left">
+              <Fab
+                color="primary"
+                onClick={openMB1AMES}
+                sx={{ position: 'fixed', bottom: 24, right: 24, zIndex: 1300, bgcolor: 'warning.main' }}
+              >
+                MES
+              </Fab>
+            </Tooltip>
+            </>
+            
           ),
-          element: <Workspace initialWindows={overviewWorkspace} />,
+        },
+
+        {
+          name: 'Task Map',
+          route: 'task-map',
+          tabGroup: 'taskMap',
+          element: <Workspace initialWindows={taskMapWorkspace} />
         },
 
         {
           name: 'Maps',
           route: 'mb1a-maps',
           tabGroup: 'mb1a',
-          tabActions: (
-            <QuickDispatchButton
-              label="Transfer to LPier"
-              taskRequest={{
-                category: 'patrol',
-                description: { places: ['lounge', 'pantry'] },
-                unix_millis_earliest_start_time: 0,
-              }}
-            />
-          ),
-          element: <Workspace initialWindows={mapMultiFloorWorkspace} />,
+          element: <Workspace initialWindows={mapFullscreenWorkspace} />,
         },
 
         {
-          name: 'Multipurpose',
-          route: 'mb1a-multipurpose',
-          tabGroup: 'mb1a',
+          name: 'Admin',
+          route: 'admin',
+          tabGroup: 'admin',
           tabActions: (
+            <>
             <QuickDispatchButton
+              confirm
               label="Transfer to LPier"
               taskRequest={{
                 category: 'patrol',
-                description: { places: ['lounge', 'pantry'] },
+                description: { places: ['MB1A-load', 'Lpier-Unload'] },
+                labels: ['task_definition_id=patrol', 'destination=Lpier-Unload'],
                 unix_millis_earliest_start_time: 0,
+                unix_millis_request_time: Date.now(),
               }}
             />
+
+            <QuickDispatchButton
+              confirm
+              label="Transfer to MB1A"
+              taskRequest={{
+                category: 'patrol',
+                description: { places: ['Lpier-Load', 'MB1A-unload'] },
+                labels: ['task_definition_id=patrol', 'destination=MB1A-unload'],
+                unix_millis_earliest_start_time: 0,
+                unix_millis_request_time: Date.now(),
+              }}
+            />
+            </>
           ),
           element: <Workspace initialWindows={multipurposeWorkspace} />,
         },
@@ -236,51 +285,42 @@ export default function App() {
           name: 'LPier Overview',
           route: 'lpier-overview',
           tabGroup: 'lpier',
-          tabActions: (
-            <QuickDispatchButton
-              label="Transfer to MB1A"
-              taskRequest={{
-                category: 'patrol',
-                description: { places: ['pantry', 'lounge'] },
-                unix_millis_earliest_start_time: 0,
-              }}
-            />
+          element: (
+            <>
+            <Box sx={{ position: 'relative', height: '90vh', width: '100%' }}>
+              <Workspace initialWindows={overviewWorkspace} />
+              <QuickDispatchButton
+                confirm
+                label="Transfer to MB1A"
+                sx={{ position: 'relative', width: '100%', height: '61%', fontSize: 'clamp(32px,6vw, 96px)' }}
+                taskRequest={{
+                  category: 'patrol',
+                  description: { places: ['Lpier-Load', 'MB1A-unload'] },
+                  labels: ['task_definition_id=patrol', 'destination=MB1A-unload'],
+                  unix_millis_earliest_start_time: 0,
+                  unix_millis_request_time: Date.now(),
+                }}
+              />
+            </Box>
+            <Tooltip title="Open MES" placement="left">
+              <Fab
+                color="primary"
+                onClick={openLpierMES}
+                sx={{ position: 'fixed', bottom: 24, right: 24, zIndex: 1300, bgcolor: 'warning.main' }}
+              >
+                MES
+              </Fab>
+            </Tooltip>
+            </>
+
           ),
-          element: <Workspace initialWindows={overviewWorkspace} />,
         },
 
         {
           name: 'Maps',
           route: 'lpier-maps',
           tabGroup: 'lpier',
-          tabActions: (
-            <QuickDispatchButton
-              label="Transfer to MB1A"
-              taskRequest={{
-                category: 'patrol',
-                description: { places: ['pantry', 'lounge'] },
-                unix_millis_earliest_start_time: 0,
-              }}
-            />
-          ),
-          element: <Workspace initialWindows={mapMultiFloorWorkspace} />,
-        },
-
-        {
-          name: 'Multipurpose',
-          route: 'lpier-multipurpose',
-          tabGroup: 'lpier',
-          tabActions: (
-            <QuickDispatchButton
-              label="Transfer to MB1A"
-              taskRequest={{
-                category: 'patrol',
-                description: { places: ['pantry', 'lounge'] },
-                unix_millis_earliest_start_time: 0,
-              }}
-            />
-          ),
-          element: <Workspace initialWindows={multipurposeWorkspace} />,
+          element: <Workspace initialWindows={mapFullscreenWorkspace} />,
         },
       ]}
     />

@@ -1,4 +1,4 @@
-import { Button, ButtonProps } from '@mui/material';
+import { Button, ButtonProps, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
 import { TaskRequest } from 'api-client';
 import React from 'react';
 
@@ -36,6 +36,18 @@ export interface QuickDispatchButtonProps {
   robotTarget?: { fleet: string; robot: string };
 
   /**
+   * When true, shows a confirmation dialog before dispatching.
+   * Defaults to false (dispatch immediately on click).
+   */
+  confirm?: boolean;
+
+  /**
+   * Custom message shown inside the confirmation dialog.
+   * Defaults to `Are you sure you want to dispatch "${label}"?`
+   */
+  confirmMessage?: string;
+
+  /**
    * MUI Button color. Defaults to 'secondary'.
    */
   color?: ButtonProps['color'];
@@ -44,6 +56,12 @@ export interface QuickDispatchButtonProps {
    * MUI Button variant. Defaults to 'contained'.
    */
   variant?: ButtonProps['variant'];
+
+  /**
+   * MUI Button sx.
+   */
+  sx?: ButtonProps['sx'];
+
 }
 
 /**
@@ -66,14 +84,18 @@ export function QuickDispatchButton({
   label,
   taskRequest,
   robotTarget,
+  confirm = false,
+  confirmMessage,
   color = 'secondary',
   variant = 'contained',
+  sx,
 }: QuickDispatchButtonProps) {
   const rmfApi = useRmfApi();
   const { showAlert } = useAppController();
   const [dispatching, setDispatching] = React.useState(false);
+  const [confirmOpen, setConfirmOpen] = React.useState(false);
 
-  const handleClick = async () => {
+  const doDispatch = async () => {
     setDispatching(true);
     try {
       await dispatchTask(rmfApi, taskRequest, robotTarget ?? null);
@@ -86,9 +108,46 @@ export function QuickDispatchButton({
     }
   };
 
+  const handleClick = () => {
+    if (confirm) {
+      setConfirmOpen(true);
+    } else {
+      doDispatch();
+    }
+  };
+
   return (
-    <Button color={color} variant={variant} disabled={dispatching} onClick={handleClick}>
-      {dispatching ? 'Dispatching...' : label}
-    </Button>
+    <>
+      <Button color={color} variant={variant} disabled={dispatching} sx={sx} onClick={handleClick}>
+        {dispatching ? 'Dispatching...' : label}
+      </Button>
+
+      {confirm && (
+        <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
+          <DialogTitle>Confirm Dispatch</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              {confirmMessage ?? `Are you sure you want to dispatch "${label}"?`}
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setConfirmOpen(false)} disabled={dispatching}>
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              color={color}
+              disabled={dispatching}
+              onClick={async () => {
+                setConfirmOpen(false);
+                await doDispatch();
+              }}
+            >
+              {dispatching ? 'Dispatching...' : 'Confirm'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+      )}
+    </>
   );
 }

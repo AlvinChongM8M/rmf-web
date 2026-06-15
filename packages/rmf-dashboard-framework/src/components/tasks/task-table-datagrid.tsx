@@ -172,62 +172,62 @@ export function TaskDataGridTable({
   );
 
   const columns: GridColumns<TaskData> = [
-    {
-      field: 'unix_millis_request_time',
-      headerName: 'Date',
-      width: 150,
-      editable: false,
-      renderCell: (cellValues) => {
-        if (!cellValues.row.state.booking.unix_millis_request_time) {
-          return 'n/a';
-        }
-        const date = new Date(cellValues.row.state.booking.unix_millis_request_time);
-        const day = date.toLocaleDateString(undefined, { day: 'numeric' });
-        const month = date.toLocaleDateString(undefined, { month: 'short' });
-        const year = date.toLocaleDateString(undefined, { year: 'numeric' });
-        return `${day} ${month} ${year}`;
-      },
-      flex: 1,
-      filterOperators: getMinimalDateOperators,
-      filterable: true,
-    },
-    {
-      field: 'requester',
-      headerName: 'Requester',
-      width: 150,
-      editable: false,
-      renderCell: (cellValues) => {
-        let prioritized = false;
-        if (cellValues.row.state.booking.priority) {
-          prioritized = parseTaskPriority(cellValues.row.state.booking.priority);
-        }
+    // {
+    //   field: 'unix_millis_request_time',
+    //   headerName: 'Date',
+    //   width: 150,
+    //   editable: false,
+    //   renderCell: (cellValues) => {
+    //     if (!cellValues.row.state.booking.unix_millis_request_time) {
+    //       return 'n/a';
+    //     }
+    //     const date = new Date(cellValues.row.state.booking.unix_millis_request_time);
+    //     const day = date.toLocaleDateString(undefined, { day: 'numeric' });
+    //     const month = date.toLocaleDateString(undefined, { month: 'short' });
+    //     const year = date.toLocaleDateString(undefined, { year: 'numeric' });
+    //     return `${day} ${month} ${year}`;
+    //   },
+    //   flex: 1,
+    //   filterOperators: getMinimalDateOperators,
+    //   filterable: true,
+    // },
+    // {
+    //   field: 'requester',
+    //   headerName: 'Requester',
+    //   width: 150,
+    //   editable: false,
+    //   renderCell: (cellValues) => {
+    //     let prioritized = false;
+    //     if (cellValues.row.state.booking.priority) {
+    //       prioritized = parseTaskPriority(cellValues.row.state.booking.priority);
+    //     }
 
-        let scheduled = false;
-        if (cellValues.row.requestLabel && 'scheduled' in cellValues.row.requestLabel) {
-          scheduled = cellValues.row.requestLabel.scheduled === 'true';
-        }
+    //     let scheduled = false;
+    //     if (cellValues.row.requestLabel && 'scheduled' in cellValues.row.requestLabel) {
+    //       scheduled = cellValues.row.requestLabel.scheduled === 'true';
+    //     }
 
-        return TaskRequester(cellValues.row.state.booking.requester, scheduled, prioritized);
-      },
-      flex: 1,
-      filterOperators: getMinimalStringFilterOperators,
-      filterable: true,
-    },
-    {
-      field: 'label=pickup',
-      headerName: 'Pickup',
-      width: 150,
-      editable: false,
-      valueGetter: (params) => {
-        if (params.row.requestLabel && params.row.requestLabel.pickup) {
-          return params.row.requestLabel.pickup;
-        }
-        return 'n/a';
-      },
-      flex: 1,
-      filterOperators: getMinimalStringFilterOperators,
-      filterable: true,
-    },
+    //     return TaskRequester(cellValues.row.state.booking.requester, scheduled, prioritized);
+    //   },
+    //   flex: 1,
+    //   filterOperators: getMinimalStringFilterOperators,
+    //   filterable: true,
+    // },
+    // {
+    //   field: 'label=pickup',
+    //   headerName: 'Pickup',
+    //   width: 150,
+    //   editable: false,
+    //   valueGetter: (params) => {
+    //     if (params.row.requestLabel && params.row.requestLabel.pickup) {
+    //       return params.row.requestLabel.pickup;
+    //     }
+    //     return 'n/a';
+    //   },
+    //   flex: 1,
+    //   filterOperators: getMinimalStringFilterOperators,
+    //   filterable: true,
+    // },
     {
       field: 'label=destination',
       headerName: 'Destination',
