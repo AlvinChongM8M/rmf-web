@@ -1,0 +1,69 @@
+/* =========================================================
+   M8M BASE STYLES
+   Global reset + CSS custom properties for theming.
+   Override these variables in a project-specific CSS file
+   to adapt the M8M framework to any project.
+   ========================================================= */
+
+:root {
+  /* Background palette */
+  --m8m-bg:             #000000;
+  --m8m-header-bg:      #020617;
+  --m8m-content-bg:     #050816;
+  --m8m-panel-bg:       #0f172a;
+  --m8m-panel-bg-alt:   #1e293b;
+
+  /* Borders */
+  --m8m-border:         #1f2937;
+  --m8m-border-alt:     #334155;
+
+  /* Text */
+  --m8m-text:           #e5e7eb;
+  --m8m-text-muted:     #9ca3af;
+  --m8m-text-secondary: #cbd5f5;
+
+  /* Primary accent (nav buttons, borders) */
+  --m8m-primary:        #38bdf8;
+  --m8m-primary-hover:  #0ea5e9;
+
+  /* Nav button active state */
+  --m8m-nav-active-bg:  #084d6d;
+
+  /* Status colours */
+  --m8m-success:        #22c55e;
+  --m8m-success-bg:     #064e3b;
+  --m8m-success-text:   #bbf7d0;
+  --m8m-danger:         #fecaca;
+  --m8m-danger-bg:      #7f1d1d;
+  --m8m-danger-text:    #fecaca;
+
+  /* Logout button */
+  --m8m-logout-bg:      #000000;
+
+  /* Layout heights */
+  --m8m-header-height:    10vh;
+  --m8m-alarmbar-height:  20vh;
+
+  /* Typography */
+  --m8m-font: 'Segoe UI', Arial, sans-serif;
+}
+
+/* ---- Global reset ---- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  font-family: var(--m8m-font);
+  background: var(--m8m-bg);
+  color: var(--m8m-text);
+}

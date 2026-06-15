@@ -1,0 +1,289 @@
+/* =========================================================
+   ATAS SYSTEM OVERVIEW PAGE  —  body content styles
+   This file is ATAS-project-specific.
+   For a new project, duplicate + customise.
+   ========================================================= */
+
+/* ---- Page shell (fills the <main> flex child) ---- */
+.atas-sysov {
+  height: 100%;
+  width: 100%;
+  background: var(--m8m-content-bg, #050816);
+  padding: 8px 16px;
+  display: flex;
+  gap: 12px;
+  overflow: hidden;
+}
+
+/* =====================================================
+   LEFT  —  Map area  (80 % width)
+   ===================================================== */
+
+.atas-sysov__map-area {
+  flex: 0 0 80%;
+  height: 100%;
+  display: flex;
+}
+
+.atas-sysov__map-container {
+  background: #020617;
+  border-radius: 8px;
+  border: 1px solid var(--m8m-border, #1f2937);
+  width: 100%;
+  height: 100%;
+  display: flex;
+  overflow: hidden;
+  justify-content: center;
+  align-items: center;
+}
+
+.atas-sysov__map-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.atas-sysov__map-placeholder {
+  color: var(--m8m-text-muted, #9ca3af);
+  font-size: 1.6vh;
+}
+
+/* =====================================================
+   RIGHT  —  Side panels  (remaining width)
+   ===================================================== */
+
+.atas-sysov__panels {
+  flex: 1 1 auto;
+  height: 100%;
+  background: #020617;
+  border-radius: 8px;
+  border: 1px solid var(--m8m-border, #1f2937);
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  gap: 8px;
+  overflow: hidden;
+}
+
+/* ---- Panel base ---- */
+.atas-panel {
+  background: var(--m8m-panel-bg, #0f172a);
+  border: 1px solid var(--m8m-border, #1f2937);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
+.atas-panel__title {
+  font-size: 1.7vh;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--m8m-text, #e5e7eb);
+}
+
+/* =====================================================
+   SYSTEM STATUS PANEL
+   ===================================================== */
+
+.atas-panel--status {
+  flex: 0 0 auto;
+}
+
+.atas-status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1.5vh;
+  margin-bottom: 4px;
+}
+
+.atas-state-pill {
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 1.3vh;
+  text-transform: uppercase;
+}
+
+.atas-state-pill--running {
+  background: var(--m8m-success-bg, #064e3b);
+  color: var(--m8m-success-text, #bbf7d0);
+}
+
+.atas-state-pill--stopped {
+  background: var(--m8m-danger-bg, #7f1d1d);
+  color: var(--m8m-danger-text, #fecaca);
+}
+
+/* =====================================================
+   SYSTEM PERFORMANCE PANEL
+   ===================================================== */
+
+.atas-panel--performance {
+  flex: 0 0 auto;
+  overflow-y: auto;
+}
+
+.atas-perf-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1.5vh;
+  margin-bottom: 5px;
+}
+
+.atas-perf-value {
+  font-weight: 700;
+  color: var(--m8m-success, #22c55e);
+}
+
+.atas-perf-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 12vh;
+  justify-content: flex-end;
+}
+
+.atas-perf-bar {
+  width: 10vh;
+  height: 1.2vh;
+  background: #111827;
+  border: 1px solid var(--m8m-border, #1f2937);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.atas-perf-bar__fill {
+  height: 100%;
+  background: var(--m8m-success, #22c55e);
+  border-radius: 999px;
+}
+
+.atas-perf-bar-text {
+  font-size: 1.4vh;
+  font-weight: 700;
+  color: var(--m8m-text, #e5e7eb);
+  min-width: 4.5vh;
+  text-align: right;
+}
+
+/* =====================================================
+   AMR BATTERY PANEL  (collapsible)
+   ===================================================== */
+
+.atas-panel--battery {
+  flex: 1 1 auto;
+  overflow: hidden;
+  padding: 0;
+}
+
+.atas-panel__toggle {
+  width: 100%;
+  height: 4.2vh;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  background: var(--m8m-panel-bg, #0f172a);
+  border: none;
+  border-radius: 6px;
+  color: var(--m8m-text, #fff);
+  cursor: pointer;
+}
+
+.atas-panel__toggle:hover {
+  background: var(--m8m-panel-bg-alt, #1e293b);
+}
+
+.atas-panel__toggle-title {
+  font-size: 1.7vh;
+  font-weight: 600;
+}
+
+.atas-panel__chevron {
+  font-size: 1.6vh;
+  color: var(--m8m-text-muted, #9ca3af);
+  transition: transform 150ms ease;
+}
+
+.atas-battery-body {
+  border-top: 1px solid var(--m8m-border, #1f2937);
+  padding: 6px 10px;
+  overflow-y: auto;
+  max-height: calc(100% - 4.2vh);
+}
+
+.atas-battery-body::-webkit-scrollbar {
+  width: 4px;
+}
+.atas-battery-body::-webkit-scrollbar-thumb {
+  background: var(--m8m-border-alt, #334155);
+  border-radius: 2px;
+}
+
+.atas-battery-row {
+  display: grid;
+  grid-template-columns: 6.5vh 1fr 4.5vh;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 1.4vh;
+}
+
+.atas-battery-name {
+  color: var(--m8m-text-secondary, #cbd5f5);
+  font-weight: 600;
+}
+
+.atas-battery-pct {
+  text-align: right;
+  color: var(--m8m-text, #e5e7eb);
+  font-weight: 700;
+}
+
+.atas-battery-bar {
+  height: 1.2vh;
+  background: #111827;
+  border: 1px solid var(--m8m-border, #1f2937);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.atas-battery-bar__fill {
+  height: 100%;
+  background: var(--m8m-success, #22c55e);
+  border-radius: 999px;
+  transition: width 400ms ease;
+}
+
+/* =====================================================
+   CONTROL CENTER PANEL
+   ===================================================== */
+
+.atas-panel--control {
+  flex: 0 0 auto;
+  margin-top: auto;
+}
+
+.atas-control-btn {
+  width: 100%;
+  padding: 6px 0;
+  background: #16a34a;
+  border-radius: 999px;
+  color: #ecfdf5;
+  font-weight: 700;
+  font-size: 1.7vh;
+  border: none;
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.atas-control-btn:hover {
+  background: #15803d;
+}
+
+.atas-control-note {
+  margin-top: 5px;
+  font-size: 1.2vh;
+  color: var(--m8m-text-muted, #9ca3af);
+}

@@ -1,0 +1,94 @@
+/* =========================================================
+   M8M ALARM BAR  —  Footer component styles
+   Uses CSS variables from m8m-base.css for theming.
+   ========================================================= */
+
+.m8m-alarmbar {
+  height: var(--m8m-alarmbar-height);
+  width: 100%;
+  background: var(--m8m-header-bg);
+  padding: 0 16px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.m8m-alarmbar__wrapper {
+  height: 100%;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.m8m-alarmbar__wrapper::-webkit-scrollbar {
+  width: 4px;
+}
+.m8m-alarmbar__wrapper::-webkit-scrollbar-thumb {
+  background: var(--m8m-border-alt);
+  border-radius: 2px;
+}
+
+/* ---- Table ---- */
+.m8m-alarmbar__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 1.4vh;
+  background: var(--m8m-panel-bg);
+  table-layout: fixed;
+}
+
+.m8m-alarmbar__table thead th {
+  position: sticky;
+  top: 0;
+  background: var(--m8m-panel-bg-alt);
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--m8m-border-alt);
+  text-align: left;
+  color: var(--m8m-text);
+  font-size: 1.4vh;
+  font-weight: 600;
+  z-index: 1;
+}
+
+.m8m-alarmbar__table tbody td {
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--m8m-border-alt);
+  color: #d1d5db;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.m8m-alarmbar__table tbody tr:hover {
+  background: var(--m8m-panel-bg-alt);
+}
+
+/* ---- Empty state ---- */
+.m8m-alarmbar__empty {
+  padding: 8px;
+  color: var(--m8m-text-muted);
+  font-size: 1.4vh;
+  text-align: center;
+}
+
+/* ---- Priority badges ---- */
+.m8m-alarm-priority {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 1.2vh;
+  font-weight: 700;
+}
+
+.m8m-alarm-priority--high {
+  background: #7f1d1d;
+  color: #fecaca;
+}
+
+.m8m-alarm-priority--medium {
+  background: #78350f;
+  color: #fde68a;
+}
+
+.m8m-alarm-priority--low {
+  background: #1e3a5f;
+  color: #bae6fd;
+}
