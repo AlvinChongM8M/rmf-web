@@ -16,6 +16,7 @@ from api_server.rmf_io.events import get_alert_events, get_fleet_events, get_tas
 
 router = APIRouter(tags=["_internal"])
 
+ENABLE_TASK_COMPLETION_ALERTS = False   # Set to True to enable task completion alerts
 
 async def process_msg(
     msg: dict[str, Any],
@@ -42,7 +43,10 @@ async def process_msg(
         await task_repo.save_task_state(task_state)
         task_events.task_states.on_next(task_state)
 
-        if task_state.status == mdl.TaskStatus.completed:
+        if (
+            ENABLE_TASK_COMPLETION_ALERTS
+            and task_state.status == mdl.TaskStatus.completed
+            ):
             alert_request = mdl.AlertRequest(
                 id=str(uuid4()),
                 unix_millis_alert_time=round(datetime.now().timestamp() * 1000),

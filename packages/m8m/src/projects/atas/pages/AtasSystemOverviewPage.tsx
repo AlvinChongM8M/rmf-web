@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './AtasSystemOverviewPage.css';
+import { AtasLiveMap, type AtasLiveMapProps } from './AtasLiveMap';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -31,8 +32,11 @@ export interface AtasSystemOverviewPageProps {
   status?: AtasSystemStatus;
   performance?: AtasSystemPerformance;
   batteries?: AtasAmrBattery[];
-  /** Path/URL to the map image. Falls back to a placeholder when the image cannot load. */
-  mapSrc?: string;
+  /**
+   * RMF API config — when provided the live RMF map is rendered.
+   * When omitted a "Map not available" placeholder is shown.
+   */
+  rmfMapConfig?: AtasLiveMapProps;
   onStartFms?: () => void;
 }
 
@@ -78,11 +82,10 @@ export function AtasSystemOverviewPage({
   status = DEFAULT_STATUS,
   performance = DEFAULT_PERFORMANCE,
   batteries = DEFAULT_BATTERIES,
-  mapSrc = '/assets/img/map.jpeg',
+  rmfMapConfig,
   onStartFms,
 }: AtasSystemOverviewPageProps) {
   const [batteryExpanded, setBatteryExpanded] = useState(true);
-  const [mapError, setMapError] = useState(false);
 
   return (
     <div className="atas-sysov">
@@ -90,15 +93,10 @@ export function AtasSystemOverviewPage({
       {/* ── LEFT: Map area ── */}
       <div className="atas-sysov__map-area">
         <div className="atas-sysov__map-container">
-          {mapError ? (
-            <span className="atas-sysov__map-placeholder">Map not available</span>
+          {rmfMapConfig ? (
+            <AtasLiveMap {...rmfMapConfig} />
           ) : (
-            <img
-              src={mapSrc}
-              className="atas-sysov__map-img"
-              alt="Live site map"
-              onError={() => setMapError(true)}
-            />
+            <span className="atas-sysov__map-placeholder">Map not available</span>
           )}
         </div>
       </div>

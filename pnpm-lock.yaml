@@ -126,22 +126,64 @@ importers:
 
   packages/m8m:
     dependencies:
+      '@emotion/react':
+        specifier: ^11.13.0
+        version: 11.13.0(@types/react@18.3.3)(react@18.3.1)
+      '@emotion/styled':
+        specifier: ^11.13.0
+        version: 11.13.0(@emotion/react@11.13.0(@types/react@18.3.3)(react@18.3.1))(@types/react@18.3.3)(react@18.3.1)
+      '@mui/material':
+        specifier: ^5.8.3
+        version: 5.16.1(@emotion/react@11.13.0(@types/react@18.3.3)(react@18.3.1))(@emotion/styled@11.13.0(@emotion/react@11.13.0(@types/react@18.3.3)(react@18.3.1))(@types/react@18.3.3)(react@18.3.1))(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@react-three/drei':
+        specifier: ^9.103.0
+        version: 9.108.3(@react-three/fiber@8.16.8(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(three@0.166.1))(@types/react@18.3.3)(@types/three@0.166.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(three@0.166.1)
+      '@react-three/fiber':
+        specifier: ^8.16.1
+        version: 8.16.8(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(three@0.166.1)
+      api-client:
+        specifier: workspace:*
+        version: link:../api-client
+      debug:
+        specifier: ^4.2.0
+        version: 4.4.0
       react:
         specifier: ^18.2.0
         version: 18.3.1
       react-dom:
         specifier: ^18.2.0
         version: 18.3.1(react@18.3.1)
+      react-error-boundary:
+        specifier: ^4.0.13
+        version: 4.0.13(react@18.3.1)
       react-router-dom:
         specifier: ^6.14.1
         version: 6.24.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      rmf-dashboard-framework:
+        specifier: workspace:*
+        version: link:../rmf-dashboard-framework
+      rmf-models:
+        specifier: workspace:*
+        version: link:../rmf-models/dist
+      rxjs:
+        specifier: ^7.5.5
+        version: 7.8.1
+      three:
+        specifier: ^0.166.1
+        version: 0.166.1
     devDependencies:
+      '@types/debug':
+        specifier: ^4.1.5
+        version: 4.1.12
       '@types/react':
         specifier: ^18.2.14
         version: 18.3.3
       '@types/react-dom':
         specifier: ^18.2.6
         version: 18.3.0
+      '@types/three':
+        specifier: ^0.166.0
+        version: 0.166.0
       '@vitejs/plugin-react-swc':
         specifier: ^3.7.0
         version: 3.7.0(vite@5.3.5(@types/node@22.2.0))
@@ -6184,7 +6226,7 @@ snapshots:
       '@babel/helper-split-export-declaration': 7.24.7
       '@babel/parser': 7.24.8
       '@babel/types': 7.24.8
-      debug: 4.3.6
+      debug: 4.4.0
       globals: 11.12.0
     transitivePeerDependencies:
       - supports-color
@@ -8701,7 +8743,7 @@ snapshots:
 
   cross-env@7.0.3:
     dependencies:
-      cross-spawn: 7.0.3
+      cross-spawn: 7.0.6
 
   cross-spawn@4.0.2:
     dependencies:
@@ -9358,7 +9400,7 @@ snapshots:
 
   extract-zip@2.0.1:
     dependencies:
-      debug: 4.3.1
+      debug: 4.4.0
       get-stream: 5.2.0
       yauzl: 2.10.0
     optionalDependencies:
@@ -9482,7 +9524,7 @@ snapshots:
 
   foreground-child@3.2.1:
     dependencies:
-      cross-spawn: 7.0.3
+      cross-spawn: 7.0.6
       signal-exit: 4.1.0
 
   form-data@4.0.0:
@@ -9752,7 +9794,7 @@ snapshots:
   https-proxy-agent@5.0.0:
     dependencies:
       agent-base: 6.0.2
-      debug: 4.3.1
+      debug: 4.4.0
     transitivePeerDependencies:
       - supports-color
 
@@ -9766,7 +9808,7 @@ snapshots:
   https-proxy-agent@7.0.4:
     dependencies:
       agent-base: 7.1.1
-      debug: 4.3.6
+      debug: 4.4.0
     transitivePeerDependencies:
       - supports-color
 

@@ -213,21 +213,21 @@ export function TaskDataGridTable({
     //   filterOperators: getMinimalStringFilterOperators,
     //   filterable: true,
     // },
-    // {
-    //   field: 'label=pickup',
-    //   headerName: 'Pickup',
-    //   width: 150,
-    //   editable: false,
-    //   valueGetter: (params) => {
-    //     if (params.row.requestLabel && params.row.requestLabel.pickup) {
-    //       return params.row.requestLabel.pickup;
-    //     }
-    //     return 'n/a';
-    //   },
-    //   flex: 1,
-    //   filterOperators: getMinimalStringFilterOperators,
-    //   filterable: true,
-    // },
+    {
+      field: 'label=pickup',
+      headerName: 'Pickup',
+      width: 150,
+      editable: false,
+      valueGetter: (params) => {
+        if (params.row.requestLabel && params.row.requestLabel.pickup) {
+          return params.row.requestLabel.pickup;
+        }
+        return 'n/a';
+      },
+      flex: 1,
+      filterOperators: getMinimalStringFilterOperators,
+      filterable: true,
+    },
     {
       field: 'label=destination',
       headerName: 'Destination',
