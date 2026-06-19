@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './AtasSystemOverviewPage.css';
+import '../styles/AtasSystemOverviewPage.css';
 import { AtasLiveMap, type AtasLiveMapProps } from './AtasLiveMap';
 
 // ---------------------------------------------------------------------------

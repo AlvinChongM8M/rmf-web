@@ -1,0 +1,168 @@
+.atas-task-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0.1rem;
+  gap: 1rem;
+  overflow: auto;
+}
+
+.atas-task-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 0.1rem;
+  border-bottom: 1px solid var(--m8m-border);
+}
+
+.atas-task-header h2 {
+  margin: 0;
+  color: var(--m8m-text);
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.atas-task-count {
+  margin: 0;
+  color: var(--m8m-text-muted);
+  font-size: 0.95rem;
+}
+
+.atas-task-table-container {
+  flex: 1;
+  overflow: auto;
+  border: 1px solid var(--m8m-border);
+  border-radius: 4px;
+  background-color: var(--m8m-panel-bg);
+}
+
+.atas-task-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--m8m-text-muted);
+  font-size: 1rem;
+}
+
+.atas-task-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.atas-task-table thead {
+  position: sticky;
+  top: 0;
+  background-color: var(--m8m-panel-bg-alt);
+  border-bottom: 2px solid var(--m8m-border);
+  z-index: 10;
+}
+
+.atas-task-table th {
+  padding: 0.1rem;
+  text-align: left;
+  color: var(--m8m-text);
+  font-weight: 600;
+  white-space: nowrap;
+  border-right: 1px solid var(--m8m-border-alt);
+  user-select: none;
+}
+
+.atas-task-table th:last-child {
+  border-right: none;
+}
+
+.atas-task-table tbody tr {
+  border-bottom: 1px solid var(--m8m-border-alt);
+  transition: background-color 0.2s;
+}
+
+.atas-task-table tbody tr:hover {
+  background-color: rgba(56, 189, 248, 0.05);
+}
+
+.atas-task-table td {
+  padding: 0.1rem;
+  color: var(--m8m-text);
+  border-right: 1px solid var(--m8m-border-alt);
+  word-break: break-word;
+}
+
+.atas-task-table td:last-child {
+  border-right: none;
+}
+
+.atas-task-id {
+  font-weight: 600;
+  color: var(--m8m-primary);
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.85rem;
+}
+
+.atas-task-amr {
+  font-weight: 500;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.85rem;
+}
+
+.atas-task-time {
+  font-size: 0.85rem;
+  color: var(--m8m-text-secondary);
+  white-space: nowrap;
+}
+
+.atas-task-duration {
+  text-align: right;
+  font-weight: 500;
+}
+
+.atas-task-status {
+  display: inline-block;
+  padding: 0.35rem 0.65rem;
+  border-radius: 3px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.atas-task-status--underway {
+  background-color: #22c55e;
+  color: white;
+}
+
+.atas-task-status--completed {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.atas-task-status--canceled {
+  background-color: #6b7280;
+  color: white;
+}
+
+.atas-task-status--failed {
+  background-color: #ef4444;
+  color: white;
+}
+
+.atas-task-status--queued {
+  background-color: #f59e0b;
+  color: white;
+}
+
+.atas-task-status--unknown {
+  background-color: #8b5cf6;
+  color: white;
+}
+
+.atas-task-empty {
+  text-align: center;
+  color: var(--m8m-text-muted);
+  padding: 2rem !important;
+}
+
+.atas-task-row {
+  cursor: pointer;
+}

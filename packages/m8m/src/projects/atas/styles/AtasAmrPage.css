@@ -1,0 +1,150 @@
+.atas-amr-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0.1rem;
+  gap: 1rem;
+  overflow: auto;
+}
+
+.atas-amr-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 0.1rem;
+  border-bottom: 1px solid var(--m8m-border);
+}
+
+.atas-amr-header h2 {
+  margin: 0;
+  color: var(--m8m-text);
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.atas-amr-count {
+  margin: 0;
+  color: var(--m8m-text-muted);
+  font-size: 0.95rem;
+}
+
+.atas-amr-table-container {
+  flex: 1;
+  overflow: auto;
+  border: 1px solid var(--m8m-border);
+  border-radius: 4px;
+  background-color: var(--m8m-panel-bg);
+}
+
+.atas-amr-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.atas-amr-table thead {
+  position: sticky;
+  top: 0;
+  background-color: var(--m8m-panel-bg-alt);
+  border-bottom: 2px solid var(--m8m-border);
+  z-index: 10;
+}
+
+.atas-amr-table th {
+  padding: 0.1rem;
+  text-align: left;
+  color: var(--m8m-text);
+  font-weight: 600;
+  white-space: nowrap;
+  border-right: 1px solid var(--m8m-border-alt);
+}
+
+.atas-amr-table th:last-child {
+  border-right: none;
+}
+
+.atas-amr-table tbody tr {
+  border-bottom: 1px solid var(--m8m-border-alt);
+  transition: background-color 0.2s;
+}
+
+.atas-amr-table tbody tr:hover {
+  background-color: rgba(56, 189, 248, 0.05);
+}
+
+.atas-amr-table td {
+  padding: 0.1rem;
+  color: var(--m8m-text);
+  border-right: 1px solid var(--m8m-border-alt);
+}
+
+.atas-amr-table td:last-child {
+  border-right: none;
+}
+
+.atas-amr-name {
+  font-weight: 500;
+  color: var(--m8m-primary);
+}
+
+.atas-amr-status {
+  display: inline-block;
+  padding: 0.35rem 0.75rem;
+  border-radius: 4px;
+  background-color: var(--status-color);
+  color: white;
+  font-weight: 500;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+}
+
+.atas-amr-battery {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 120px;
+}
+
+.atas-amr-battery-bar {
+  flex: 1;
+  height: 20px;
+  background-color: var(--m8m-border);
+  border-radius: 3px;
+  position: relative;
+  overflow: hidden;
+  min-width: 60px;
+}
+
+.atas-amr-battery-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: linear-gradient(90deg, #22c55e, #16a34a);
+  width: 100%;
+  transition: width 0.3s ease;
+}
+
+.atas-amr-battery span {
+  min-width: 40px;
+  text-align: right;
+  color: var(--m8m-text-muted);
+  font-size: 0.85rem;
+}
+
+.atas-amr-task {
+  color: var(--m8m-text-secondary);
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.9rem;
+}
+
+.atas-amr-empty {
+  text-align: center;
+  color: var(--m8m-text-muted);
+  padding: 2rem !important;
+}
+
+.atas-amr-row {
+  cursor: pointer;
+}

@@ -24,7 +24,10 @@ import {
   ATAS_TITLE,
   ATAS_TRAJECTORY_SERVER_URL,
 } from './atas-config';
+import { AtasRmfProviders } from './AtasRmfProviders';
+import { AtasAmrPage } from './pages/AtasAmrPage';
 import { AtasSystemOverviewPage } from './pages/AtasSystemOverviewPage';
+import { AtasTaskPage } from './pages/AtasTaskPage';
 
 // ---------------------------------------------------------------------------
 // Layout wrapper — shared by every ATAS screen
@@ -113,9 +116,33 @@ export function AtasApp() {
         />
 
         {/* ── Placeholder routes — replace <ComingSoon> with real pages as built ── */}
-        <Route path="/amr"              element={<AtasPage subtitle="AMR"><ComingSoon name="AMR" /></AtasPage>} />
+        <Route
+          path="/amr"
+          element={
+            <AtasPage subtitle="AMR">
+              <AtasRmfProviders
+                apiServerUrl={ATAS_API_SERVER_URL}
+                trajectoryServerUrl={ATAS_TRAJECTORY_SERVER_URL}
+              >
+                <AtasAmrPage />
+              </AtasRmfProviders>
+            </AtasPage>
+          }
+        />
         <Route path="/tus"              element={<AtasPage subtitle="TUS"><ComingSoon name="TUS" /></AtasPage>} />
-        <Route path="/task"             element={<AtasPage subtitle="Task"><ComingSoon name="Task" /></AtasPage>} />
+        <Route
+          path="/task"
+          element={
+            <AtasPage subtitle="Task">
+              <AtasRmfProviders
+                apiServerUrl={ATAS_API_SERVER_URL}
+                trajectoryServerUrl={ATAS_TRAJECTORY_SERVER_URL}
+              >
+                <AtasTaskPage />
+              </AtasRmfProviders>
+            </AtasPage>
+          }
+        />
         <Route path="/historical-alarm" element={<AtasPage subtitle="Historical Alarm"><ComingSoon name="Historical Alarm" /></AtasPage>} />
         <Route path="/scheduler"        element={<AtasPage subtitle="Scheduler"><ComingSoon name="Scheduler" /></AtasPage>} />
         <Route path="/path-planning"    element={<AtasPage subtitle="Path Planning"><ComingSoon name="Path Planning" /></AtasPage>} />
