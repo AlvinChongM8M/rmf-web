@@ -12,6 +12,47 @@ interface AmrData {
   currentTask?: string;
 }
 
+type AmrSortKey = 'fleet' | 'name' | 'status' | 'battery' | 'location' | 'currentTask';
+
+interface AmrSort {
+  key: AmrSortKey;
+  direction: 'asc' | 'desc';
+}
+
+const amrCollator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+
+function amrSortValue(amr: AmrData, key: AmrSortKey): string | number | null {
+  switch (key) {
+    case 'fleet':
+      return amr.fleet;
+    case 'name':
+      return amr.name;
+    case 'status':
+      return amr.status ?? null;
+    case 'battery':
+      return amr.battery ?? null;
+    case 'location':
+      return amr.location ?? null;
+    case 'currentTask':
+      return amr.currentTask ?? null;
+  }
+}
+
+function compareAmrs(left: AmrData, right: AmrData, sort: AmrSort): number {
+  const leftValue = amrSortValue(left, sort.key);
+  const rightValue = amrSortValue(right, sort.key);
+
+  if (leftValue == null && rightValue == null) return 0;
+  if (leftValue == null) return 1;
+  if (rightValue == null) return -1;
+
+  const comparison =
+    typeof leftValue === 'number' && typeof rightValue === 'number'
+      ? leftValue - rightValue
+      : amrCollator.compare(String(leftValue), String(rightValue));
+  return comparison * (sort.direction === 'asc' ? 1 : -1);
+}
+
 function batteryPercentage(battery?: number): number {
   return battery == null ? 0 : Math.min(100, Math.max(0, battery));
 }
@@ -19,6 +60,7 @@ function batteryPercentage(battery?: number): number {
 export function AtasAmrPage(): JSX.Element {
   const rmfApi = useRmfApi();
   const [amrs, setAmrs] = React.useState<AmrData[]>([]);
+  const [sort, setSort] = React.useState<AmrSort>({ key: 'fleet', direction: 'asc' });
 
   React.useEffect(() => {
     let mounted = true;
@@ -79,6 +121,45 @@ export function AtasAmrPage(): JSX.Element {
     }
   };
 
+  const sortedAmrs = React.useMemo(
+    () =>
+      amrs
+        .map((amr, index) => ({ amr, index }))
+        .sort((left, right) => {
+          const comparison = compareAmrs(left.amr, right.amr, sort);
+          return comparison === 0 ? left.index - right.index : comparison;
+        })
+        .map(({ amr }) => amr),
+    [amrs, sort],
+  );
+
+  const handleSort = (key: AmrSortKey) => {
+    setSort((current) => ({
+      key,
+      direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc',
+    }));
+  };
+
+  const sortHeader = (label: string, key: AmrSortKey) => {
+    const isActive = sort.key === key;
+    const ariaSort = isActive ? (sort.direction === 'asc' ? 'ascending' : 'descending') : 'none';
+    return (
+      <th aria-sort={ariaSort}>
+        <button
+          className="atas-amr-sort-button"
+          type="button"
+          onClick={() => handleSort(key)}
+          title={`Sort by ${label}`}
+        >
+          <span>{label}</span>
+          <span className="atas-amr-sort-indicator" aria-hidden="true">
+            {isActive ? (sort.direction === 'asc' ? '▲' : '▼') : '↕'}
+          </span>
+        </button>
+      </th>
+    );
+  };
+
   return (
     <div className="atas-amr-page">
       {/* <div className="atas-amr-header">
@@ -90,12 +171,12 @@ export function AtasAmrPage(): JSX.Element {
         <table className="atas-amr-table">
           <thead>
             <tr>
-              <th>Fleet</th>
-              <th>AMR Name</th>
-              <th>Status</th>
-              <th>Battery (%)</th>
-              <th>Current Level</th>
-              <th>Current Task</th>
+              {sortHeader('Fleet', 'fleet')}
+              {sortHeader('AMR Name', 'name')}
+              {sortHeader('Status', 'status')}
+              {sortHeader('Battery (%)', 'battery')}
+              {sortHeader('Current Level', 'location')}
+              {sortHeader('Current Task', 'currentTask')}
             </tr>
           </thead>
           <tbody>
@@ -106,8 +187,8 @@ export function AtasAmrPage(): JSX.Element {
                 </td>
               </tr>
             ) : (
-              amrs.map((amr, idx) => (
-                <tr key={`${amr.fleet}-${amr.name}-${idx}`} className="atas-amr-row">
+              sortedAmrs.map((amr) => (
+                <tr key={`${amr.fleet}-${amr.name}`} className="atas-amr-row">
                   <td>{amr.fleet}</td>
                   <td className="atas-amr-name">{amr.name}</td>
                   <td>
