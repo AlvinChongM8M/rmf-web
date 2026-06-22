@@ -9,6 +9,14 @@ type AlarmState =
   | 'recovered_acknowledged'
   | 'lost_track';
 
+const ALARM_STATE_LABELS: Record<AlarmState, string> = {
+  active_unacknowledged: 'ACT UNACK',
+  active_acknowledged: 'ACT ACK',
+  recovered_unacknowledged: 'RCV UNACK',
+  recovered_acknowledged: 'RCV ACK',
+  lost_track: 'LOST TRACK',
+};
+
 interface AlarmEventResponse {
   id: number;
   source: string;
@@ -62,7 +70,7 @@ function toM8mAlarm(event: AlarmEventResponse): M8mAlarm {
     equipmentId: `${event.source}.${event.alarm_code}`,
     description: `${event.alarm_name}`,
     value: String(event.value),
-    state: event.state.replace(/_/g, ' ').toUpperCase(),
+    state: ALARM_STATE_LABELS[event.state],
     acknowledgeable: event.acknowledge_time === null,
   };
 }

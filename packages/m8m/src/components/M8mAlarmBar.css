@@ -136,6 +136,41 @@
   opacity: 0.55;
 }
 
+/* ---- Alarm state effects ---- */
+@keyframes m8m-alarmbar-act-unack-blink {
+  0%,
+  49% {
+    color: #ef4444;
+  }
+  50%,
+  100% {
+    color: #fff;
+  }
+}
+
+.m8m-alarmbar__table tbody .m8m-alarmbar__row--act-unack td,
+.m8m-alarmbar__row--act-unack .m8m-alarm-priority {
+  animation: m8m-alarmbar-act-unack-blink 2s step-end infinite;
+}
+
+.m8m-alarmbar__table tbody .m8m-alarmbar__row--act-ack td,
+.m8m-alarmbar__row--act-ack .m8m-alarm-priority {
+  color: #fff;
+}
+
+.m8m-alarmbar__table tbody .m8m-alarmbar__row--rcv-unack td,
+.m8m-alarmbar__row--rcv-unack .m8m-alarm-priority {
+  color: #4ade80;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .m8m-alarmbar__table tbody .m8m-alarmbar__row--act-unack td,
+  .m8m-alarmbar__row--act-unack .m8m-alarm-priority {
+    animation: none;
+    color: #ef4444;
+  }
+}
+
 /* ---- Empty state ---- */
 .m8m-alarmbar__empty {
   padding: 8px;

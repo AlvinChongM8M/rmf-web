@@ -53,6 +53,19 @@ function priorityClass(priority: string): string {
   }
 }
 
+function alarmStateClass(state: string): string {
+  switch (state.toUpperCase()) {
+    case 'ACT UNACK':
+      return 'm8m-alarmbar__row--act-unack';
+    case 'ACT ACK':
+      return 'm8m-alarmbar__row--act-ack';
+    case 'RCV UNACK':
+      return 'm8m-alarmbar__row--rcv-unack';
+    default:
+      return '';
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -136,6 +149,7 @@ export function M8mAlarmBar({
                   <tr
                     key={alarm.id}
                     className={[
+                      alarmStateClass(alarm.state),
                       alarm.acknowledgeable ? 'm8m-alarmbar__row--acknowledgeable' : '',
                       isAcknowledging ? 'm8m-alarmbar__row--acknowledging' : '',
                     ]
