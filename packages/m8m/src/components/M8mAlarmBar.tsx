@@ -1,3 +1,5 @@
+import { useMemo, useState } from 'react';
+
 import './M8mAlarmBar.css';
 
 // ---------------------------------------------------------------------------
@@ -8,6 +10,8 @@ export interface M8mAlarm {
   /** Unique identifier for React key prop */
   id: string;
   datetime: string;
+  /** Raw timestamp used for reliable datetime sorting. */
+  sortTimestamp?: number;
   /** Severity or priority label supplied by the application. */
   priority: string;
   equipmentId: string;
@@ -36,6 +40,20 @@ export interface M8mAlarmBarProps {
   acknowledgingAlarmIds?: ReadonlySet<string>;
   /** True while an acknowledge-all request is in progress. */
   acknowledgingAll?: boolean;
+}
+
+type AlarmSortKey =
+  | 'datetime'
+  | 'priority'
+  | 'equipmentId'
+  | 'description'
+  | 'value'
+  | 'state';
+type SortDirection = 'asc' | 'desc';
+
+interface AlarmSort {
+  key: AlarmSortKey;
+  direction: SortDirection;
 }
 
 // ---------------------------------------------------------------------------
@@ -68,6 +86,28 @@ function alarmStateClass(state: string): string {
   }
 }
 
+const alarmCollator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+
+function compareAlarms(left: M8mAlarm, right: M8mAlarm, key: AlarmSortKey): number {
+  if (key === 'datetime') {
+    const leftTimestamp = left.sortTimestamp ?? Date.parse(left.datetime);
+    const rightTimestamp = right.sortTimestamp ?? Date.parse(right.datetime);
+    if (Number.isFinite(leftTimestamp) && Number.isFinite(rightTimestamp)) {
+      return leftTimestamp - rightTimestamp;
+    }
+  }
+
+  if (key === 'priority' || key === 'value') {
+    const leftNumber = Number(left[key]);
+    const rightNumber = Number(right[key]);
+    if (Number.isFinite(leftNumber) && Number.isFinite(rightNumber)) {
+      return leftNumber - rightNumber;
+    }
+  }
+
+  return alarmCollator.compare(left[key], right[key]);
+}
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -82,8 +122,50 @@ export function M8mAlarmBar({
   acknowledgingAlarmIds = new Set(),
   acknowledgingAll = false,
 }: M8mAlarmBarProps) {
+  const [sort, setSort] = useState<AlarmSort>({ key: 'datetime', direction: 'desc' });
   const acknowledgeableCount = alarms.filter((alarm) => alarm.acknowledgeable).length;
   const Container = variant === 'page' ? 'section' : 'footer';
+  const sortedAlarms = useMemo(
+    () =>
+      alarms
+        .map((alarm, index) => ({ alarm, index }))
+        .sort((left, right) => {
+          const comparison = compareAlarms(left.alarm, right.alarm, sort.key);
+          return comparison === 0
+            ? left.index - right.index
+            : comparison * (sort.direction === 'asc' ? 1 : -1);
+        })
+        .map(({ alarm }) => alarm),
+    [alarms, sort],
+  );
+
+  const handleSort = (key: AlarmSortKey) => {
+    setSort((current) => ({
+      key,
+      direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc',
+    }));
+  };
+
+  const sortHeader = (label: string, key: AlarmSortKey) => {
+    const isActive = sort.key === key;
+    const ariaSort = isActive ? (sort.direction === 'asc' ? 'ascending' : 'descending') : 'none';
+
+    return (
+      <th aria-sort={ariaSort}>
+        <button
+          className="m8m-alarmbar__sort-button"
+          type="button"
+          onClick={() => handleSort(key)}
+          title={`Sort by ${label}`}
+        >
+          <span>{label}</span>
+          <span className="m8m-alarmbar__sort-indicator" aria-hidden="true">
+            {isActive ? (sort.direction === 'asc' ? '▲' : '▼') : '↕'}
+          </span>
+        </button>
+      </th>
+    );
+  };
 
   const handleDoubleClick = (alarm: M8mAlarm) => {
     if (
@@ -113,12 +195,12 @@ export function M8mAlarmBar({
           </colgroup>
           <thead>
             <tr>
-              <th>Datetime</th>
-              <th>Priority</th>
-              <th>Equipment ID</th>
-              <th>Description</th>
-              <th>Value</th>
-              <th>State</th>
+              {sortHeader('Datetime', 'datetime')}
+              {sortHeader('Priority', 'priority')}
+              {sortHeader('Equipment ID', 'equipmentId')}
+              {sortHeader('Description', 'description')}
+              {sortHeader('Value', 'value')}
+              {sortHeader('State', 'state')}
             </tr>
           </thead>
           <tbody>
@@ -129,7 +211,7 @@ export function M8mAlarmBar({
                 </td>
               </tr>
             ) : (
-              alarms.map((alarm) => {
+              sortedAlarms.map((alarm) => {
                 const isAcknowledging = acknowledgingAlarmIds.has(alarm.id);
                 return (
                   <tr

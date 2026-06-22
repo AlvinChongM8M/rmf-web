@@ -119,6 +119,32 @@
   z-index: 1;
 }
 
+.m8m-alarmbar__sort-button {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.m8m-alarmbar__sort-button:focus-visible {
+  outline: 2px solid var(--m8m-primary);
+  outline-offset: 2px;
+}
+
+.m8m-alarmbar__sort-indicator {
+  color: var(--m8m-text-muted);
+  font-size: 1.1vh;
+}
+
 .m8m-alarmbar__table tbody td {
   padding: 4px 8px;
   border-bottom: 1px solid var(--m8m-border-alt);

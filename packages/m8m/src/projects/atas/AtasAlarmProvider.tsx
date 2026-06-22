@@ -67,6 +67,7 @@ function toM8mAlarm(event: AlarmEventResponse): M8mAlarm {
   return {
     id: String(event.id),
     datetime: formatAlarmDate(event.activation_time),
+    sortTimestamp: Date.parse(event.activation_time),
     priority: String(event.alarm_severity),
     equipmentId: `${event.source}.${event.alarm_code}`,
     description: `${event.alarm_name}`,
