@@ -22,6 +22,11 @@ export const ATAS_CLIENT_LOGO_SRC = '/assets/img/logos/cag_logo.svg';
 
 export const ATAS_API_SERVER_URL = 'http://localhost:8000';
 export const ATAS_TRAJECTORY_SERVER_URL = 'http://localhost:8006';
+export const ATAS_ALARM_SERVER_URL =
+  import.meta.env.VITE_ATAS_ALARM_SERVER_URL ?? 'http://localhost:8080';
+export const ATAS_ALARM_REFRESH_INTERVAL_MS = 5000;
+export const ATAS_USERNAME = 'CAG_Admin';
+export const ATAS_USER_ROLE = 'Administrator';
 
 // ---------------------------------------------------------------------------
 // Navigation

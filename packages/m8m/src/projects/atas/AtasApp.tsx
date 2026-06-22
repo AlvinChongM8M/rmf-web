@@ -17,13 +17,18 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 
 import { M8mLayout } from '../../components/M8mLayout';
 import {
+  ATAS_ALARM_REFRESH_INTERVAL_MS,
+  ATAS_ALARM_SERVER_URL,
   ATAS_API_SERVER_URL,
   ATAS_CLIENT_LOGO_SRC,
   ATAS_LOGO_SRC,
   ATAS_NAV_ITEMS,
   ATAS_TITLE,
   ATAS_TRAJECTORY_SERVER_URL,
+  ATAS_USERNAME,
+  ATAS_USER_ROLE,
 } from './atas-config';
+import { AtasAlarmProvider, useAtasAlarms } from './AtasAlarmProvider';
 import { AtasRmfProviders } from './AtasRmfProviders';
 import { AtasAmrPage } from './pages/AtasAmrPage';
 import { AtasSystemOverviewPage } from './pages/AtasSystemOverviewPage';
@@ -44,16 +49,33 @@ interface AtasPageProps {
 }
 
 function AtasPage({ subtitle, showAlarmBar = true, children }: AtasPageProps) {
+  const {
+    alarms,
+    loading,
+    error,
+    acknowledgeAlarm,
+    acknowledgeAll,
+    acknowledgingAlarmIds,
+    acknowledgingAll,
+  } = useAtasAlarms();
+
   return (
     <M8mLayout
       title={ATAS_TITLE}
       subtitle={subtitle}
       navItems={ATAS_NAV_ITEMS}
-      username="CAG_Admin"
-      userRole="Administrator"
+      username={ATAS_USERNAME}
+      userRole={ATAS_USER_ROLE}
       logoSrc={ATAS_LOGO_SRC}
       clientLogoSrc={ATAS_CLIENT_LOGO_SRC}
       showAlarmBar={showAlarmBar}
+      alarms={alarms}
+      alarmsLoading={loading}
+      alarmsError={error}
+      onAcknowledgeAlarm={acknowledgeAlarm}
+      onAcknowledgeAll={acknowledgeAll}
+      acknowledgingAlarmIds={acknowledgingAlarmIds}
+      acknowledgingAll={acknowledgingAll}
     >
       {children}
     </M8mLayout>
@@ -88,7 +110,12 @@ function ComingSoon({ name }: { name: string }) {
 export function AtasApp() {
   return (
     <BrowserRouter>
-      <Routes>
+      <AtasAlarmProvider
+        serverUrl={ATAS_ALARM_SERVER_URL}
+        username={ATAS_USERNAME}
+        refreshIntervalMs={ATAS_ALARM_REFRESH_INTERVAL_MS}
+      >
+        <Routes>
 
         {/* ── Implemented screens ── */}
         <Route
@@ -153,7 +180,8 @@ export function AtasApp() {
         {/* ── Fallback ── */}
         <Route path="*" element={<Navigate to="/" replace />} />
 
-      </Routes>
+        </Routes>
+      </AtasAlarmProvider>
     </BrowserRouter>
   );
 }

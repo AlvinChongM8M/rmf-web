@@ -14,8 +14,26 @@ export interface M8mLayoutProps extends M8mAppBarProps {
    */
   showAlarmBar?: boolean;
 
-  /** Alarms to display in the alarm-bar footer */
+  /** Unresolved alarms to display in the alarm-bar footer. */
   alarms?: M8mAlarm[];
+
+  /** Alarm-bar loading state. */
+  alarmsLoading?: boolean;
+
+  /** Alarm-bar request error. */
+  alarmsError?: string | null;
+
+  /** Called when an alarm row is double-clicked. */
+  onAcknowledgeAlarm?: (alarm: M8mAlarm) => void;
+
+  /** Called by the alarm bar's Acknowledge All button. */
+  onAcknowledgeAll?: () => void;
+
+  /** Alarm IDs currently being acknowledged. */
+  acknowledgingAlarmIds?: ReadonlySet<string>;
+
+  /** True while all shown alarms are being acknowledged. */
+  acknowledgingAll?: boolean;
 
   /** Page body content */
   children: React.ReactNode;
@@ -41,6 +59,12 @@ export interface M8mLayoutProps extends M8mAppBarProps {
 export function M8mLayout({
   showAlarmBar = true,
   alarms = [],
+  alarmsLoading = false,
+  alarmsError,
+  onAcknowledgeAlarm,
+  onAcknowledgeAll,
+  acknowledgingAlarmIds,
+  acknowledgingAll = false,
   children,
   ...appBarProps
 }: M8mLayoutProps) {
@@ -66,7 +90,17 @@ export function M8mLayout({
         {children}
       </main>
 
-      {showAlarmBar && <M8mAlarmBar alarms={alarms} />}
+      {showAlarmBar && (
+        <M8mAlarmBar
+          alarms={alarms}
+          loading={alarmsLoading}
+          error={alarmsError}
+          onAcknowledgeAlarm={onAcknowledgeAlarm}
+          onAcknowledgeAll={onAcknowledgeAll}
+          acknowledgingAlarmIds={acknowledgingAlarmIds}
+          acknowledgingAll={acknowledgingAll}
+        />
+      )}
     </div>
   );
 }
