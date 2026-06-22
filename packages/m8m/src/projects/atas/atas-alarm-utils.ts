@@ -69,7 +69,7 @@ export function alarmStateLabel(state: AtasAlarmState): string {
 }
 
 export function alarmEquipmentId(event: AtasAlarmEvent): string {
-  return `${event.source}.${event.alarm_code}`;
+  return event.source;
 }
 
 export function formatAlarmDuration(durationMillis: number): string {

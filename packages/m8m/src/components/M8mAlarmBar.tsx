@@ -15,6 +15,7 @@ export interface M8mAlarm {
   /** Severity or priority label supplied by the application. */
   priority: string;
   equipmentId: string;
+  alarmCode: string;
   description: string;
   value: string;
   /** "ACTIVE" | "ACKNOWLEDGED" | "CLEARED" or any custom string */
@@ -46,6 +47,7 @@ type AlarmSortKey =
   | 'datetime'
   | 'priority'
   | 'equipmentId'
+  | 'alarmCode'
   | 'description'
   | 'value'
   | 'state';
@@ -186,11 +188,12 @@ export function M8mAlarmBar({
       <div className="m8m-alarmbar__wrapper">
         <table className="m8m-alarmbar__table">
           <colgroup>
-            <col style={{ width: '15%' }} />
-            <col style={{ width: '7%' }} />
-            <col style={{ width: '16%' }} />
-            <col style={{ width: '40%' }} />
-            <col style={{ width: '7%' }} />
+            <col style={{ width: '14%' }} />
+            <col style={{ width: '6%' }} />
+            <col style={{ width: '12%' }} />
+            <col style={{ width: '14%' }} />
+            <col style={{ width: '33%' }} />
+            <col style={{ width: '6%' }} />
             <col style={{ width: '15%' }} />
           </colgroup>
           <thead>
@@ -198,6 +201,7 @@ export function M8mAlarmBar({
               {sortHeader('Datetime', 'datetime')}
               {sortHeader('Priority', 'priority')}
               {sortHeader('Equipment ID', 'equipmentId')}
+              {sortHeader('Alarm Code', 'alarmCode')}
               {sortHeader('Description', 'description')}
               {sortHeader('Value', 'value')}
               {sortHeader('State', 'state')}
@@ -206,7 +210,7 @@ export function M8mAlarmBar({
           <tbody>
             {alarms.length === 0 ? (
               <tr>
-                <td colSpan={6} className="m8m-alarmbar__empty">
+                <td colSpan={7} className="m8m-alarmbar__empty">
                   {loading ? 'Loading unresolved alarms...' : 'No unresolved alarms'}
                 </td>
               </tr>
@@ -243,6 +247,7 @@ export function M8mAlarmBar({
                       </span>
                     </td>
                     <td>{alarm.equipmentId}</td>
+                    <td>{alarm.alarmCode}</td>
                     <td>{alarm.description}</td>
                     <td>{alarm.value}</td>
                     <td>{isAcknowledging ? 'ACKNOWLEDGING' : alarm.state}</td>

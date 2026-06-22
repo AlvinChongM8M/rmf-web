@@ -37,6 +37,7 @@ function toM8mAlarm(event: AtasAlarmEvent): M8mAlarm {
     sortTimestamp: alarmTimestamp(event.activation_time) ?? undefined,
     priority: String(event.alarm_severity),
     equipmentId: alarmEquipmentId(event),
+    alarmCode: event.alarm_code,
     description: `${event.alarm_name}`,
     value: String(event.value),
     state: alarmStateLabel(event.state),

@@ -18,6 +18,7 @@ type HistoricalAlarmSortKey =
   | 'duration'
   | 'priority'
   | 'equipmentId'
+  | 'alarmCode'
   | 'description'
   | 'value'
   | 'state';
@@ -66,6 +67,8 @@ function rowSortValue(
       return row.event.alarm_severity;
     case 'equipmentId':
       return row.equipmentId;
+    case 'alarmCode':
+      return row.event.alarm_code;
     case 'description':
       return row.event.alarm_name;
     case 'value':
@@ -233,15 +236,16 @@ export function AtasHistoricalAlarmPage({
       <div className="atas-history-table-container">
         <table className="atas-history-table">
           <colgroup>
-            <col style={{ width: '14%' }} />
-            <col style={{ width: '14%' }} />
-            <col style={{ width: '14%' }} />
+            <col style={{ width: '13%' }} />
+            <col style={{ width: '13%' }} />
+            <col style={{ width: '13%' }} />
             <col style={{ width: '10%' }} />
-            <col style={{ width: '6%' }} />
-            <col style={{ width: '14%' }} />
-            <col style={{ width: '18%' }} />
-            <col style={{ width: '4%' }} />
-            <col style={{ width: '6%' }} />
+            <col style={{ width: '5%' }} />
+            <col style={{ width: '11%' }} />
+            <col style={{ width: '11%' }} />
+            <col style={{ width: '16%' }} />
+            <col style={{ width: '3%' }} />
+            <col style={{ width: '5%' }} />
           </colgroup>
           <thead>
             <tr>
@@ -251,6 +255,7 @@ export function AtasHistoricalAlarmPage({
               {sortHeader('Alarm Duration (DDD:HH:MM:SS.sss)', 'duration')}
               {sortHeader('Priority', 'priority')}
               {sortHeader('Equipment ID', 'equipmentId')}
+              {sortHeader('Alarm Code', 'alarmCode')}
               {sortHeader('Description', 'description')}
               {sortHeader('Value', 'value')}
               {sortHeader('State', 'state')}
@@ -259,7 +264,7 @@ export function AtasHistoricalAlarmPage({
           <tbody>
             {events.length === 0 ? (
               <tr>
-                <td colSpan={9} className="atas-history-empty">
+                <td colSpan={10} className="atas-history-empty">
                   {loading ? 'Loading historical alarms...' : 'No historical alarms'}
                 </td>
               </tr>
@@ -280,6 +285,7 @@ export function AtasHistoricalAlarmPage({
                   </td>
                   <td>{row.event.alarm_severity}</td>
                   <td>{row.equipmentId}</td>
+                  <td>{row.event.alarm_code}</td>
                   <td>{row.event.alarm_name}</td>
                   <td>{row.event.value}</td>
                   <td className={`atas-history-state ${stateClass(row.state)}`}>{row.state}</td>
