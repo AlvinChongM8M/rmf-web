@@ -33,6 +33,7 @@ import { AtasAlarmProvider, useAtasAlarms } from './AtasAlarmProvider';
 import { AtasRmfProviders } from './AtasRmfProviders';
 import { AtasActiveAlarmPage } from './pages/AtasActiveAlarmPage';
 import { AtasAmrPage } from './pages/AtasAmrPage';
+import { AtasHistoricalAlarmPage } from './pages/AtasHistoricalAlarmPage';
 import { AtasSystemOverviewPage } from './pages/AtasSystemOverviewPage';
 import { AtasTaskPage } from './pages/AtasTaskPage';
 
@@ -173,7 +174,18 @@ export function AtasApp() {
             </AtasPage>
           }
         />
-        <Route path="/historical-alarm" element={<AtasPage subtitle="Historical Alarm"><ComingSoon name="Historical Alarm" /></AtasPage>} />
+        <Route
+          path="/historical-alarm"
+          element={
+            <AtasPage subtitle="Historical Alarm">
+              <AtasHistoricalAlarmPage
+                serverUrl={ATAS_ALARM_SERVER_URL}
+                refreshIntervalMs={ATAS_ALARM_REFRESH_INTERVAL_MS}
+                recordLimit={ATAS_ALARM_RECORD_LIMIT}
+              />
+            </AtasPage>
+          }
+        />
         <Route path="/scheduler"        element={<AtasPage subtitle="Scheduler"><ComingSoon name="Scheduler" /></AtasPage>} />
         <Route path="/path-planning"    element={<AtasPage subtitle="Path Planning"><ComingSoon name="Path Planning" /></AtasPage>} />
         <Route path="/legend"           element={<AtasPage subtitle="Legend"><ComingSoon name="Legend" /></AtasPage>} />

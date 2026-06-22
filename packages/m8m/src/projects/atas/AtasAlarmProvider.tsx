@@ -1,42 +1,14 @@
 import React from 'react';
 
 import type { M8mAlarm } from '../../components/M8mAlarmBar';
-
-type AlarmState =
-  | 'active_unacknowledged'
-  | 'active_acknowledged'
-  | 'recovered_unacknowledged'
-  | 'recovered_acknowledged'
-  | 'lost_track';
-
-const ALARM_STATE_LABELS: Record<AlarmState, string> = {
-  active_unacknowledged: 'ACT UNACK',
-  active_acknowledged: 'ACT ACK',
-  recovered_unacknowledged: 'RCV UNACK',
-  recovered_acknowledged: 'RCV ACK',
-  lost_track: 'LOST TRACK',
-};
-
-interface AlarmEventResponse {
-  id: number;
-  source: string;
-  alarm_group: string;
-  alarm_code: string;
-  alarm_name: string;
-  alarm_severity: number;
-  alarm_description: string;
-  recovery_action: string;
-  value: number;
-  activation_time: string;
-  acknowledge_time: string | null;
-  state: AlarmState;
-}
-
-interface AlarmHistoryResponse {
-  items: AlarmEventResponse[];
-  limit: number;
-  offset: number;
-}
+import {
+  alarmEquipmentId,
+  alarmStateLabel,
+  alarmTimestamp,
+  type AtasAlarmEvent,
+  type AtasAlarmListResponse,
+  formatAlarmDate,
+} from './atas-alarm-utils';
 
 interface AtasAlarmContextValue {
   alarms: M8mAlarm[];
@@ -58,31 +30,17 @@ interface AtasAlarmProviderProps {
 
 const AtasAlarmContext = React.createContext<AtasAlarmContextValue | null>(null);
 
-function formatAlarmDate(value: string): string {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  const pad = (part: number, length = 2) => String(part).padStart(length, '0');
-  return (
-    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ` +
-    `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}.` +
-    pad(date.getMilliseconds(), 3)
-  );
-}
-
-function toM8mAlarm(event: AlarmEventResponse): M8mAlarm {
+function toM8mAlarm(event: AtasAlarmEvent): M8mAlarm {
   return {
     id: String(event.id),
     datetime: formatAlarmDate(event.activation_time),
-    sortTimestamp: Date.parse(event.activation_time),
+    sortTimestamp: alarmTimestamp(event.activation_time) ?? undefined,
     priority: String(event.alarm_severity),
-    equipmentId: `${event.source}.${event.alarm_code}`,
+    equipmentId: alarmEquipmentId(event),
     description: `${event.alarm_name}`,
     value: String(event.value),
-    state: ALARM_STATE_LABELS[event.state],
-    acknowledgeable: event.acknowledge_time === null,
+    state: alarmStateLabel(event.state),
+    acknowledgeable: event.acknowledge_time == null,
   };
 }
 
@@ -117,7 +75,7 @@ export function AtasAlarmProvider({
         if (!response.ok) {
           throw responseError(response, 'Loading unresolved alarms');
         }
-        const data = (await response.json()) as AlarmHistoryResponse;
+        const data = (await response.json()) as AtasAlarmListResponse;
         setAlarms(data.items.map(toM8mAlarm));
         setError(null);
       } catch (err) {

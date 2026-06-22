@@ -1,0 +1,144 @@
+.atas-history-page {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 8px 16px;
+  background: var(--m8m-content-bg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.atas-history-summary {
+  height: 4vh;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--m8m-text);
+  font-size: 1.4vh;
+  font-weight: 700;
+}
+
+.atas-history-count {
+  min-width: 2.2vh;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--m8m-panel-bg-alt);
+  color: var(--m8m-text);
+  text-align: center;
+}
+
+.atas-history-error {
+  min-width: 0;
+  overflow: hidden;
+  color: #fca5a5;
+  font-weight: 400;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.atas-history-table-container {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  border: 1px solid var(--m8m-border);
+  border-radius: 4px;
+  background: var(--m8m-panel-bg);
+  scrollbar-width: thin;
+}
+
+.atas-history-table {
+  width: 100%;
+  min-width: 1400px;
+  border-collapse: collapse;
+  table-layout: fixed;
+  color: var(--m8m-text);
+  font-size: 1.35vh;
+}
+
+.atas-history-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--m8m-border-alt);
+  background: var(--m8m-panel-bg-alt);
+  color: var(--m8m-text);
+  font-weight: 600;
+  text-align: left;
+}
+
+.atas-history-sort-button {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.atas-history-sort-button:focus-visible {
+  outline: 2px solid var(--m8m-primary);
+  outline-offset: 2px;
+}
+
+.atas-history-sort-indicator {
+  flex-shrink: 0;
+  color: var(--m8m-text-muted);
+  font-size: 1.1vh;
+}
+
+.atas-history-table tbody tr {
+  border-bottom: 1px solid var(--m8m-border-alt);
+}
+
+.atas-history-table tbody tr:hover {
+  background: var(--m8m-panel-bg-alt);
+}
+
+.atas-history-table tbody td {
+  padding: 6px 8px;
+  overflow: hidden;
+  color: #d1d5db;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.atas-history-datetime,
+.atas-history-duration {
+  font-variant-numeric: tabular-nums;
+}
+
+.atas-history-duration {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+.atas-history-state {
+  font-weight: 600;
+}
+
+.atas-history-table tbody .atas-history-state--act-unack {
+  color: #ef4444;
+}
+
+.atas-history-table tbody .atas-history-state--act-ack {
+  color: #fff;
+}
+
+.atas-history-table tbody .atas-history-state--rcv-unack {
+  color: #4ade80;
+}
+
+.atas-history-empty {
+  padding: 2rem !important;
+  color: var(--m8m-text-muted) !important;
+  text-align: center;
+}
