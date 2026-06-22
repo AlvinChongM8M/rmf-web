@@ -13,15 +13,74 @@ interface TaskTableData {
   endLocation: string;
   amrId: string;
   startTime: string;
+  startTimeMs?: number;
   endTime: string;
+  endTimeMs?: number;
   taskDurationSec: number;
   taskStatus: Status | undefined;
+}
+
+type TaskSortKey =
+  | 'taskId'
+  | 'taskType'
+  | 'startLocation'
+  | 'endLocation'
+  | 'amrId'
+  | 'startTime'
+  | 'endTime'
+  | 'taskDurationSec'
+  | 'taskStatus';
+
+interface TaskSort {
+  key: TaskSortKey;
+  direction: 'asc' | 'desc';
+}
+
+const taskCollator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+
+function taskSortValue(task: TaskTableData, key: TaskSortKey): string | number | null {
+  switch (key) {
+    case 'taskId':
+      return task.taskId;
+    case 'taskType':
+      return task.taskType;
+    case 'startLocation':
+      return task.startLocation;
+    case 'endLocation':
+      return task.endLocation;
+    case 'amrId':
+      return task.amrId;
+    case 'startTime':
+      return task.startTimeMs ?? null;
+    case 'endTime':
+      return task.endTimeMs ?? null;
+    case 'taskDurationSec':
+      return task.taskDurationSec;
+    case 'taskStatus':
+      return task.taskStatus ?? null;
+  }
+}
+
+function compareTasks(left: TaskTableData, right: TaskTableData, sort: TaskSort): number {
+  const leftValue = taskSortValue(left, sort.key);
+  const rightValue = taskSortValue(right, sort.key);
+
+  if (leftValue == null && rightValue == null) return 0;
+  if (leftValue == null) return 1;
+  if (rightValue == null) return -1;
+
+  const comparison =
+    typeof leftValue === 'number' && typeof rightValue === 'number'
+      ? leftValue - rightValue
+      : taskCollator.compare(String(leftValue), String(rightValue));
+  return comparison * (sort.direction === 'asc' ? 1 : -1);
 }
 
 export function AtasTaskPage(): JSX.Element {
   const rmfApi = useRmfApi();
   const [tasks, setTasks] = React.useState<TaskTableData[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [sort, setSort] = React.useState<TaskSort>({ key: 'startTime', direction: 'desc' });
 
   React.useEffect(() => {
     let mounted = true;
@@ -83,7 +142,9 @@ export function AtasTaskPage(): JSX.Element {
             endLocation,
             amrId: task.assigned_to?.name || '-',
             startTime: startTimeMs ? new Date(startTimeMs).toLocaleString() : '-',
+            startTimeMs: startTimeMs || undefined,
             endTime: endTimeMs ? new Date(endTimeMs).toLocaleString() : '-',
+            endTimeMs: endTimeMs || undefined,
             taskDurationSec: durationSec,
             taskStatus: task.status ?? undefined,
           };
@@ -129,6 +190,45 @@ export function AtasTaskPage(): JSX.Element {
     }
   };
 
+  const sortedTasks = React.useMemo(
+    () =>
+      tasks
+        .map((task, index) => ({ task, index }))
+        .sort((left, right) => {
+          const comparison = compareTasks(left.task, right.task, sort);
+          return comparison === 0 ? left.index - right.index : comparison;
+        })
+        .map(({ task }) => task),
+    [sort, tasks],
+  );
+
+  const handleSort = (key: TaskSortKey) => {
+    setSort((current) => ({
+      key,
+      direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc',
+    }));
+  };
+
+  const sortHeader = (label: string, key: TaskSortKey) => {
+    const isActive = sort.key === key;
+    const ariaSort = isActive ? (sort.direction === 'asc' ? 'ascending' : 'descending') : 'none';
+    return (
+      <th aria-sort={ariaSort}>
+        <button
+          className="atas-task-sort-button"
+          type="button"
+          onClick={() => handleSort(key)}
+          title={`Sort by ${label}`}
+        >
+          <span>{label}</span>
+          <span className="atas-task-sort-indicator" aria-hidden="true">
+            {isActive ? (sort.direction === 'asc' ? '▲' : '▼') : '↕'}
+          </span>
+        </button>
+      </th>
+    );
+  };
+
   return (
     <div className="atas-task-page">
       <div className="atas-task-header">
@@ -143,15 +243,15 @@ export function AtasTaskPage(): JSX.Element {
           <table className="atas-task-table">
             <thead>
               <tr>
-                <th>Task ID</th>
-                <th>Task Type</th>
-                <th>Start Location</th>
-                <th>End Location</th>
-                <th>AMR ID</th>
-                <th>Start Time</th>
-                <th>End Time</th>
-                <th>Duration (s)</th>
-                <th>Status</th>
+                {sortHeader('Task ID', 'taskId')}
+                {sortHeader('Task Type', 'taskType')}
+                {sortHeader('Start Location', 'startLocation')}
+                {sortHeader('End Location', 'endLocation')}
+                {sortHeader('AMR ID', 'amrId')}
+                {sortHeader('Start Time', 'startTime')}
+                {sortHeader('End Time', 'endTime')}
+                {sortHeader('Duration (s)', 'taskDurationSec')}
+                {sortHeader('Status', 'taskStatus')}
               </tr>
             </thead>
             <tbody>
@@ -162,8 +262,8 @@ export function AtasTaskPage(): JSX.Element {
                   </td>
                 </tr>
               ) : (
-                tasks.map((task, idx) => (
-                  <tr key={`${task.taskId}-${idx}`} className="atas-task-row">
+                sortedTasks.map((task) => (
+                  <tr key={`${task.taskId}-${task.startTimeMs ?? 'pending'}`} className="atas-task-row">
                     <td className="atas-task-id">{task.taskId}</td>
                     <td>{task.taskType}</td>
                     <td>{task.startLocation}</td>
