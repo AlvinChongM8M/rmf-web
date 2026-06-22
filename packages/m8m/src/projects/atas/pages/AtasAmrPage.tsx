@@ -12,6 +12,10 @@ interface AmrData {
   currentTask?: string;
 }
 
+function batteryPercentage(battery?: number): number {
+  return battery == null ? 0 : Math.min(100, Math.max(0, battery));
+}
+
 export function AtasAmrPage(): JSX.Element {
   const rmfApi = useRmfApi();
   const [amrs, setAmrs] = React.useState<AmrData[]>([]);
@@ -118,8 +122,17 @@ export function AtasAmrPage(): JSX.Element {
                     <div className="atas-amr-battery">
                       <div
                         className="atas-amr-battery-bar"
-                        style={{ width: `${amr.battery || 0}%` }}
-                      ></div>
+                        role="progressbar"
+                        aria-label={`${amr.name} battery`}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-valuenow={batteryPercentage(amr.battery)}
+                      >
+                        <div
+                          className="atas-amr-battery-bar__fill"
+                          style={{ width: `${batteryPercentage(amr.battery)}%` }}
+                        />
+                      </div>
                       <span>{amr.battery !== undefined ? `${Math.round(amr.battery)}%` : '-'}</span>
                     </div>
                   </td>
