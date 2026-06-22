@@ -177,7 +177,7 @@ export function AtasApp() {
         <Route
           path="/historical-alarm"
           element={
-            <AtasPage subtitle="Historical Alarm">
+            <AtasPage subtitle="Historical Alarm" showAlarmBar={false}>
               <AtasHistoricalAlarmPage
                 serverUrl={ATAS_ALARM_SERVER_URL}
                 refreshIntervalMs={ATAS_ALARM_REFRESH_INTERVAL_MS}

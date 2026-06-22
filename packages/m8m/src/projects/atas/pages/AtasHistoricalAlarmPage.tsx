@@ -227,12 +227,6 @@ export function AtasHistoricalAlarmPage({
 
   return (
     <section className="atas-history-page" aria-label="Historical alarms">
-      <div className="atas-history-summary">
-        <span>HISTORICAL ALARMS</span>
-        <span className="atas-history-count">{events.length}</span>
-        {error && <span className="atas-history-error">{error}</span>}
-      </div>
-
       <div className="atas-history-table-container">
         <table className="atas-history-table">
           <colgroup>
@@ -294,6 +288,11 @@ export function AtasHistoricalAlarmPage({
             )}
           </tbody>
         </table>
+      </div>
+      <div className="atas-history-summary">
+        <span>HISTORICAL ALARMS</span>
+        <span className="atas-history-count">{events.length}</span>
+        {error && <span className="atas-history-error">{error}</span>}
       </div>
     </section>
   );
