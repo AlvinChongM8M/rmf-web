@@ -52,6 +52,7 @@ interface AtasAlarmProviderProps {
   serverUrl: string;
   username: string;
   refreshIntervalMs?: number;
+  recordLimit?: number;
   children: React.ReactNode;
 }
 
@@ -83,9 +84,11 @@ export function AtasAlarmProvider({
   serverUrl,
   username,
   refreshIntervalMs = 5000,
+  recordLimit = 1000,
   children,
 }: AtasAlarmProviderProps): JSX.Element {
   const normalizedServerUrl = React.useMemo(() => serverUrl.replace(/\/$/, ''), [serverUrl]);
+  const normalizedRecordLimit = Math.min(1000, Math.max(1, Math.trunc(recordLimit)));
   const [alarms, setAlarms] = React.useState<M8mAlarm[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -97,9 +100,10 @@ export function AtasAlarmProvider({
   const refreshAlarms = React.useCallback(
     async (signal?: AbortSignal) => {
       try {
-        const response = await fetch(`${normalizedServerUrl}/api/v1/alarm/unresolved?limit=100`, {
-          signal,
-        });
+        const response = await fetch(
+          `${normalizedServerUrl}/api/v1/alarm/unresolved?limit=${normalizedRecordLimit}`,
+          { signal },
+        );
         if (!response.ok) {
           throw responseError(response, 'Loading unresolved alarms');
         }
@@ -117,7 +121,7 @@ export function AtasAlarmProvider({
         }
       }
     },
-    [normalizedServerUrl],
+    [normalizedRecordLimit, normalizedServerUrl],
   );
 
   React.useEffect(() => {

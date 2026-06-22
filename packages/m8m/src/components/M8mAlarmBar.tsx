@@ -20,6 +20,8 @@ export interface M8mAlarm {
 }
 
 export interface M8mAlarmBarProps {
+  /** Compact footer or full-height page presentation. */
+  variant?: 'footer' | 'page';
   /** List of unresolved alarms to display. Defaults to empty (shows placeholder row). */
   alarms?: M8mAlarm[];
   /** True while the first unresolved-alarm request is in progress. */
@@ -71,6 +73,7 @@ function alarmStateClass(state: string): string {
 // ---------------------------------------------------------------------------
 
 export function M8mAlarmBar({
+  variant = 'footer',
   alarms = [],
   loading = false,
   error,
@@ -80,6 +83,7 @@ export function M8mAlarmBar({
   acknowledgingAll = false,
 }: M8mAlarmBarProps) {
   const acknowledgeableCount = alarms.filter((alarm) => alarm.acknowledgeable).length;
+  const Container = variant === 'page' ? 'section' : 'footer';
 
   const handleDoubleClick = (alarm: M8mAlarm) => {
     if (
@@ -93,7 +97,10 @@ export function M8mAlarmBar({
   };
 
   return (
-    <footer className="m8m-alarmbar" aria-label="Unresolved alarms">
+    <Container
+      className={`m8m-alarmbar${variant === 'page' ? ' m8m-alarmbar--page' : ''}`}
+      aria-label="Unresolved alarms"
+    >
       <div className="m8m-alarmbar__toolbar">
         <div className="m8m-alarmbar__summary">
           <span>UNRESOLVED ALARMS</span>
@@ -185,6 +192,6 @@ export function M8mAlarmBar({
           </tbody>
         </table>
       </div>
-    </footer>
+    </Container>
   );
 }

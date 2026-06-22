@@ -17,6 +17,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 
 import { M8mLayout } from '../../components/M8mLayout';
 import {
+  ATAS_ALARM_RECORD_LIMIT,
   ATAS_ALARM_REFRESH_INTERVAL_MS,
   ATAS_ALARM_SERVER_URL,
   ATAS_API_SERVER_URL,
@@ -30,6 +31,7 @@ import {
 } from './atas-config';
 import { AtasAlarmProvider, useAtasAlarms } from './AtasAlarmProvider';
 import { AtasRmfProviders } from './AtasRmfProviders';
+import { AtasActiveAlarmPage } from './pages/AtasActiveAlarmPage';
 import { AtasAmrPage } from './pages/AtasAmrPage';
 import { AtasSystemOverviewPage } from './pages/AtasSystemOverviewPage';
 import { AtasTaskPage } from './pages/AtasTaskPage';
@@ -114,6 +116,7 @@ export function AtasApp() {
         serverUrl={ATAS_ALARM_SERVER_URL}
         username={ATAS_USERNAME}
         refreshIntervalMs={ATAS_ALARM_REFRESH_INTERVAL_MS}
+        recordLimit={ATAS_ALARM_RECORD_LIMIT}
       >
         <Routes>
 
@@ -137,7 +140,7 @@ export function AtasApp() {
           path="/alarm"
           element={
             <AtasPage subtitle="Active Alarm" showAlarmBar={false}>
-              <ComingSoon name="Active Alarm" />
+              <AtasActiveAlarmPage />
             </AtasPage>
           }
         />

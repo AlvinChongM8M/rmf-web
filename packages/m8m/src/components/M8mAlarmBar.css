@@ -12,6 +12,20 @@
   flex-shrink: 0;
 }
 
+.m8m-alarmbar--page {
+  height: 100%;
+  min-height: 0;
+  padding: 8px 16px 16px;
+  background: var(--m8m-content-bg);
+  flex-shrink: 1;
+}
+
+.m8m-alarmbar--page .m8m-alarmbar__wrapper {
+  border: 1px solid var(--m8m-border);
+  border-radius: 4px;
+  background: var(--m8m-panel-bg);
+}
+
 .m8m-alarmbar__toolbar {
   height: 4vh;
   display: flex;
