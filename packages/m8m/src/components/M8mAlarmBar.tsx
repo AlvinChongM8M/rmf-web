@@ -101,27 +101,6 @@ export function M8mAlarmBar({
       className={`m8m-alarmbar${variant === 'page' ? ' m8m-alarmbar--page' : ''}`}
       aria-label="Unresolved alarms"
     >
-      <div className="m8m-alarmbar__toolbar">
-        <div className="m8m-alarmbar__summary">
-          <span>UNRESOLVED ALARMS</span>
-          <span className="m8m-alarmbar__count">{alarms.length}</span>
-          {error && <span className="m8m-alarmbar__error">{error}</span>}
-        </div>
-        {onAcknowledgeAll && (
-          <button
-            className="m8m-alarmbar__ack-all"
-            type="button"
-            disabled={
-              acknowledgeableCount === 0 || acknowledgingAll || acknowledgingAlarmIds.size > 0
-            }
-            onClick={onAcknowledgeAll}
-          >
-            {acknowledgingAll
-              ? 'ACKNOWLEDGING...'
-              : `ACKNOWLEDGE ALL (${acknowledgeableCount})`}
-          </button>
-        )}
-      </div>
       <div className="m8m-alarmbar__wrapper">
         <table className="m8m-alarmbar__table">
           <colgroup>
@@ -191,6 +170,27 @@ export function M8mAlarmBar({
             )}
           </tbody>
         </table>
+      </div>
+      <div className="m8m-alarmbar__toolbar">
+        <div className="m8m-alarmbar__summary">
+          <span>UNRESOLVED ALARMS</span>
+          <span className="m8m-alarmbar__count">{alarms.length}</span>
+          {error && <span className="m8m-alarmbar__error">{error}</span>}
+        </div>
+        {onAcknowledgeAll && (
+          <button
+            className="m8m-alarmbar__ack-all"
+            type="button"
+            disabled={
+              acknowledgeableCount === 0 || acknowledgingAll || acknowledgingAlarmIds.size > 0
+            }
+            onClick={onAcknowledgeAll}
+          >
+            {acknowledgingAll
+              ? 'ACKNOWLEDGING...'
+              : `ACKNOWLEDGE ALL (${acknowledgeableCount})`}
+          </button>
+        )}
       </div>
     </Container>
   );
