@@ -52,7 +52,6 @@ export function AtasTaskPage(): JSX.Element {
     };
 
     const refreshTasks = async () => {
-      setIsLoading(true);
       try {
         const response = await rmfApi.tasksApi.queryTaskStatesTasksGet(
           undefined,
