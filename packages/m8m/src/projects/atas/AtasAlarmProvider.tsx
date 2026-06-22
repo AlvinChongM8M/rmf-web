@@ -60,7 +60,16 @@ const AtasAlarmContext = React.createContext<AtasAlarmContextValue | null>(null)
 
 function formatAlarmDate(value: string): string {
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  const pad = (part: number, length = 2) => String(part).padStart(length, '0');
+  return (
+    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ` +
+    `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}.` +
+    pad(date.getMilliseconds(), 3)
+  );
 }
 
 function toM8mAlarm(event: AlarmEventResponse): M8mAlarm {
