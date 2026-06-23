@@ -16,6 +16,7 @@ import React from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 
 import { M8mLayout } from '../../components/M8mLayout';
+import { M8mNewTaskButton } from '../../components/M8mNewTaskButton';
 import {
   ATAS_ALARM_RECORD_LIMIT,
   ATAS_ALARM_REFRESH_INTERVAL_MS,
@@ -24,6 +25,7 @@ import {
   ATAS_CLIENT_LOGO_SRC,
   ATAS_LOGO_SRC,
   ATAS_NAV_ITEMS,
+  ATAS_SHOW_NEW_TASK_BUTTON,
   ATAS_TITLE,
   ATAS_TRAJECTORY_SERVER_URL,
   ATAS_USERNAME,
@@ -79,6 +81,11 @@ function AtasPage({ subtitle, showAlarmBar = true, children }: AtasPageProps) {
       onAcknowledgeAll={acknowledgeAll}
       acknowledgingAlarmIds={acknowledgingAlarmIds}
       acknowledgingAll={acknowledgingAll}
+      floatingAction={
+        ATAS_SHOW_NEW_TASK_BUTTON ? (
+          <M8mNewTaskButton username={ATAS_USERNAME} buttonId="atas-new-task-button" />
+        ) : undefined
+      }
     >
       {children}
     </M8mLayout>
@@ -113,13 +120,17 @@ function ComingSoon({ name }: { name: string }) {
 export function AtasApp() {
   return (
     <BrowserRouter>
-      <AtasAlarmProvider
-        serverUrl={ATAS_ALARM_SERVER_URL}
-        username={ATAS_USERNAME}
-        refreshIntervalMs={ATAS_ALARM_REFRESH_INTERVAL_MS}
-        recordLimit={ATAS_ALARM_RECORD_LIMIT}
+      <AtasRmfProviders
+        apiServerUrl={ATAS_API_SERVER_URL}
+        trajectoryServerUrl={ATAS_TRAJECTORY_SERVER_URL}
       >
-        <Routes>
+        <AtasAlarmProvider
+          serverUrl={ATAS_ALARM_SERVER_URL}
+          username={ATAS_USERNAME}
+          refreshIntervalMs={ATAS_ALARM_REFRESH_INTERVAL_MS}
+          recordLimit={ATAS_ALARM_RECORD_LIMIT}
+        >
+          <Routes>
 
         {/* ── Implemented screens ── */}
         <Route
@@ -151,12 +162,7 @@ export function AtasApp() {
           path="/amr"
           element={
             <AtasPage subtitle="AMR">
-              <AtasRmfProviders
-                apiServerUrl={ATAS_API_SERVER_URL}
-                trajectoryServerUrl={ATAS_TRAJECTORY_SERVER_URL}
-              >
-                <AtasAmrPage />
-              </AtasRmfProviders>
+              <AtasAmrPage />
             </AtasPage>
           }
         />
@@ -165,12 +171,7 @@ export function AtasApp() {
           path="/task"
           element={
             <AtasPage subtitle="Task">
-              <AtasRmfProviders
-                apiServerUrl={ATAS_API_SERVER_URL}
-                trajectoryServerUrl={ATAS_TRAJECTORY_SERVER_URL}
-              >
-                <AtasTaskPage />
-              </AtasRmfProviders>
+              <AtasTaskPage />
             </AtasPage>
           }
         />
@@ -195,8 +196,9 @@ export function AtasApp() {
         {/* ── Fallback ── */}
         <Route path="*" element={<Navigate to="/" replace />} />
 
-        </Routes>
-      </AtasAlarmProvider>
+          </Routes>
+        </AtasAlarmProvider>
+      </AtasRmfProviders>
     </BrowserRouter>
   );
 }

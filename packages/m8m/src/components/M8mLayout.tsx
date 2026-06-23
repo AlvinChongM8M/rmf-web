@@ -37,6 +37,9 @@ export interface M8mLayoutProps extends M8mAppBarProps {
 
   /** Page body content */
   children: React.ReactNode;
+
+  /** Optional control displayed over the bottom-right corner of the page body. */
+  floatingAction?: React.ReactNode;
 }
 
 // ---------------------------------------------------------------------------
@@ -66,6 +69,7 @@ export function M8mLayout({
   acknowledgingAlarmIds,
   acknowledgingAll = false,
   children,
+  floatingAction,
   ...appBarProps
 }: M8mLayoutProps) {
   return (
@@ -101,6 +105,19 @@ export function M8mLayout({
           acknowledgingAll={acknowledgingAll}
         />
       )}
+
+      {floatingAction && (
+          <div
+            style={{
+              position: 'absolute',
+              right: 16,
+              bottom: 16,
+              zIndex: 20,
+            }}
+          >
+            {floatingAction}
+          </div>
+        )}
     </div>
   );
 }

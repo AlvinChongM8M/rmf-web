@@ -28,6 +28,9 @@ export const ATAS_ALARM_REFRESH_INTERVAL_MS = 5000;
 export const ATAS_ALARM_RECORD_LIMIT = 1000;
 export const ATAS_USERNAME = 'CAG_Admin';
 export const ATAS_USER_ROLE = 'Administrator';
+// Set VITE_ATAS_SHOW_NEW_TASK_BUTTON=false to hide the floating action without code changes.
+export const ATAS_SHOW_NEW_TASK_BUTTON =
+  import.meta.env.VITE_ATAS_SHOW_NEW_TASK_BUTTON !== 'false';
 
 // ---------------------------------------------------------------------------
 // Navigation

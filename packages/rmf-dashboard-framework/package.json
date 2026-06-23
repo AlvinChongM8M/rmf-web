@@ -85,8 +85,10 @@
   },
   "exports": {
     "./components": "./src/components/index.ts",
+    "./components/locale": "./src/components/locale.tsx",
     "./components/map": "./src/components/map/map.tsx",
     "./components/map-events": "./src/components/map/map-events-context.tsx",
+    "./components/tasks": "./src/components/tasks/index.ts",
     "./hooks": "./src/hooks/index.ts",
     "./micro-apps": "./src/micro-apps/index.ts",
     "./services": "./src/services/index.ts"
