@@ -189,7 +189,9 @@
 }
 
 .m8m-alarmbar__table tbody .m8m-alarmbar__row--act-unack td,
+.m8m-alarmbar__table tbody .m8m-alarmbar__row--act-unack td *,
 .m8m-alarmbar__row--act-unack .m8m-alarm-priority {
+  color: #ef4444;
   animation: m8m-alarmbar-act-unack-blink 2s step-end infinite;
 }
 
@@ -201,14 +203,6 @@
 .m8m-alarmbar__table tbody .m8m-alarmbar__row--rcv-unack td,
 .m8m-alarmbar__row--rcv-unack .m8m-alarm-priority {
   color: #4ade80;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .m8m-alarmbar__table tbody .m8m-alarmbar__row--act-unack td,
-  .m8m-alarmbar__row--act-unack .m8m-alarm-priority {
-    animation: none;
-    color: #ef4444;
-  }
 }
 
 /* ---- Empty state ---- */
