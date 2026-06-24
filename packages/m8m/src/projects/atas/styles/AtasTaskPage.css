@@ -184,6 +184,21 @@
   color: white;
 }
 
+.atas-task-actions {
+  min-width: 120px;
+}
+
+.atas-task-actions__buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.atas-task-actions__buttons .MuiButton-root {
+  line-height: 1.2;
+}
+
 .atas-task-empty {
   text-align: center;
   color: var(--m8m-text-muted);

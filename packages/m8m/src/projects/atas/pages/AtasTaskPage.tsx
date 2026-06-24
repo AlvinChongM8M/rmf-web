@@ -3,6 +3,7 @@ import {
   ApiServerModelsRmfApiTaskStateStatus as Status,
   TaskStateInput as TaskState,
 } from 'api-client';
+import { TaskCancelButton } from 'rmf-dashboard-framework/components/tasks';
 import { useRmfApi } from 'rmf-dashboard-framework/hooks';
 import '../styles/AtasTaskPage.css';
 
@@ -252,18 +253,22 @@ export function AtasTaskPage(): JSX.Element {
                 {sortHeader('End Time', 'endTime')}
                 {sortHeader('Duration (s)', 'taskDurationSec')}
                 {sortHeader('Status', 'taskStatus')}
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {tasks.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="atas-task-empty">
+                  <td colSpan={10} className="atas-task-empty">
                     No tasks available
                   </td>
                 </tr>
               ) : (
                 sortedTasks.map((task) => (
-                  <tr key={`${task.taskId}-${task.startTimeMs ?? 'pending'}`} className="atas-task-row">
+                  <tr
+                    key={`${task.taskId}-${task.startTimeMs ?? 'pending'}`}
+                    className="atas-task-row"
+                  >
                     <td className="atas-task-id">{task.taskId}</td>
                     <td>{task.taskType}</td>
                     <td>{task.startLocation}</td>
@@ -276,6 +281,27 @@ export function AtasTaskPage(): JSX.Element {
                       <span className={`atas-task-status ${getStatusClass(task.taskStatus)}`}>
                         {task.taskStatus || 'Unknown'}
                       </span>
+                    </td>
+                    <td className="atas-task-actions">
+                      <div
+                        className="atas-task-actions__buttons"
+                        onClick={(event) => event.stopPropagation()}
+                      >
+                        <TaskCancelButton
+                          taskId={task.taskId === '-' ? null : task.taskId}
+                          buttonText="Cancel Task"
+                          size="small"
+                          variant="contained"
+                          color="error"
+                          sx={{
+                            minWidth: '6.5rem',
+                            px: 1,
+                            py: 0.35,
+                            fontSize: '0.7rem',
+                            textTransform: 'none',
+                          }}
+                        />
+                      </div>
                     </td>
                   </tr>
                 ))
