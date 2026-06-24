@@ -1137,7 +1137,9 @@ export function TaskForm({
               variant="outlined"
               disabled={submitting}
               className={classes.actionBtn}
-              onClick={(ev) => onClose && onClose(ev, 'escapeKeyDown')}
+              onClick={(ev: React.MouseEvent<HTMLButtonElement>) =>
+                onClose && onClose(ev, 'escapeKeyDown')
+              }
               size="medium"
             >
               Cancel

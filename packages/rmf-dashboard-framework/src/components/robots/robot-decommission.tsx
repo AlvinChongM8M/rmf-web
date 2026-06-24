@@ -17,11 +17,15 @@ import { ConfirmationDialog } from '../confirmation-dialog';
 export interface RobotDecommissionButtonProp extends Omit<ButtonProps, 'onClick' | 'autoFocus'> {
   fleet: string;
   robotState: RobotState | null;
+  decommissionText?: string;
+  recommissionText?: string;
 }
 
 export function RobotDecommissionButton({
   fleet,
   robotState,
+  decommissionText = 'Decommission',
+  recommissionText = 'Recommission',
   ...otherProps
 }: RobotDecommissionButtonProp) {
   const rmfApi = useRmfApi();
@@ -140,7 +144,7 @@ export function RobotDecommissionButton({
     <>
       {robotState ? (
         <Button onClick={() => setOpenConfirmDialog(true)} autoFocus {...otherProps}>
-          {robotDecommissioned ? 'Recommission' : 'Decommission'}
+          {robotDecommissioned ? recommissionText : decommissionText}
         </Button>
       ) : (
         <Tooltip title={`Robot from fleet ${fleet} cannot be decommissioned/recommissioned.`}>
@@ -153,7 +157,7 @@ export function RobotDecommissionButton({
             }}
             {...otherProps}
           >
-            {'Decommission'}
+            {decommissionText}
           </Button>
         </Tooltip>
       )}

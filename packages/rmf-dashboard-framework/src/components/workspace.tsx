@@ -136,7 +136,9 @@ export const Workspace = React.memo(
             <Fab
               color="primary"
               sx={{ position: 'fixed', right: '2vw', bottom: '2vw' }}
-              onClick={(e) => setAddMenuAnchor(e.currentTarget)}
+              onClick={(e: React.MouseEvent<HTMLButtonElement>) =>
+                setAddMenuAnchor(e.currentTarget)
+              }
             >
               <AddIcon />
             </Fab>

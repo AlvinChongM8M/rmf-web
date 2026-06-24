@@ -161,6 +161,21 @@
   font-size: 0.9rem;
 }
 
+.atas-amr-actions {
+  min-width: 260px;
+}
+
+.atas-amr-actions__buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.atas-amr-actions__buttons .MuiButton-root {
+  line-height: 1.2;
+}
+
 .atas-amr-empty {
   text-align: center;
   color: var(--m8m-text-muted);

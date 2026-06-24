@@ -1,5 +1,7 @@
 import React from 'react';
-import { ApiServerModelsRmfApiRobotStateStatus as Status } from 'api-client';
+import { ApiServerModelsRmfApiRobotStateStatus as Status, type RobotState } from 'api-client';
+import { RobotDecommissionButton } from 'rmf-dashboard-framework/components/robots';
+import { TaskCancelButton } from 'rmf-dashboard-framework/components/tasks';
 import { useRmfApi } from 'rmf-dashboard-framework/hooks';
 import '../styles/AtasAmrPage.css';
 
@@ -10,6 +12,8 @@ interface AmrData {
   battery?: number;
   location?: string;
   currentTask?: string;
+  taskId: string | null;
+  robotState: RobotState;
 }
 
 type AmrSortKey = 'fleet' | 'name' | 'status' | 'battery' | 'location' | 'currentTask';
@@ -75,13 +79,17 @@ export function AtasAmrPage(): JSX.Element {
             continue;
           }
           for (const [robotName, robot] of Object.entries(fleet.robots)) {
+            const taskId = robot.task_id || null;
+            const robotState: RobotState = { ...robot, name: robot.name ?? robotName };
             allAmrs.push({
               fleet: fleet.name,
               name: robotName,
               status: robot.status ?? undefined,
               battery: robot.battery != null ? robot.battery * 100 : undefined,
               location: robot.location?.map || '-',
-              currentTask: robot.task_id || 'None',
+              currentTask: taskId || 'None',
+              taskId,
+              robotState,
             });
           }
         }
@@ -177,12 +185,13 @@ export function AtasAmrPage(): JSX.Element {
               {sortHeader('Battery (%)', 'battery')}
               {sortHeader('Current Level', 'location')}
               {sortHeader('Current Task', 'currentTask')}
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {amrs.length === 0 ? (
               <tr>
-                <td colSpan={6} className="atas-amr-empty">
+                <td colSpan={7} className="atas-amr-empty">
                   No AMRs available
                 </td>
               </tr>
@@ -219,6 +228,45 @@ export function AtasAmrPage(): JSX.Element {
                   </td>
                   <td>{amr.location}</td>
                   <td className="atas-amr-task">{amr.currentTask}</td>
+                  <td className="atas-amr-actions">
+                    <div
+                      className="atas-amr-actions__buttons"
+                      onClick={(event) => event.stopPropagation()}
+                    >
+                      <RobotDecommissionButton
+                        fleet={amr.fleet}
+                        robotState={amr.robotState}
+                        decommissionText="Decommission Robot"
+                        recommissionText="Recommission Robot"
+                        size="small"
+                        variant="contained"
+                        color="secondary"
+                        sx={{
+                          minWidth: '8rem',
+                          px: 1,
+                          py: 0.35,
+                          fontSize: '0.7rem',
+                          textTransform: 'none',
+                        }}
+                      />
+                      {amr.taskId && (
+                        <TaskCancelButton
+                          taskId={amr.taskId}
+                          buttonText="Cancel Task"
+                          size="small"
+                          variant="contained"
+                          color="error"
+                          sx={{
+                            minWidth: '6.5rem',
+                            px: 1,
+                            py: 0.35,
+                            fontSize: '0.7rem',
+                            textTransform: 'none',
+                          }}
+                        />
+                      )}
+                    </div>
+                  </td>
                 </tr>
               ))
             )}

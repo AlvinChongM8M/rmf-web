@@ -123,6 +123,8 @@ export function AtasApp() {
       <AtasRmfProviders
         apiServerUrl={ATAS_API_SERVER_URL}
         trajectoryServerUrl={ATAS_TRAJECTORY_SERVER_URL}
+        username={ATAS_USERNAME}
+        userRole={ATAS_USER_ROLE}
       >
         <AtasAlarmProvider
           serverUrl={ATAS_ALARM_SERVER_URL}
