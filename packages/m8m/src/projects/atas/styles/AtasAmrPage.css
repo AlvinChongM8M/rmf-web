@@ -117,9 +117,10 @@
 .atas-amr-status {
   display: inline-block;
   padding: 0.35rem 0.75rem;
+  border: 1px solid var(--status-border, transparent);
   border-radius: 4px;
-  background-color: var(--status-color);
-  color: white;
+  background-color: var(--status-bg);
+  color: var(--status-text);
   font-weight: 500;
   font-size: 0.85rem;
   text-transform: uppercase;

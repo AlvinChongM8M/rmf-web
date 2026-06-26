@@ -23,6 +23,12 @@ interface AmrSort {
   direction: 'asc' | 'desc';
 }
 
+type AmrStatusStyle = React.CSSProperties & {
+  '--status-bg': string;
+  '--status-text': string;
+  '--status-border': string;
+};
+
 const amrCollator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
 
 function amrSortValue(amr: AmrData, key: AmrSortKey): string | number | null {
@@ -113,19 +119,51 @@ export function AtasAmrPage(): JSX.Element {
     };
   }, [rmfApi]);
 
-  const getStatusColor = (status?: Status) => {
+  const getStatusStyle = (status?: Status): AmrStatusStyle => {
     switch (status) {
       case Status.Working:
-        return '#22c55e';
+        return {
+          '--status-bg': '#22c55e',
+          '--status-text': '#fff',
+          '--status-border': '#16a34a',
+        };
       case Status.Charging:
-        return '#3b82f6';
+        return {
+          '--status-bg': '#3b82f6',
+          '--status-text': '#fff',
+          '--status-border': '#2563eb',
+        };
       case Status.Error:
-        return '#ef4444';
+        return {
+          '--status-bg': '#ef4444',
+          '--status-text': '#fff',
+          '--status-border': '#dc2626',
+        };
       case Status.Offline:
       case Status.Uninitialized:
-        return '#6b7280';
+        return {
+          '--status-bg': '#6b7280',
+          '--status-text': '#fff',
+          '--status-border': '#4b5563',
+        };
+      case Status.Idle:
+        return {
+          '--status-bg': '#fff',
+          '--status-text': '#111827',
+          '--status-border': '#9ca3af',
+        };
+      case Status.Shutdown:
+        return {
+          '--status-bg': '#111827',
+          '--status-text': '#fff',
+          '--status-border': '#374151',
+        };
       default:
-        return '#f59e0b';
+        return {
+          '--status-bg': '#f59e0b',
+          '--status-text': '#111827',
+          '--status-border': '#d97706',
+        };
     }
   };
 
@@ -203,7 +241,7 @@ export function AtasAmrPage(): JSX.Element {
                   <td>
                     <span
                       className="atas-amr-status"
-                      style={{ '--status-color': getStatusColor(amr.status) } as React.CSSProperties}
+                      style={getStatusStyle(amr.status)}
                     >
                       {amr.status || 'Unknown'}
                     </span>
