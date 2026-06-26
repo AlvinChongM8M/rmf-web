@@ -25,6 +25,14 @@ export const CircleShape = ({
 
   const rotatedX = position.x + SCALED_RADIUS * Math.cos(rotation.z);
   const rotatedY = position.y + SCALED_RADIUS * Math.sin(rotation.z);
+  const outlinePoints = Array.from({ length: segment + 1 }, (_value, index) => {
+    const angle = (index / segment) * Math.PI * 2;
+    return new Vector3(
+      position.x + SCALED_RADIUS * Math.cos(angle),
+      position.y + SCALED_RADIUS * Math.sin(angle),
+      position.z + 0.01,
+    );
+  });
 
   return (
     <>
@@ -38,9 +46,12 @@ export const CircleShape = ({
       >
         <meshBasicMaterial color={robot.color} />
       </Circle>
+      {robot.outlineColor && (
+        <Line points={outlinePoints} color={robot.outlineColor} linewidth={3} />
+      )}
       <Line
         points={[position.x, position.y, position.z, rotatedX, rotatedY, position.z]}
-        color="black"
+        color={robot.outlineColor ?? 'black'}
         linewidth={2}
       />
     </>

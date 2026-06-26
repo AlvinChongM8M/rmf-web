@@ -16,6 +16,7 @@ import {
   loadSettings,
   StubAuthenticator,
 } from 'rmf-dashboard-framework/services';
+import { getAtasAmrStatusStyle } from '../atas-amr-status-style';
 
 // ---------------------------------------------------------------------------
 // Dark theme for MUI components rendered inside the map (controls, overlays)
@@ -82,6 +83,16 @@ export function AtasLiveMap({
     }),
     [],
   );
+  const robotColorProvider = React.useCallback<NonNullable<MapProps['robotColorProvider']>>(
+    ({ robotState, defaultColor }) => {
+      const statusStyle = getAtasAmrStatusStyle(robotState.status);
+      return {
+        color: statusStyle.mapColor || defaultColor,
+        outlineColor: statusStyle.mapOutlineColor,
+      };
+    },
+    [],
+  );
 
   const mapProps: MapProps = {
     attributionPrefix: 'ATAS',
@@ -89,6 +100,7 @@ export function AtasLiveMap({
     defaultZoom,
     defaultRobotZoom,
     defaultHiddenLayers,
+    robotColorProvider,
   };
 
   return (

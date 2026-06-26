@@ -14,7 +14,9 @@ export interface RobotData {
   model: string;
   footprint: number;
   scale: number;
+  baseColor?: string;
   color: string;
+  outlineColor?: string;
   inConflict?: boolean;
   iconPath?: string;
 }

@@ -1,7 +1,7 @@
 import { Box, styled, Typography } from '@mui/material';
 import { Line } from '@react-three/drei';
 import { Canvas, useLoader } from '@react-three/fiber';
-import { BuildingMap, FleetState, Level, Lift } from 'api-client';
+import { BuildingMap, FleetState, Level, Lift, type RobotState } from 'api-client';
 import Debug from 'debug';
 import React, { ChangeEvent, Suspense } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
@@ -48,6 +48,35 @@ function getRobotId(fleetName: string, robotName: string): string {
   return `${fleetName}/${robotName}`;
 }
 
+export interface RobotColorProviderParams {
+  fleetName: string;
+  robotName: string;
+  robotState: RobotState;
+  defaultColor: string;
+}
+
+export interface RobotColorProviderResult {
+  color: string;
+  outlineColor?: string;
+}
+
+function resolveRobotColors(
+  robotColorProvider: MapProps['robotColorProvider'] | undefined,
+  params: RobotColorProviderParams,
+): RobotColorProviderResult {
+  const colors = robotColorProvider?.(params);
+  if (!colors) {
+    return { color: params.defaultColor };
+  }
+  if (typeof colors === 'string') {
+    return { color: colors };
+  }
+  return {
+    color: colors.color || params.defaultColor,
+    outlineColor: colors.outlineColor,
+  };
+}
+
 export interface MapProps {
   defaultMapLevel: string;
   defaultZoom: number;
@@ -72,6 +101,9 @@ export interface MapProps {
     labelColor?: string;
     labelFontSize?: string;
   };
+  robotColorProvider?: (
+    params: RobotColorProviderParams,
+  ) => RobotColorProviderResult | string | undefined;
 }
 
 export const Map = styled((props: MapProps) => {
@@ -293,7 +325,26 @@ export const Map = styled((props: MapProps) => {
         return robotKey.map(async (r) => {
           const robotId = getRobotId(fleetName, r);
           const fleetResource: FleetResource | undefined = fleetResources[fleetName];
-          if (robotId in robotsStore) return;
+          const robotState = fleetState.robots?.[r];
+          if (!robotState) {
+            return;
+          }
+          const existingRobot = robotsStore[robotId];
+          if (existingRobot) {
+            robotsStore[robotId] = {
+              ...existingRobot,
+              scale: fleetResource?.default.scale || existingRobot.scale,
+              iconPath: fleetResource?.default.icon || existingRobot.iconPath,
+            };
+            return;
+          }
+          const defaultColor = await colorManager.robotPrimaryColor(fleetName, r, '');
+          const robotColors = resolveRobotColors(props.robotColorProvider, {
+            fleetName,
+            robotName: r,
+            robotState,
+            defaultColor,
+          });
           robotsStore[robotId] = {
             fleet: fleetName,
             name: r,
@@ -301,7 +352,9 @@ export const Map = styled((props: MapProps) => {
             model: '',
             scale: fleetResource?.default.scale || DEFAULT_ROBOT_SCALE,
             footprint: 0.5,
-            color: await colorManager.robotPrimaryColor(fleetName, r, ''),
+            baseColor: defaultColor,
+            color: robotColors.color,
+            outlineColor: robotColors.outlineColor,
             iconPath: fleetResource?.default.icon || undefined,
           };
         });
@@ -321,7 +374,14 @@ export const Map = styled((props: MapProps) => {
       });
       setRobots(newRobots);
     })();
-  }, [fleets, fleetResources, robotsStore, currentLevel, currentLevelOfRobots]);
+  }, [
+    fleets,
+    fleetResources,
+    robotsStore,
+    currentLevel,
+    currentLevelOfRobots,
+    props.robotColorProvider,
+  ]);
 
   const { current: robotLocations } = React.useRef<
     Record<string, [number, number, number, string]>
@@ -360,24 +420,56 @@ export const Map = styled((props: MapProps) => {
             robotState.location.yaw,
             robotState.location.map,
           ];
+          const existingRobot = robotsStore[robotId];
+          if (existingRobot) {
+            const defaultColor = existingRobot.baseColor ?? existingRobot.color;
+            const robotColors = resolveRobotColors(props.robotColorProvider, {
+              fleetName,
+              robotName,
+              robotState,
+              defaultColor,
+            });
+            if (
+              existingRobot.color !== robotColors.color ||
+              existingRobot.outlineColor !== robotColors.outlineColor
+            ) {
+              robotsStore[robotId] = {
+                ...existingRobot,
+                baseColor: defaultColor,
+                color: robotColors.color,
+                outlineColor: robotColors.outlineColor,
+              };
+              setRobots((currentRobots) =>
+                currentRobots.map((currentRobot) =>
+                  currentRobot.fleet === fleetName && currentRobot.name === robotName
+                    ? robotsStore[robotId]
+                    : currentRobot,
+                ),
+              );
+            }
+          }
 
           setCurrentLevelOfRobots((prevState) => {
-            if (!robotState.location?.map && prevState.robotName) {
+            const robotLevel = robotState.location?.map || '';
+            if (!robotLevel && prevState[robotName]) {
               console.warn(`Map: Fail to update robot level for ${robotId} (missing map)`);
               const updatedState = { ...prevState };
               delete updatedState[robotName];
               return updatedState;
             }
+            if (prevState[robotName] === robotLevel) {
+              return prevState;
+            }
 
             return {
               ...prevState,
-              [robotName]: robotState.location?.map || '',
+              [robotName]: robotLevel,
             };
           });
         });
       });
     return () => sub.unsubscribe();
-  }, [rmfApi, robotLocations]);
+  }, [rmfApi, robotLocations, robotsStore, props.robotColorProvider]);
 
   //Accumulate values over time to persist between tabs
   React.useEffect(() => {

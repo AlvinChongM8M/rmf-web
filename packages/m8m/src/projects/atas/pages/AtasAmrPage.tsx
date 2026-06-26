@@ -3,6 +3,7 @@ import { ApiServerModelsRmfApiRobotStateStatus as Status, type RobotState } from
 import { RobotDecommissionButton } from 'rmf-dashboard-framework/components/robots';
 import { TaskCancelButton } from 'rmf-dashboard-framework/components/tasks';
 import { useRmfApi } from 'rmf-dashboard-framework/hooks';
+import { getAtasAmrStatusStyle } from '../atas-amr-status-style';
 import '../styles/AtasAmrPage.css';
 
 interface AmrData {
@@ -120,51 +121,12 @@ export function AtasAmrPage(): JSX.Element {
   }, [rmfApi]);
 
   const getStatusStyle = (status?: Status): AmrStatusStyle => {
-    switch (status) {
-      case Status.Working:
-        return {
-          '--status-bg': '#22c55e',
-          '--status-text': '#fff',
-          '--status-border': '#16a34a',
-        };
-      case Status.Charging:
-        return {
-          '--status-bg': '#3b82f6',
-          '--status-text': '#fff',
-          '--status-border': '#2563eb',
-        };
-      case Status.Error:
-        return {
-          '--status-bg': '#ef4444',
-          '--status-text': '#fff',
-          '--status-border': '#dc2626',
-        };
-      case Status.Offline:
-      case Status.Uninitialized:
-        return {
-          '--status-bg': '#6b7280',
-          '--status-text': '#fff',
-          '--status-border': '#4b5563',
-        };
-      case Status.Idle:
-        return {
-          '--status-bg': '#fff',
-          '--status-text': '#111827',
-          '--status-border': '#9ca3af',
-        };
-      case Status.Shutdown:
-        return {
-          '--status-bg': '#111827',
-          '--status-text': '#fff',
-          '--status-border': '#374151',
-        };
-      default:
-        return {
-          '--status-bg': '#f59e0b',
-          '--status-text': '#111827',
-          '--status-border': '#d97706',
-        };
-    }
+    const statusStyle = getAtasAmrStatusStyle(status);
+    return {
+      '--status-bg': statusStyle.backgroundColor,
+      '--status-text': statusStyle.textColor,
+      '--status-border': statusStyle.borderColor,
+    };
   };
 
   const sortedAmrs = React.useMemo(
