@@ -1,5 +1,4 @@
 import { Box, styled, Typography } from '@mui/material';
-import { Line } from '@react-three/drei';
 import { Canvas, useLoader } from '@react-three/fiber';
 import { BuildingMap, FleetState, Level, Lift, type RobotState } from 'api-client';
 import Debug from 'debug';
@@ -26,6 +25,7 @@ import { RobotSummary } from '../robots/robot-summary';
 import { RobotTableData } from '../robots/robot-table-datagrid';
 import { CameraControl } from './camera-control';
 import { Door } from './door-three';
+import { ElectricTrajectory, type ElectricTrajectoryStyle } from './electric-trajectory';
 import { ReactThreeFiberImageMaker } from './image-maker';
 import { LayersController } from './layers-controller';
 import { Lifts } from './lift-three';
@@ -101,6 +101,7 @@ export interface MapProps {
     labelColor?: string;
     labelFontSize?: string;
   };
+  trajectoryStyle?: ElectricTrajectoryStyle;
   robotColorProvider?: (
     params: RobotColorProviderParams,
   ) => RobotColorProviderResult | string | undefined;
@@ -802,11 +803,10 @@ export const Map = styled((props: MapProps) => {
           })}
         {!disabledLayers['Trajectories'] &&
           trajectories.map((trajData) => (
-            <Line
+            <ElectricTrajectory
               key={trajData.trajectory.id}
-              points={trajData.trajectory.segments.map((seg) => new Vector3(seg.x[0], seg.x[1], 4))}
-              color={trajData.color}
-              linewidth={5}
+              trajectoryData={trajData}
+              style={props.trajectoryStyle}
             />
           ))}
         <ambientLight />

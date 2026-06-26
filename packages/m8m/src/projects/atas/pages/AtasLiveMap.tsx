@@ -100,6 +100,11 @@ export function AtasLiveMap({
     defaultZoom,
     defaultRobotZoom,
     defaultHiddenLayers,
+    trajectoryStyle: {
+      glowLineWidth: 14,
+      coreLineWidth: 6,
+      pulseLineWidth: 12,
+    },
     robotColorProvider,
   };
 
