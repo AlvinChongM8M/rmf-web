@@ -235,11 +235,11 @@ export function AtasHistoricalAlarmPage({
             <col style={{ width: '13%' }} />
             <col style={{ width: '10%' }} />
             <col style={{ width: '5%' }} />
-            <col style={{ width: '11%' }} />
-            <col style={{ width: '11%' }} />
+            <col style={{ width: '8%' }} />
+            <col style={{ width: '8%' }} />
             <col style={{ width: '16%' }} />
-            <col style={{ width: '3%' }} />
             <col style={{ width: '5%' }} />
+            <col style={{ width: '9%' }} />
           </colgroup>
           <thead>
             <tr>
