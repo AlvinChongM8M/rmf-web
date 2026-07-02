@@ -31,6 +31,7 @@ import { LayersController } from './layers-controller';
 import { Lifts } from './lift-three';
 import { RobotThree } from './robot-three';
 import { RobotData } from './robot-three-maker';
+import { type RobotRippleEffectStyle } from './robot-ripple-effect';
 import { ShapeThreeRendering } from './shape-three-rendering';
 import { TextThreeRendering } from './text-maker';
 import { findSceneBoundingBoxFromThreeFiber } from './utils';
@@ -102,6 +103,7 @@ export interface MapProps {
     labelFontSize?: string;
   };
   trajectoryStyle?: ElectricTrajectoryStyle;
+  robotRippleEffect?: RobotRippleEffectStyle;
   robotColorProvider?: (
     params: RobotColorProviderParams,
   ) => RobotColorProviderResult | string | undefined;
@@ -796,6 +798,7 @@ export const Map = styled((props: MapProps) => {
                     setSelectedRobot(robot);
                   }}
                   robotLabel={!disabledLayers['Robots labels']}
+                  rippleEffect={props.robotRippleEffect}
                 />
               );
             }

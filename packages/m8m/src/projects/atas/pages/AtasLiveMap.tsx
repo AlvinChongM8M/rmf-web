@@ -112,6 +112,16 @@ export function AtasLiveMap({
       conflictCoreColor: '#FF00FF',
       conflictPulseColor: '#FFEA00',
     },
+    robotRippleEffect: {
+      color: '#00F5FF',
+      radius: 0.78,
+      ringWidth: 0.055,
+      ringCount: 3,
+      minScale: 1,
+      maxScale: 2.35,
+      opacity: 0.85,
+      duration: 3.2,
+    },
     robotColorProvider,
   };
 

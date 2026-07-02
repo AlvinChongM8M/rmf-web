@@ -4,15 +4,23 @@ import React from 'react';
 import { Euler, Vector3 } from 'three';
 
 import { RobotData, RobotThreeMaker } from './robot-three-maker';
+import { type RobotRippleEffectStyle } from './robot-ripple-effect';
 
 interface RobotThreeProps {
   robot: RobotData;
   robotLocation: [number, number, number];
   onRobotClick?: (ev: ThreeEvent<MouseEvent>, robot: RobotData) => void;
   robotLabel: boolean;
+  rippleEffect?: RobotRippleEffectStyle;
 }
 
-export const RobotThree = ({ robot, robotLocation, onRobotClick, robotLabel }: RobotThreeProps) => {
+export const RobotThree = ({
+  robot,
+  robotLocation,
+  onRobotClick,
+  robotLabel,
+  rippleEffect,
+}: RobotThreeProps) => {
   const STANDAR_Z_POSITION = 5;
   const CIRCLE_SEGMENT = 64;
 
@@ -32,6 +40,7 @@ export const RobotThree = ({ robot, robotLocation, onRobotClick, robotLabel }: R
         circleSegment={CIRCLE_SEGMENT}
         fontPath={robotoFont}
         robotLabel={robotLabel}
+        rippleEffect={rippleEffect}
       />
     </React.Fragment>
   );

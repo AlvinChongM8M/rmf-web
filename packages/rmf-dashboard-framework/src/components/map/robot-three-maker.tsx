@@ -5,6 +5,7 @@ import React from 'react';
 import { Color, Euler, Texture, TextureLoader, Vector3 } from 'three';
 
 import { CircleShape } from './circle-shape';
+import { RobotRippleEffect, type RobotRippleEffectStyle } from './robot-ripple-effect';
 import { debounce } from './shape-three-rendering';
 import { TextThreeRendering } from './text-maker';
 
@@ -30,6 +31,7 @@ interface RobotThreeMakerProps {
   circleSegment: number;
   fontPath?: string;
   robotLabel: boolean;
+  rippleEffect?: RobotRippleEffectStyle;
 }
 
 interface RobotImageMakerProps extends MeshProps {
@@ -91,6 +93,7 @@ export const RobotThreeMaker = ({
   circleSegment,
   fontPath,
   robotLabel,
+  rippleEffect,
 }: RobotThreeMakerProps): JSX.Element => {
   const [isHovered, setIsHovered] = React.useState(false);
   const theme = useTheme();
@@ -133,6 +136,14 @@ export const RobotThreeMaker = ({
       ) : robotLabel ? (
         <TextThreeRendering position={[position.x, position.y, 1]} text={robot.name} />
       ) : null}
+      {rippleEffect && (
+        <RobotRippleEffect
+          position={position}
+          robotColor={robot.color}
+          outlineColor={robot.outlineColor}
+          style={rippleEffect}
+        />
+      )}
       {imageUrl ? (
         <RobotImageMaker
           imageUrl={imageUrl}
