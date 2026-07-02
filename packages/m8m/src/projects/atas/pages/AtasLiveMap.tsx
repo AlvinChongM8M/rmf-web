@@ -101,9 +101,16 @@ export function AtasLiveMap({
     defaultRobotZoom,
     defaultHiddenLayers,
     trajectoryStyle: {
-      glowLineWidth: 14,
+      glowLineWidth: 20,
       coreLineWidth: 6,
       pulseLineWidth: 12,
+      glowColor: '#147aff',
+      coreColor: '#FFFFFF',
+      pulseColor: '#00b3ff',
+
+      conflictGlowColor: '#FF003C',
+      conflictCoreColor: '#FF00FF',
+      conflictPulseColor: '#FFEA00',
     },
     robotColorProvider,
   };

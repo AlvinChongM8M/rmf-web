@@ -29,6 +29,7 @@ export interface ElectricTrajectoryStyle {
 interface ElectricTrajectoryProps {
   trajectoryData: TrajectoryData;
   style?: ElectricTrajectoryStyle;
+  lineWidthScale?: number;
 }
 
 type AnimatedLine = React.ElementRef<typeof Line>;
@@ -37,9 +38,12 @@ type AnimatedLineMaterial = { dashOffset?: number };
 export function ElectricTrajectory({
   trajectoryData,
   style,
+  lineWidthScale = 1,
 }: ElectricTrajectoryProps): JSX.Element | null {
   const pulseRef = React.useRef<AnimatedLine | null>(null);
 
+  const scaledLineWidth = (lineWidth: number) =>
+    Math.max(1, lineWidth * Math.min(2.5, Math.max(0.2, lineWidthScale)));
   const elevation = style?.elevation ?? 4;
   const isConflict = Boolean(trajectoryData.conflict);
   const variant = style?.variant ?? 'electric';
@@ -85,7 +89,7 @@ export function ElectricTrajectory({
       <Line
         points={points}
         color={pulseColor}
-        linewidth={style?.coreLineWidth ?? 5}
+        linewidth={scaledLineWidth(style?.coreLineWidth ?? 5)}
       />
     );
   }
@@ -95,7 +99,7 @@ export function ElectricTrajectory({
       <Line
         points={points}
         color={glowColor}
-        linewidth={style?.glowLineWidth ?? 9}
+        linewidth={scaledLineWidth(style?.glowLineWidth ?? 9)}
         transparent
         opacity={style?.glowOpacity ?? 0.42}
         depthWrite={false}
@@ -103,7 +107,7 @@ export function ElectricTrajectory({
       <Line
         points={points}
         color={coreColor}
-        linewidth={style?.coreLineWidth ?? 2.5}
+        linewidth={scaledLineWidth(style?.coreLineWidth ?? 2.5)}
         transparent
         opacity={style?.coreOpacity ?? 0.9}
         depthWrite={false}
@@ -112,7 +116,7 @@ export function ElectricTrajectory({
         ref={pulseRef}
         points={points}
         color={pulseColor}
-        linewidth={style?.pulseLineWidth ?? 4}
+        linewidth={scaledLineWidth(style?.pulseLineWidth ?? 4)}
         dashed
         dashSize={style?.dashSize ?? 0.8}
         gapSize={style?.gapSize ?? 1.8}

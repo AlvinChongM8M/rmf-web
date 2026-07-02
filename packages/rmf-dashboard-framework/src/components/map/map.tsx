@@ -807,6 +807,7 @@ export const Map = styled((props: MapProps) => {
               key={trajData.trajectory.id}
               trajectoryData={trajData}
               style={props.trajectoryStyle}
+              lineWidthScale={zoom / props.defaultZoom}
             />
           ))}
         <ambientLight />
