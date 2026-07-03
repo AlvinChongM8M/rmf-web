@@ -110,8 +110,8 @@ export function M8mLayout({
           <div
             style={{
               position: 'absolute',
-              right: 16,
-              bottom: 16,
+              right: 32,
+              bottom: 48,
               zIndex: 20,
             }}
           >
