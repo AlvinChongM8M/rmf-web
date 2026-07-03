@@ -44,9 +44,21 @@ const TrajectoryUpdateInterval = 2000;
 const colorManager = new ColorManager();
 
 const DEFAULT_ROBOT_SCALE = 0.003;
+type RobotLocation = [x: number, y: number, yaw: number, map: string];
 
 function getRobotId(fleetName: string, robotName: string): string {
   return `${fleetName}/${robotName}`;
+}
+
+function sameRobotLocation(left?: RobotLocation, right?: RobotLocation): boolean {
+  return Boolean(
+    left &&
+      right &&
+      left[0] === right[0] &&
+      left[1] === right[1] &&
+      left[2] === right[2] &&
+      left[3] === right[3],
+  );
 }
 
 export interface RobotColorProviderParams {
@@ -386,9 +398,8 @@ export const Map = styled((props: MapProps) => {
     props.robotColorProvider,
   ]);
 
-  const { current: robotLocations } = React.useRef<
-    Record<string, [number, number, number, string]>
-  >({});
+  const [robotLocations, setRobotLocations] = React.useState<Record<string, RobotLocation>>({});
+  const robotLocationsRef = React.useRef<Record<string, RobotLocation>>({});
   // updates the robot location
   React.useEffect(() => {
     const sub = rmfApi.fleetsObs
@@ -411,18 +422,21 @@ export const Map = styled((props: MapProps) => {
           console.warn('Map: Fail to update robot location (missing fleet name or robots)');
           return;
         }
+        const nextRobotLocations: Record<string, RobotLocation> = {};
         Object.entries(fleetState.robots).forEach(([robotName, robotState]) => {
           const robotId = getRobotId(fleetName, robotName);
           if (!robotState.location) {
             console.warn(`Map: Fail to update robot location for ${robotId} (missing location)`);
             return;
           }
-          robotLocations[robotId] = [
+          const nextRobotLocation: RobotLocation = [
             robotState.location.x,
             robotState.location.y,
             robotState.location.yaw,
             robotState.location.map,
           ];
+          robotLocationsRef.current[robotId] = nextRobotLocation;
+          nextRobotLocations[robotId] = nextRobotLocation;
           const existingRobot = robotsStore[robotId];
           if (existingRobot) {
             const defaultColor = existingRobot.baseColor ?? existingRobot.color;
@@ -470,9 +484,22 @@ export const Map = styled((props: MapProps) => {
             };
           });
         });
+        setRobotLocations((currentRobotLocations) => {
+          let hasChanges = false;
+          const updatedRobotLocations = { ...currentRobotLocations };
+
+          Object.entries(nextRobotLocations).forEach(([robotId, nextRobotLocation]) => {
+            if (!sameRobotLocation(currentRobotLocations[robotId], nextRobotLocation)) {
+              updatedRobotLocations[robotId] = nextRobotLocation;
+              hasChanges = true;
+            }
+          });
+
+          return hasChanges ? updatedRobotLocations : currentRobotLocations;
+        });
       });
     return () => sub.unsubscribe();
-  }, [rmfApi, robotLocations, robotsStore, props.robotColorProvider]);
+  }, [rmfApi, robotsStore, props.robotColorProvider]);
 
   //Accumulate values over time to persist between tabs
   React.useEffect(() => {
@@ -496,7 +523,7 @@ export const Map = styled((props: MapProps) => {
         }
         const [fleetName, robotName] = data;
         const robotId = getRobotId(fleetName, robotName);
-        const robotLocation = robotLocations[robotId];
+        const robotLocation = robotLocationsRef.current[robotId];
         if (!robotLocation) {
           console.warn(`Map: Failed to zoom to robot ${robotId} (robot location was not found)`);
           return;
