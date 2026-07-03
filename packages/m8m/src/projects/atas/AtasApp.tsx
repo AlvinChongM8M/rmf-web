@@ -143,6 +143,7 @@ export function AtasApp() {
                 rmfMapConfig={{
                   apiServerUrl: ATAS_API_SERVER_URL,
                   trajectoryServerUrl: ATAS_TRAJECTORY_SERVER_URL,
+                  defaultZoom: 35,
                 }}
               />
             </AtasPage>
