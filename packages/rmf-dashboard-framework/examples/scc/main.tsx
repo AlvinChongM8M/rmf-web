@@ -88,7 +88,7 @@ const mapL1App = createMapApp({
   attributionPrefix: 'M8M',
   defaultMapLevel: 'L1',
   defaultRobotZoom: 10,
-  defaultZoom: 4,
+  defaultZoom: 20,
   defaultHiddenLayers: [
     'Pickup & Dropoff labels',
     'Waypoint labels',   // leave this out to show waypoints by default
@@ -165,10 +165,20 @@ const robotsWorkspace: InitialWindow[] = [
 ];
 
 const multipurposeWorkspace: InitialWindow[] = [
-  { layout: { x: 0, y: 0, w: 7, h: 8 }, microApp: tasksApp },
-  { layout: { x: 8, y: 0, w: 5, h: 8 }, microApp: mapL1App },
-  { layout: { x: 0, y: 0, w: 6, h: 4 }, microApp: liftsApp },
-  { layout: { x: 8, y: 0, w: 6, h: 4 }, microApp: robotMutexGroupsApp, hideToolbar: false },
+  { layout: { x: 0, y: 0, w: 7, h: 3 }, microApp: tasksApp },
+  { layout: { x: 8, y: 0, w: 5, h: 3 }, microApp: mapL1App },
+  { layout: { x: 0, y: 0, w: 6, h: 2 }, microApp: liftsApp },
+  { layout: { x: 8, y: 0, w: 6, h: 2 }, microApp: robotMutexGroupsApp, hideToolbar: false },
+];
+
+const dashboarddWorkspace: InitialWindow[] = [
+  { layout: { x: 0, y: 0, w: 6, h: 1.4 }, microApp: robotsApp, hideToolbar: true },
+  { layout: { x: 7, y: 0, w: 6, h: 1.4 }, microApp: activeTasksApp, hideToolbar: true },
+  { layout: { x: 8, y: 0, w: 12, h: 4 }, microApp: mapL1App },
+];
+
+const fullTaskWorkspace: InitialWindow[] = [
+  { layout: { x: 0, y: 0, w: 12, h: 6 }, microApp: tasksApp },
 ];
 
 function openMB1AMES() {
@@ -182,10 +192,10 @@ function openLpierMES() {
 export default function App() {
   return (
     <RmfDashboard
-      apiServerUrl="http://localhost:8000"
-      trajectoryServerUrl="http://localhost:8006"
-      // apiServerUrl="http://10.160.55.13:8000"
-      // trajectoryServerUrl="http://10.160.55.13:8006"
+      // apiServerUrl="http://localhost:8000"
+      // trajectoryServerUrl="http://localhost:8006"
+      apiServerUrl="http://10.160.55.13:8000"
+      trajectoryServerUrl="http://10.160.55.13:8006"
 
       hideNewTaskButton={false}
       authenticator={new StubAuthenticator()}
@@ -263,7 +273,7 @@ export default function App() {
                 unix_millis_request_time: Date.now(),
               }}
             />
-
+            <span style={{ display: "inline-block", width: "10px" }} />
             <QuickDispatchButton
               confirm
               label="Transfer to MB1A"
@@ -278,6 +288,74 @@ export default function App() {
             </>
           ),
           element: <Workspace initialWindows={multipurposeWorkspace} />,
+        },
+
+        {
+          name: 'Dashboard',
+          route: 'dashboard',
+          tabGroup: 'dashboard',
+          tabActions: (
+            <>
+            <QuickDispatchButton
+              confirm
+              label="Transfer to LPier"
+              taskRequest={{
+                category: 'patrol',
+                description: { places: ['MB1A-load', 'Lpier-Unload'] },
+                labels: ['task_definition_id=patrol', 'destination=Lpier-Unload'],
+                unix_millis_earliest_start_time: 0,
+                unix_millis_request_time: Date.now(),
+              }}
+            />
+            <span style={{ display: "inline-block", width: "10px" }} />
+            <QuickDispatchButton
+              confirm
+              label="Transfer to MB1A"
+              taskRequest={{
+                category: 'patrol',
+                description: { places: ['Lpier-Load', 'MB1A-unload'] },
+                labels: ['task_definition_id=patrol', 'destination=MB1A-unload'],
+                unix_millis_earliest_start_time: 0,
+                unix_millis_request_time: Date.now(),
+              }}
+            />
+            </>
+          ),
+          element: <Workspace initialWindows={dashboarddWorkspace} />,
+        },
+
+        {
+          name: 'Task History',
+          route: 'dashboard/task-history',
+          tabGroup: 'dashboard',
+          tabActions: (
+            <>
+            <QuickDispatchButton
+              confirm
+              label="Transfer to LPier"
+              taskRequest={{
+                category: 'patrol',
+                description: { places: ['MB1A-load', 'Lpier-Unload'] },
+                labels: ['task_definition_id=patrol', 'destination=Lpier-Unload'],
+                unix_millis_earliest_start_time: 0,
+                unix_millis_request_time: Date.now(),
+              }}
+            />
+            <span style={{ display: "inline-block", width: "10px" }} />
+            <QuickDispatchButton
+              confirm
+              label="Transfer to MB1A"
+              taskRequest={{
+                category: 'patrol',
+                description: { places: ['Lpier-Load', 'MB1A-unload'] },
+                labels: ['task_definition_id=patrol', 'destination=MB1A-unload'],
+                unix_millis_earliest_start_time: 0,
+                unix_millis_request_time: Date.now(),
+              }}
+            />
+            </>
+          ),
+          element: <Workspace initialWindows={fullTaskWorkspace} />,
         },
 
         // LPier group — only these tabs appear in the AppBar when on a /lpier* route
@@ -295,7 +373,7 @@ export default function App() {
                 sx={{ position: 'relative', width: '100%', height: '61%', fontSize: 'clamp(32px,6vw, 96px)' }}
                 taskRequest={{
                   category: 'patrol',
-                  description: { places: ['Lpier-Load', 'MB1A-unload'] },
+                  description: { places: ['Lpier-wp27', 'Lpier-Load', 'MB1A-unload'] },
                   labels: ['task_definition_id=patrol', 'destination=MB1A-unload'],
                   unix_millis_earliest_start_time: 0,
                   unix_millis_request_time: Date.now(),
