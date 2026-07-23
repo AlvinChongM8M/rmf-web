@@ -197,7 +197,7 @@
 
 .m8m-alarmbar__table tbody .m8m-alarmbar__row--act-ack td,
 .m8m-alarmbar__row--act-ack .m8m-alarm-priority {
-  color: #fff;
+  color: #ef4444;
 }
 
 .m8m-alarmbar__table tbody .m8m-alarmbar__row--rcv-unack td,
