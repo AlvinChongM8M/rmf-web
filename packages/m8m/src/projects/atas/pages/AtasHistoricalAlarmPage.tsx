@@ -264,7 +264,7 @@ export function AtasHistoricalAlarmPage({
               </tr>
             ) : (
               sortedRows.map((row) => (
-                <tr key={row.event.id}>
+                <tr key={row.event.id} className={stateClass(row.state) || undefined}>
                   <td className="atas-history-datetime">
                     {formatAlarmDate(row.event.activation_time)}
                   </td>
@@ -282,7 +282,7 @@ export function AtasHistoricalAlarmPage({
                   <td>{row.event.alarm_code}</td>
                   <td>{row.event.alarm_name}</td>
                   <td>{row.event.value}</td>
-                  <td className={`atas-history-state ${stateClass(row.state)}`}>{row.state}</td>
+                  <td className="atas-history-state">{row.state}</td>
                 </tr>
               ))
             )}
