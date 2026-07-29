@@ -16,14 +16,14 @@ export function getAtasAmrStatusStyle(status?: Status | null): AtasAmrStatusStyl
         textColor: '#fff',
         borderColor: '#16a34a',
         mapColor: '#22c55e',
-        mapOutlineColor: '#16a34a',
+        mapOutlineColor: '#004f1d',
       };
     case Status.Charging:
       return {
         backgroundColor: '#00f0ff',
         textColor: '#000000',
         borderColor: '#1500ffd7',
-        mapColor: '#00f0ff',
+        mapColor: '#00b3ff',
         mapOutlineColor: '#1500ffd7',
       };
     case Status.Error:
