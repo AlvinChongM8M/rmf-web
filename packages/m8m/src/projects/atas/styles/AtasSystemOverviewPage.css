@@ -217,6 +217,21 @@
   border-radius: 2px;
 }
 
+.atas-battery-empty,
+.atas-battery-error {
+  padding: 8px 0;
+  font-size: 1.35vh;
+  text-align: center;
+}
+
+.atas-battery-empty {
+  color: var(--m8m-text-muted, #9ca3af);
+}
+
+.atas-battery-error {
+  color: #fca5a5;
+}
+
 .atas-battery-row {
   display: grid;
   grid-template-columns: 6.5vh 1fr 4.5vh;

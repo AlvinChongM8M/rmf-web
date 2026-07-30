@@ -1,4 +1,7 @@
-import React, { useState } from 'react';
+import type { FleetState } from 'api-client';
+import React, { useEffect, useState } from 'react';
+import { useRmfApi } from 'rmf-dashboard-framework/hooks';
+import { EMPTY, merge, switchMap, throttleTime } from 'rxjs';
 import '../styles/AtasSystemOverviewPage.css';
 import { AtasLiveMap, type AtasLiveMapProps } from './AtasLiveMap';
 
@@ -23,6 +26,8 @@ export interface AtasSystemPerformance {
 }
 
 export interface AtasAmrBattery {
+  /** Stable key used when the same robot name exists in multiple fleets. */
+  key?: string;
   id: string;
   /** 0–100 */
   level: number;
@@ -58,20 +63,66 @@ const DEFAULT_PERFORMANCE: AtasSystemPerformance = {
   queuedTasks: 0,
 };
 
-const DEFAULT_BATTERIES: AtasAmrBattery[] = [
-  { id: 'AMR-001', level: 78 },
-  { id: 'AMR-002', level: 42 },
-  { id: 'AMR-003', level: 72 },
-];
-
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+const BATTERY_UPDATE_THROTTLE_MS = 1000;
+const batteryCollator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
 
 function statePillClass(state: string): string {
   return state.toUpperCase() === 'RUNNING'
     ? 'atas-state-pill atas-state-pill--running'
     : 'atas-state-pill atas-state-pill--stopped';
+}
+
+function normalizeBatteryPercentage(battery?: number | null): number | null {
+  if (battery == null || !Number.isFinite(battery)) {
+    return null;
+  }
+
+  const percentage = battery <= 1 ? battery * 100 : battery;
+  return Math.round(Math.min(100, Math.max(0, percentage)));
+}
+
+function batteriesFromFleet(fleet: FleetState): AtasAmrBattery[] {
+  if (!fleet.name || !fleet.robots) {
+    return [];
+  }
+
+  return Object.entries(fleet.robots)
+    .flatMap(([robotName, robot]) => {
+      const level = normalizeBatteryPercentage(robot.battery);
+      if (level == null) {
+        return [];
+      }
+
+      return [{
+        key: `${fleet.name}/${robotName}`,
+        id: robot.name || robotName,
+        level,
+      }];
+    });
+}
+
+function sortBatteries(batteries: AtasAmrBattery[]): AtasAmrBattery[] {
+  return [...batteries].sort((left, right) => batteryCollator.compare(left.id, right.id));
+}
+
+function batteriesFromFleets(fleets: FleetState[]): AtasAmrBattery[] {
+  return sortBatteries(fleets.flatMap(batteriesFromFleet));
+}
+
+function mergeFleetBatteries(
+  currentBatteries: AtasAmrBattery[],
+  fleet: FleetState,
+): AtasAmrBattery[] {
+  const fleetKeyPrefix = `${fleet.name}/`;
+  const nextFleetBatteries = batteriesFromFleet(fleet);
+  return sortBatteries([
+    ...currentBatteries.filter((battery) => !battery.key?.startsWith(fleetKeyPrefix)),
+    ...nextFleetBatteries,
+  ]);
 }
 
 // ---------------------------------------------------------------------------
@@ -81,11 +132,85 @@ function statePillClass(state: string): string {
 export function AtasSystemOverviewPage({
   status = DEFAULT_STATUS,
   performance = DEFAULT_PERFORMANCE,
-  batteries = DEFAULT_BATTERIES,
+  batteries,
   rmfMapConfig,
   onStartFms,
 }: AtasSystemOverviewPageProps) {
+  const rmfApi = useRmfApi();
   const [batteryExpanded, setBatteryExpanded] = useState(true);
+  const [liveBatteries, setLiveBatteries] = useState<AtasAmrBattery[]>([]);
+  const [batteryLoading, setBatteryLoading] = useState(true);
+  const [batteryError, setBatteryError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (batteries) {
+      setBatteryLoading(false);
+      setBatteryError(null);
+      return;
+    }
+
+    let mounted = true;
+    setBatteryLoading(true);
+
+    const subscription = rmfApi.fleetsObs
+      .pipe(
+        switchMap((fleets) => {
+          if (mounted) {
+            setLiveBatteries(batteriesFromFleets(fleets));
+            setBatteryLoading(false);
+            setBatteryError(null);
+          }
+
+          const fleetNames = fleets
+            .map((fleet) => fleet.name)
+            .filter((fleetName): fleetName is string => Boolean(fleetName));
+
+          if (fleetNames.length === 0) {
+            return EMPTY;
+          }
+
+          return merge(
+            ...fleetNames.map((fleetName) =>
+              rmfApi
+                .getFleetStateObs(fleetName)
+                .pipe(
+                  throttleTime(BATTERY_UPDATE_THROTTLE_MS, undefined, {
+                    leading: true,
+                    trailing: true,
+                  }),
+                ),
+            ),
+          );
+        }),
+      )
+      .subscribe({
+        next: (fleet) => {
+          if (!mounted) {
+            return;
+          }
+          setLiveBatteries((currentBatteries) => mergeFleetBatteries(currentBatteries, fleet));
+          setBatteryLoading(false);
+          setBatteryError(null);
+        },
+        error: (err) => {
+          if (!mounted) {
+            return;
+          }
+          console.error('Failed to load AMR battery data:', err);
+          setBatteryError((err as Error).message);
+          setBatteryLoading(false);
+        },
+      });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, [batteries, rmfApi]);
+
+  const displayedBatteries = batteries ?? liveBatteries;
+  const showBatteryLoading = !batteries && batteryLoading;
+  const showBatteryError = !batteries && batteryError;
 
   return (
     <div className="atas-sysov">
@@ -177,15 +302,26 @@ export function AtasSystemOverviewPage({
 
           {batteryExpanded && (
             <div className="atas-battery-body">
-              {batteries.map((b) => (
-                <div className="atas-battery-row" key={b.id}>
-                  <span className="atas-battery-name">{b.id}</span>
-                  <div className="atas-battery-bar">
-                    <div className="atas-battery-bar__fill" style={{ width: `${b.level}%` }} />
+              {showBatteryLoading ? (
+                <div className="atas-battery-empty">Loading AMR battery data...</div>
+              ) : showBatteryError ? (
+                <div className="atas-battery-error">{showBatteryError}</div>
+              ) : displayedBatteries.length === 0 ? (
+                <div className="atas-battery-empty">No AMR battery data</div>
+              ) : (
+                displayedBatteries.map((battery) => (
+                  <div className="atas-battery-row" key={battery.key ?? battery.id}>
+                    <span className="atas-battery-name">{battery.id}</span>
+                    <div className="atas-battery-bar">
+                      <div
+                        className="atas-battery-bar__fill"
+                        style={{ width: `${battery.level}%` }}
+                      />
+                    </div>
+                    <span className="atas-battery-pct">{battery.level}%</span>
                   </div>
-                  <span className="atas-battery-pct">{b.level}%</span>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           )}
         </div>
