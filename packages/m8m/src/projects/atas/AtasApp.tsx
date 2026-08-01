@@ -164,16 +164,16 @@ export function AtasApp() {
         <Route
           path="/amr"
           element={
-            <AtasPage subtitle="AMR">
+            <AtasPage subtitle="AMR Monitoring">
               <AtasAmrPage />
             </AtasPage>
           }
         />
-        <Route path="/tus"              element={<AtasPage subtitle="TUS"><ComingSoon name="TUS" /></AtasPage>} />
+        <Route path="/tus"              element={<AtasPage subtitle="TUS Monitoring"><ComingSoon name="TUS" /></AtasPage>} />
         <Route
           path="/task"
           element={
-            <AtasPage subtitle="Task">
+            <AtasPage subtitle="Task Monitoring">
               <AtasTaskPage />
             </AtasPage>
           }
