@@ -3,7 +3,7 @@ import {
   ApiServerModelsRmfApiTaskStateStatus as Status,
   TaskStateInput as TaskState,
 } from 'api-client';
-import { TaskCancelButton } from 'rmf-dashboard-framework/components/tasks';
+import { parseTaskBookingLabels, TaskCancelButton } from 'rmf-dashboard-framework/components/tasks';
 import { useRmfApi } from 'rmf-dashboard-framework/hooks';
 import '../styles/AtasTaskPage.css';
 
@@ -38,6 +38,12 @@ interface TaskSort {
 }
 
 const taskCollator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+const PLACE_TAG_PATTERN = /\[place:(.*?)\]/g;
+
+interface TaskPhaseLocationSource {
+  detail?: unknown;
+  events?: Record<string, { detail?: unknown; name?: unknown }> | null;
+}
 
 function taskSortValue(task: TaskTableData, key: TaskSortKey): string | number | null {
   switch (key) {
@@ -77,6 +83,84 @@ function compareTasks(left: TaskTableData, right: TaskTableData, sort: TaskSort)
   return comparison * (sort.direction === 'asc' ? 1 : -1);
 }
 
+function locationOrFallback(location?: string | null): string {
+  const trimmedLocation = location?.trim();
+  return trimmedLocation || '-';
+}
+
+function placeFromText(value: unknown, preferLast = false): string | undefined {
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+
+  const matches = [...value.matchAll(PLACE_TAG_PATTERN)]
+    .map((match) => match[1]?.trim())
+    .filter((place): place is string => Boolean(place));
+
+  if (matches.length === 0) {
+    return undefined;
+  }
+
+  return preferLast ? matches[matches.length - 1] : matches[0];
+}
+
+function locationFromDetail(detail: unknown, preferLast = false): string | undefined {
+  if (!detail) {
+    return undefined;
+  }
+
+  const textPlace = placeFromText(detail, preferLast);
+  if (textPlace) {
+    return textPlace;
+  }
+
+  if (typeof detail === 'object' && 'location' in detail) {
+    const location = (detail as { location?: unknown }).location;
+    if (typeof location === 'string' && location.trim()) {
+      return location.trim();
+    }
+  }
+
+  return undefined;
+}
+
+function locationFromPhase(phase: TaskPhaseLocationSource | undefined, preferLast = false) {
+  const detailLocation = locationFromDetail(phase?.detail, preferLast);
+  if (detailLocation) {
+    return detailLocation;
+  }
+
+  const events = Object.values(phase?.events ?? {});
+  const orderedEvents = preferLast ? [...events].reverse() : events;
+  for (const event of orderedEvents) {
+    const eventLocation =
+      locationFromDetail(event.detail, preferLast) ?? placeFromText(event.name, preferLast);
+    if (eventLocation) {
+      return eventLocation;
+    }
+  }
+
+  return undefined;
+}
+
+function parseLocations(task: TaskState): { startLocation: string; endLocation: string } {
+  const labels = task.booking?.labels ? parseTaskBookingLabels(task.booking.labels) : {};
+  const phases = task.phases as Record<string, TaskPhaseLocationSource> | undefined;
+  const phaseEntries = Object.values(phases ?? {});
+  const firstPhase = phaseEntries[0];
+  const lastPhase = phaseEntries[phaseEntries.length - 1];
+
+  const startLocation =
+    labels.pickup ?? labels.start ?? labels.origin ?? locationFromPhase(firstPhase);
+  const endLocation =
+    labels.destination ?? labels.dropoff ?? labels.end ?? locationFromPhase(lastPhase, true);
+
+  return {
+    startLocation: locationOrFallback(startLocation),
+    endLocation: locationOrFallback(endLocation),
+  };
+}
+
 export function AtasTaskPage(): JSX.Element {
   const rmfApi = useRmfApi();
   const [tasks, setTasks] = React.useState<TaskTableData[]>([]);
@@ -85,31 +169,6 @@ export function AtasTaskPage(): JSX.Element {
 
   React.useEffect(() => {
     let mounted = true;
-
-    const parseLocations = (task: TaskState): { startLocation: string; endLocation: string } => {
-      let startLocation = '-';
-      let endLocation = '-';
-      const phases = task.phases as Record<string, { detail?: unknown }> | undefined;
-      if (!phases) {
-        return { startLocation, endLocation };
-      }
-      const phaseEntries = Object.values(phases);
-      if (phaseEntries.length === 0) {
-        return { startLocation, endLocation };
-      }
-
-      const firstPhaseDetail = String(phaseEntries[0]?.detail ?? '');
-      const lastPhaseDetail = String(phaseEntries[phaseEntries.length - 1]?.detail ?? '');
-      const startMatch = firstPhaseDetail.match(/\[place:(.*?)\]/);
-      if (startMatch) {
-        startLocation = startMatch[1];
-      }
-      const endMatch = lastPhaseDetail.match(/\[place:(.*?)\]/);
-      if (endMatch) {
-        endLocation = endMatch[1];
-      }
-      return { startLocation, endLocation };
-    };
 
     const refreshTasks = async () => {
       try {
@@ -123,7 +182,7 @@ export function AtasTaskPage(): JSX.Element {
           undefined,
           undefined,
           undefined,
-          100,
+          1000,
           0,
           '-unix_millis_start_time',
           undefined,
