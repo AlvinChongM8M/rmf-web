@@ -26,6 +26,10 @@ export const ATAS_ALARM_SERVER_URL =
   import.meta.env.VITE_ATAS_ALARM_SERVER_URL ?? 'http://localhost:10020';
 export const ATAS_ALARM_REFRESH_INTERVAL_MS = 2500;
 export const ATAS_ALARM_RECORD_LIMIT = 1000;
+export const ATAS_TUS_SERVER_URL =
+  import.meta.env.VITE_ATAS_TUS_SERVER_URL ?? 'http://localhost:10021';
+export const ATAS_TUS_EVENT_REFRESH_INTERVAL_MS = 5000;
+export const ATAS_TUS_EVENT_RECORD_LIMIT = 1000;
 export const ATAS_USERNAME = 'CAG_Admin';
 export const ATAS_USER_ROLE = 'Administrator';
 // Set VITE_ATAS_SHOW_NEW_TASK_BUTTON=false to hide the floating action without code changes.

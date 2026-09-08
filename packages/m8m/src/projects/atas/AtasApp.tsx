@@ -28,6 +28,9 @@ import {
   ATAS_SHOW_NEW_TASK_BUTTON,
   ATAS_TITLE,
   ATAS_TRAJECTORY_SERVER_URL,
+  ATAS_TUS_EVENT_RECORD_LIMIT,
+  ATAS_TUS_EVENT_REFRESH_INTERVAL_MS,
+  ATAS_TUS_SERVER_URL,
   ATAS_USERNAME,
   ATAS_USER_ROLE,
 } from './atas-config';
@@ -38,6 +41,7 @@ import { AtasAmrPage } from './pages/AtasAmrPage';
 import { AtasHistoricalAlarmPage } from './pages/AtasHistoricalAlarmPage';
 import { AtasSystemOverviewPage } from './pages/AtasSystemOverviewPage';
 import { AtasTaskPage } from './pages/AtasTaskPage';
+import { AtasTusPage } from './pages/AtasTusPage';
 
 // ---------------------------------------------------------------------------
 // Layout wrapper — shared by every ATAS screen
@@ -169,7 +173,18 @@ export function AtasApp() {
             </AtasPage>
           }
         />
-        <Route path="/tus"              element={<AtasPage subtitle="TUS Monitoring"><ComingSoon name="TUS" /></AtasPage>} />
+        <Route
+          path="/tus"
+          element={
+            <AtasPage subtitle="TUS Monitoring">
+              <AtasTusPage
+                serverUrl={ATAS_TUS_SERVER_URL}
+                eventRefreshIntervalMs={ATAS_TUS_EVENT_REFRESH_INTERVAL_MS}
+                eventRecordLimit={ATAS_TUS_EVENT_RECORD_LIMIT}
+              />
+            </AtasPage>
+          }
+        />
         <Route
           path="/task"
           element={

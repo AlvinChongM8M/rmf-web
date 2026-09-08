@@ -1,0 +1,277 @@
+.atas-tus-page {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 0 16px;
+  overflow: hidden;
+  background: var(--m8m-content-bg);
+}
+
+.atas-tus-content {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  gap: 12px;
+}
+
+.atas-tus-panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: 100%;
+  padding: 8px 10px;
+  overflow: hidden;
+  border: 1px solid var(--m8m-border);
+  border-radius: 8px;
+  background: var(--m8m-panel-bg);
+}
+
+.atas-tus-status-panel {
+  flex: 0 0 calc(60% - 6px);
+  transition: flex-basis 200ms ease;
+}
+
+.atas-tus-events-panel {
+  flex: 1 1 calc(40% - 6px);
+}
+
+.atas-tus-page--events-hidden .atas-tus-status-panel {
+  flex: 1 1 100%;
+}
+
+.atas-tus-panel-titlebar {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 3.2vh;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.atas-tus-panel-titlebar h2 {
+  margin: 0;
+  color: var(--m8m-text);
+  font-size: 1.7vh;
+  font-weight: 600;
+}
+
+.atas-tus-title-group {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 7px;
+}
+
+.atas-tus-record-count {
+  min-width: 2.2vh;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--m8m-panel-bg-alt);
+  color: var(--m8m-text-muted);
+  font-size: 1.2vh;
+  text-align: center;
+}
+
+.atas-tus-filter {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 6px;
+  color: var(--m8m-text-muted);
+  font-size: 1.25vh;
+}
+
+.atas-tus-filter input {
+  width: clamp(110px, 10vw, 190px);
+  height: 2.8vh;
+  min-height: 24px;
+  padding: 2px 8px;
+  border: 1px solid var(--m8m-border-alt);
+  border-radius: 4px;
+  outline: none;
+  background: var(--m8m-header-bg);
+  color: var(--m8m-text);
+  font: inherit;
+}
+
+.atas-tus-filter input:focus {
+  border-color: var(--m8m-primary);
+  box-shadow: 0 0 0 1px var(--m8m-primary);
+}
+
+.atas-tus-filter input::placeholder {
+  color: var(--m8m-text-muted);
+}
+
+.atas-tus-message {
+  flex: 0 0 auto;
+  margin: 0 0 6px;
+  font-size: 1.2vh;
+}
+
+.atas-tus-message--error {
+  color: #fca5a5;
+}
+
+.atas-tus-table-wrapper {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+
+.atas-tus-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  background: var(--m8m-panel-bg);
+  color: var(--m8m-text);
+  font-size: 1.4vh;
+}
+
+.atas-tus-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--m8m-border-alt);
+  background: var(--m8m-panel-bg-alt);
+  color: var(--m8m-text);
+  font-weight: 600;
+  text-align: left;
+}
+
+.atas-tus-table tbody td {
+  padding: 4px 8px;
+  overflow: hidden;
+  border-bottom: 1px solid var(--m8m-border-alt);
+  color: #d1d5db;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.atas-tus-table tbody tr:hover {
+  background: var(--m8m-panel-bg-alt);
+}
+
+.atas-tus-sort-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.atas-tus-sort-button:focus-visible {
+  outline: 2px solid var(--m8m-primary);
+  outline-offset: 2px;
+}
+
+.atas-tus-sort-indicator {
+  flex: 0 0 auto;
+  color: var(--m8m-text-muted);
+  font-size: 1.1vh;
+}
+
+.atas-tus-id {
+  color: var(--m8m-primary) !important;
+  font-weight: 600;
+}
+
+.atas-tus-datetime {
+  font-variant-numeric: tabular-nums;
+}
+
+.atas-tus-state {
+  font-weight: 600;
+}
+
+.atas-tus-state--yes {
+  color: #4ade80;
+}
+
+.atas-tus-state--no {
+  color: var(--m8m-text-muted);
+}
+
+.atas-tus-empty {
+  padding: 2rem !important;
+  color: var(--m8m-text-muted) !important;
+  text-align: center;
+}
+
+.atas-tus-log-toggle {
+  position: fixed;
+  top: 50%;
+  right: 0;
+  z-index: 19;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 5vh;
+  min-width: 34px;
+  height: 20vh;
+  min-height: 120px;
+  padding: 0;
+  transform: translateY(-50%);
+  border: 1px solid var(--m8m-border-alt);
+  border-right: 0;
+  border-left: 0.4vh solid var(--m8m-primary);
+  background: var(--m8m-header-bg);
+  color: #fff;
+  cursor: pointer;
+}
+
+.atas-tus-log-toggle:hover {
+  background: var(--m8m-panel-bg-alt);
+}
+
+.atas-tus-log-toggle:focus-visible {
+  outline: 2px solid var(--m8m-primary);
+  outline-offset: -3px;
+}
+
+.atas-tus-log-toggle span {
+  transform: rotate(180deg);
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  color: inherit;
+  font-size: 1.6vh;
+  font-weight: 700;
+  letter-spacing: 2px;
+  white-space: nowrap;
+}
+
+@media (max-width: 1100px) {
+  .atas-tus-content {
+    gap: 8px;
+  }
+
+  .atas-tus-status-panel {
+    flex-basis: calc(55% - 4px);
+  }
+
+  .atas-tus-events-panel {
+    flex-basis: calc(45% - 4px);
+  }
+
+  .atas-tus-table {
+    font-size: 1.25vh;
+  }
+
+  .atas-tus-table thead th,
+  .atas-tus-table tbody td {
+    padding-right: 5px;
+    padding-left: 5px;
+  }
+}
