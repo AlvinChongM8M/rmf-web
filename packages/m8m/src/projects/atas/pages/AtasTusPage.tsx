@@ -28,7 +28,13 @@ interface TusEvent {
   source: string;
 }
 
-type TusEventSortKey = 'timestamp' | 'tusName' | 'nickname' | 'eventName' | 'value';
+type TusEventSortKey =
+  | 'timestamp'
+  | 'tssName'
+  | 'tusName'
+  | 'nickname'
+  | 'eventName'
+  | 'value';
 
 interface TusEventSort {
   key: TusEventSortKey;
@@ -66,6 +72,8 @@ function eventSortValue(event: TusEvent, key: TusEventSortKey): string | number 
       const timestamp = Date.parse(event.timestamp);
       return Number.isNaN(timestamp) ? event.timestamp : timestamp;
     }
+    case 'tssName':
+      return event.tss_name ?? '';
     case 'tusName':
       return event.tus_name ?? '';
     case 'nickname':
@@ -241,6 +249,7 @@ export function AtasTusPage({
         }
         return [
           formatDateTime(event.timestamp),
+          event.tss_name,
           event.tus_name,
           event.nickname,
           event.event_name,
@@ -298,16 +307,18 @@ export function AtasTusPage({
           <div className="atas-tus-table-wrapper">
             <table className="atas-tus-table atas-tus-status-table">
               <colgroup>
-                <col style={{ width: '10%' }} />
-                <col style={{ width: '12%' }} />
-                <col style={{ width: '10%' }} />
-                <col style={{ width: '14%' }} />
+                <col style={{ width: '9%' }} />
+                <col style={{ width: '9%' }} />
+                <col style={{ width: '11%' }} />
+                <col style={{ width: '9%' }} />
+                <col style={{ width: '13%' }} />
+                <col style={{ width: '17%' }} />
                 <col style={{ width: '18%' }} />
-                <col style={{ width: '20%' }} />
-                <col style={{ width: '16%' }} />
+                <col style={{ width: '14%' }} />
               </colgroup>
               <thead>
                 <tr>
+                  <th>TSS Name</th>
                   <th>TUS ID</th>
                   <th>Nickname</th>
                   <th>Battery (%)</th>
@@ -320,13 +331,14 @@ export function AtasTusPage({
               <tbody>
                 {sortedTusNodes.length === 0 ? (
                   <tr>
-                    <td className="atas-tus-empty" colSpan={7}>
+                    <td className="atas-tus-empty" colSpan={8}>
                       {realtimeError ? 'No TUS real-time data available' : 'Waiting for TUS real-time data…'}
                     </td>
                   </tr>
                 ) : (
                   sortedTusNodes.map((node) => (
                     <tr key={node.id}>
+                      <td>{node.tss_name}</td>
                       <td className="atas-tus-id">{node.tus_name}</td>
                       <td>{displayText(node.nickname)}</td>
                       <td>{node.battery_percentage == null ? '-' : `${node.battery_percentage}%`}</td>
@@ -368,15 +380,17 @@ export function AtasTusPage({
             <div className="atas-tus-table-wrapper">
               <table className="atas-tus-table atas-tus-event-table">
                 <colgroup>
-                  <col style={{ width: '27%' }} />
+                  <col style={{ width: '24%' }} />
+                  <col style={{ width: '14%' }} />
+                  <col style={{ width: '14%' }} />
                   <col style={{ width: '16%' }} />
-                  <col style={{ width: '18%' }} />
-                  <col style={{ width: '23%' }} />
-                  <col style={{ width: '16%' }} />
+                  <col style={{ width: '20%' }} />
+                  <col style={{ width: '12%' }} />
                 </colgroup>
                 <thead>
                   <tr>
                     {sortHeader('Datetime', 'timestamp')}
+                    {sortHeader('TSS Name', 'tssName')}
                     {sortHeader('TUS ID', 'tusName')}
                     {sortHeader('Nickname', 'nickname')}
                     {sortHeader('Event Name', 'eventName')}
@@ -386,7 +400,7 @@ export function AtasTusPage({
                 <tbody>
                   {filteredEvents.length === 0 ? (
                     <tr>
-                      <td className="atas-tus-empty" colSpan={5}>
+                      <td className="atas-tus-empty" colSpan={6}>
                         {eventsLoading
                           ? 'Loading TUS events…'
                           : filter
@@ -398,6 +412,7 @@ export function AtasTusPage({
                     filteredEvents.map((event) => (
                       <tr key={event.id}>
                         <td className="atas-tus-datetime">{formatDateTime(event.timestamp)}</td>
+                        <td>{displayText(event.tss_name)}</td>
                         <td className="atas-tus-id">{displayText(event.tus_name)}</td>
                         <td>{displayText(event.nickname)}</td>
                         <td>{displayText(event.event_name)}</td>
