@@ -3,6 +3,11 @@ import {
   AtasTusNodeEditDialog,
   type TusNodeConfiguration,
 } from './AtasTusNodeEditDialog';
+import {
+  AtasTusWaypointDeleteDialog,
+  AtasTusWaypointFormDialog,
+  type TusRmfWaypointConfiguration,
+} from './AtasTusWaypointDialogs';
 import '../styles/AtasConfigurationPage.css';
 
 interface TusNetworkConfiguration {
@@ -11,17 +16,6 @@ interface TusNetworkConfiguration {
   from_tus_node_id: number;
   to_tus_node_id: number;
   distance_weight: number;
-  enabled: boolean;
-}
-
-interface TusRmfWaypointConfiguration {
-  id: number;
-  tus_node_id: number;
-  tss_name: string;
-  tus_name: string;
-  nickname: string | null;
-  waypoint_name: string;
-  action: string | null;
   enabled: boolean;
 }
 
@@ -68,6 +62,14 @@ export function AtasConfigurationPage({
   const [waypointsError, setWaypointsError] = React.useState<string | null>(null);
   const [selectedNode, setSelectedNode] = React.useState<TusNodeConfiguration | null>(null);
   const [nodeUpdateMessage, setNodeUpdateMessage] = React.useState<string | null>(null);
+  const [waypointDialogMode, setWaypointDialogMode] = React.useState<'add' | 'edit' | null>(
+    null,
+  );
+  const [selectedWaypoint, setSelectedWaypoint] =
+    React.useState<TusRmfWaypointConfiguration | null>(null);
+  const [deletingWaypoint, setDeletingWaypoint] =
+    React.useState<TusRmfWaypointConfiguration | null>(null);
+  const [waypointUpdateMessage, setWaypointUpdateMessage] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     const controller = new AbortController();
@@ -247,10 +249,21 @@ export function AtasConfigurationPage({
             <section className="atas-configuration-block">
               <div className="atas-configuration-header">
                 <h3>TUS RMF Waypoint Configuration</h3>
-                <button className="atas-configuration-action" type="button">
-                  Configure Waypoint
+                <button
+                  className="atas-configuration-action"
+                  type="button"
+                  onClick={() => {
+                    setWaypointUpdateMessage(null);
+                    setSelectedWaypoint(null);
+                    setWaypointDialogMode('add');
+                  }}
+                >
+                  Add Waypoint
                 </button>
               </div>
+              {waypointUpdateMessage && (
+                <div className="atas-configuration-success">{waypointUpdateMessage}</div>
+              )}
               {waypointsError && (
                 <div className="atas-configuration-error">
                   RMF waypoint configuration: {waypointsError}
@@ -259,13 +272,14 @@ export function AtasConfigurationPage({
               <div className="atas-configuration-table-wrapper">
                 <table className="atas-configuration-table atas-waypoint-table">
                   <colgroup>
-                    <col style={{ width: '10%' }} />
+                    <col style={{ width: '7%' }} />
+                    <col style={{ width: '11%' }} />
+                    <col style={{ width: '11%' }} />
                     <col style={{ width: '14%' }} />
-                    <col style={{ width: '14%' }} />
-                    <col style={{ width: '17%' }} />
-                    <col style={{ width: '21%' }} />
-                    <col style={{ width: '14%' }} />
-                    <col style={{ width: '10%' }} />
+                    <col style={{ width: '18%' }} />
+                    <col style={{ width: '15%' }} />
+                    <col style={{ width: '8%' }} />
+                    <col style={{ width: '16%' }} />
                   </colgroup>
                   <thead>
                     <tr>
@@ -274,14 +288,15 @@ export function AtasConfigurationPage({
                       <th>TUS Name</th>
                       <th>Nickname</th>
                       <th>RMF Waypoint</th>
-                      <th>Action</th>
+                      <th>Waypoint Action</th>
                       <th>Enabled</th>
+                      <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {sortedWaypoints.length === 0 ? (
                       <tr>
-                        <td className="atas-configuration-empty" colSpan={7}>
+                        <td className="atas-configuration-empty" colSpan={8}>
                           {waypointsLoading
                             ? 'Loading TUS RMF waypoints…'
                             : 'No TUS RMF waypoints configured'}
@@ -297,6 +312,31 @@ export function AtasConfigurationPage({
                           <td>{waypoint.waypoint_name}</td>
                           <td>{optionalText(waypoint.action)}</td>
                           <td>{waypoint.enabled ? 1 : 0}</td>
+                          <td>
+                            <div className="atas-configuration-row-actions">
+                              <button
+                                className="atas-configuration-edit-button"
+                                type="button"
+                                onClick={() => {
+                                  setWaypointUpdateMessage(null);
+                                  setSelectedWaypoint(waypoint);
+                                  setWaypointDialogMode('edit');
+                                }}
+                              >
+                                Edit
+                              </button>
+                              <button
+                                className="atas-configuration-delete-button"
+                                type="button"
+                                onClick={() => {
+                                  setWaypointUpdateMessage(null);
+                                  setDeletingWaypoint(waypoint);
+                                }}
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </td>
                         </tr>
                       ))
                     )}
@@ -388,6 +428,42 @@ export function AtasConfigurationPage({
             current.map((node) => (node.id === updatedNode.id ? updatedNode : node)),
           );
           setNodeUpdateMessage(updatedNode.tus_name + ' updated successfully.');
+        }}
+      />
+      <AtasTusWaypointFormDialog
+        mode={waypointDialogMode}
+        waypoint={selectedWaypoint}
+        nodes={sortedNodes}
+        serverUrl={normalizedServerUrl}
+        onClose={() => {
+          setWaypointDialogMode(null);
+          setSelectedWaypoint(null);
+        }}
+        onSaved={(savedWaypoint, mode) => {
+          setWaypoints((current) => {
+            const exists = current.some((waypoint) => waypoint.id === savedWaypoint.id);
+            return exists
+              ? current.map((waypoint) =>
+                  waypoint.id === savedWaypoint.id ? savedWaypoint : waypoint,
+                )
+              : [...current, savedWaypoint];
+          });
+          setWaypointUpdateMessage(
+            mode === 'add'
+              ? savedWaypoint.waypoint_name + ' added successfully.'
+              : savedWaypoint.waypoint_name + ' updated successfully.',
+          );
+        }}
+      />
+      <AtasTusWaypointDeleteDialog
+        waypoint={deletingWaypoint}
+        serverUrl={normalizedServerUrl}
+        onClose={() => setDeletingWaypoint(null)}
+        onDeleted={(waypointId) => {
+          setWaypoints((current) =>
+            current.filter((waypoint) => waypoint.id !== waypointId),
+          );
+          setWaypointUpdateMessage('RMF waypoint deleted successfully.');
         }}
       />
     </section>

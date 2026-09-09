@@ -236,7 +236,7 @@ export function AtasTusNodeEditDialog({
             <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
               Node details
             </Typography>
-            <div className="atas-node-edit-grid">
+            <div className="atas-configuration-dialog-grid">
               <TextField label="Node ID" value={node?.id ?? ''} InputProps={{ readOnly: true }} />
               <TextField
                 label="TSS Name"
@@ -269,7 +269,7 @@ export function AtasTusNodeEditDialog({
             <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
               Editable configuration
             </Typography>
-            <div className="atas-node-edit-grid">
+            <div className="atas-configuration-dialog-grid">
               <TextField
                 label="Nickname"
                 value={form.nickname}
