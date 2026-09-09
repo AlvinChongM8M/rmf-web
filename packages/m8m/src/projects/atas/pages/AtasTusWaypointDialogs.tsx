@@ -290,7 +290,7 @@ export function AtasTusWaypointFormDialog({
                 >
                   {nodes.map((node) => (
                     <MenuItem key={node.id} value={String(node.id)}>
-                      {node.tss_name} / {node.tus_name} — {displayText(node.nickname)}
+                      {displayText(node.nickname)} ({node.tss_name} / {node.tus_name})
                     </MenuItem>
                   ))}
                 </TextField>
