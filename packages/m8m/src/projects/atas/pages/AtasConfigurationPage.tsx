@@ -4,20 +4,17 @@ import {
   type TusNodeConfiguration,
 } from './AtasTusNodeEditDialog';
 import {
+  AtasTusNetworkDeleteDialog,
+  AtasTusNetworkFormDialog,
+  networkEndpointDisplayLabel,
+  type TusNetworkConfiguration,
+} from './AtasTusNetworkDialogs';
+import {
   AtasTusWaypointDeleteDialog,
   AtasTusWaypointFormDialog,
   type TusRmfWaypointConfiguration,
 } from './AtasTusWaypointDialogs';
 import '../styles/AtasConfigurationPage.css';
-
-interface TusNetworkConfiguration {
-  id: number;
-  network_name: string;
-  from_tus_node_id: number;
-  to_tus_node_id: number;
-  distance_weight: number;
-  enabled: boolean;
-}
 
 interface AtasConfigurationPageProps {
   serverUrl: string;
@@ -70,6 +67,14 @@ export function AtasConfigurationPage({
   const [deletingWaypoint, setDeletingWaypoint] =
     React.useState<TusRmfWaypointConfiguration | null>(null);
   const [waypointUpdateMessage, setWaypointUpdateMessage] = React.useState<string | null>(null);
+  const [networkDialogMode, setNetworkDialogMode] = React.useState<'add' | 'edit' | null>(
+    null,
+  );
+  const [selectedNetwork, setSelectedNetwork] =
+    React.useState<TusNetworkConfiguration | null>(null);
+  const [deletingNetwork, setDeletingNetwork] =
+    React.useState<TusNetworkConfiguration | null>(null);
+  const [networkUpdateMessage, setNetworkUpdateMessage] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     const controller = new AbortController();
@@ -350,10 +355,21 @@ export function AtasConfigurationPage({
           <section className="atas-configuration-block">
             <div className="atas-configuration-header">
               <h3>TUS Network Configuration</h3>
-              <button className="atas-configuration-action" type="button">
-                Configure Network
+              <button
+                className="atas-configuration-action"
+                type="button"
+                onClick={() => {
+                  setNetworkUpdateMessage(null);
+                  setSelectedNetwork(null);
+                  setNetworkDialogMode('add');
+                }}
+              >
+                Add Network
               </button>
             </div>
+            {networkUpdateMessage && (
+              <div className="atas-configuration-success">{networkUpdateMessage}</div>
+            )}
             {networksError && (
               <div className="atas-configuration-error">
                 Network configuration: {networksError}
@@ -361,27 +377,29 @@ export function AtasConfigurationPage({
             )}
             <div className="atas-configuration-table-wrapper">
               <table className="atas-configuration-table">
+                <colgroup>
+                  <col style={{ width: '11%' }} />
+                  <col style={{ width: '28%' }} />
+                  <col style={{ width: '28%' }} />
+                  <col style={{ width: '13%' }} />
+                  <col style={{ width: '20%' }} />
+                </colgroup>
                 <thead>
                   <tr>
                     <th>Network ID</th>
-                    <th>
-                      From Node
-                      <span>(Node ID)</span>
-                    </th>
-                    <th>
-                      To Node
-                      <span>(Node ID)</span>
-                    </th>
+                    <th>From Node</th>
+                    <th>To Node</th>
                     <th>
                       Distance
                       <span>(Weight)</span>
                     </th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {sortedNetworks.length === 0 ? (
                     <tr>
-                      <td className="atas-configuration-empty" colSpan={4}>
+                      <td className="atas-configuration-empty" colSpan={5}>
                         {networksLoading ? 'Loading TUS network…' : 'No TUS network configured'}
                       </td>
                     </tr>
@@ -389,9 +407,40 @@ export function AtasConfigurationPage({
                     sortedNetworks.map((network) => (
                       <tr key={network.id}>
                         <td>{network.id}</td>
-                        <td>{network.from_tus_node_id}</td>
-                        <td>{network.to_tus_node_id}</td>
+                        <td
+                          title={networkEndpointDisplayLabel(network, 'from', sortedNodes)}
+                        >
+                          {networkEndpointDisplayLabel(network, 'from', sortedNodes)}
+                        </td>
+                        <td title={networkEndpointDisplayLabel(network, 'to', sortedNodes)}>
+                          {networkEndpointDisplayLabel(network, 'to', sortedNodes)}
+                        </td>
                         <td>{network.distance_weight}</td>
+                        <td>
+                          <div className="atas-configuration-row-actions">
+                            <button
+                              className="atas-configuration-edit-button"
+                              type="button"
+                              onClick={() => {
+                                setNetworkUpdateMessage(null);
+                                setSelectedNetwork(network);
+                                setNetworkDialogMode('edit');
+                              }}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              className="atas-configuration-delete-button"
+                              type="button"
+                              onClick={() => {
+                                setNetworkUpdateMessage(null);
+                                setDeletingNetwork(network);
+                              }}
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </td>
                       </tr>
                     ))
                   )}
@@ -465,6 +514,41 @@ export function AtasConfigurationPage({
             current.filter((waypoint) => waypoint.id !== waypointId),
           );
           setWaypointUpdateMessage('RMF waypoint deleted successfully.');
+        }}
+      />
+      <AtasTusNetworkFormDialog
+        mode={networkDialogMode}
+        network={selectedNetwork}
+        nodes={sortedNodes}
+        serverUrl={normalizedServerUrl}
+        onClose={() => {
+          setNetworkDialogMode(null);
+          setSelectedNetwork(null);
+        }}
+        onSaved={(savedNetwork, mode) => {
+          setNetworks((current) => {
+            const exists = current.some((network) => network.id === savedNetwork.id);
+            return exists
+              ? current.map((network) =>
+                  network.id === savedNetwork.id ? savedNetwork : network,
+                )
+              : [...current, savedNetwork];
+          });
+          setNetworkUpdateMessage(
+            mode === 'add'
+              ? savedNetwork.network_name + ' added successfully.'
+              : savedNetwork.network_name + ' updated successfully.',
+          );
+        }}
+      />
+      <AtasTusNetworkDeleteDialog
+        network={deletingNetwork}
+        nodes={sortedNodes}
+        serverUrl={normalizedServerUrl}
+        onClose={() => setDeletingNetwork(null)}
+        onDeleted={(networkId) => {
+          setNetworks((current) => current.filter((network) => network.id !== networkId));
+          setNetworkUpdateMessage('TUS network deleted successfully.');
         }}
       />
     </section>
