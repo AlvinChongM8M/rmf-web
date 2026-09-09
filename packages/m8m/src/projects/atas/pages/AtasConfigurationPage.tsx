@@ -1,13 +1,9 @@
 import React from 'react';
+import {
+  AtasTusNodeEditDialog,
+  type TusNodeConfiguration,
+} from './AtasTusNodeEditDialog';
 import '../styles/AtasConfigurationPage.css';
-
-interface TusNodeConfiguration {
-  id: number;
-  tus_name: string;
-  role: string | null;
-  replenishment_priority: number | null;
-  in_operation: boolean;
-}
 
 interface TusNetworkConfiguration {
   id: number;
@@ -70,6 +66,8 @@ export function AtasConfigurationPage({
   const [nodesError, setNodesError] = React.useState<string | null>(null);
   const [networksError, setNetworksError] = React.useState<string | null>(null);
   const [waypointsError, setWaypointsError] = React.useState<string | null>(null);
+  const [selectedNode, setSelectedNode] = React.useState<TusNodeConfiguration | null>(null);
+  const [nodeUpdateMessage, setNodeUpdateMessage] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     const controller = new AbortController();
@@ -176,52 +174,66 @@ export function AtasConfigurationPage({
             <section className="atas-configuration-block">
               <div className="atas-configuration-header">
                 <h3>TUS Node Configuration</h3>
-                <button className="atas-configuration-action" type="button">
-                  Configure Node
-                </button>
               </div>
+              {nodeUpdateMessage && (
+                <div className="atas-configuration-success">{nodeUpdateMessage}</div>
+              )}
               {nodesError && (
                 <div className="atas-configuration-error">Node configuration: {nodesError}</div>
               )}
               <div className="atas-configuration-table-wrapper">
                 <table className="atas-configuration-table">
                   <colgroup>
-                    <col style={{ width: '10%' }} />
+                    <col style={{ width: '14%' }} />
                     <col style={{ width: '15%' }} />
                     <col style={{ width: '17%' }} />
-                    <col style={{ width: '38%' }} />
-                    <col style={{ width: '20%' }} />
+                    <col style={{ width: '12%' }} />
+                    <col style={{ width: '24%' }} />
+                    <col style={{ width: '10%' }} />
+                    <col style={{ width: '8%' }} />
                   </colgroup>
                   <thead>
                     <tr>
-                      <th>Node ID</th>
+                      <th>TSS Name</th>
                       <th>Node Name</th>
+                      <th>Nickname</th>
                       <th>Role</th>
                       <th>
                         Replenishment Priority
                         <span>(0 = Disable, 1 = Highest, 255 = Lowest)</span>
                       </th>
-                      <th>
-                        In Operation
-                        <span>(0 = No, 1 = Yes)</span>
-                      </th>
+                      <th>In Operation</th>
+                      <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {sortedNodes.length === 0 ? (
                       <tr>
-                        <td className="atas-configuration-empty" colSpan={5}>
+                        <td className="atas-configuration-empty" colSpan={7}>
                           {nodesLoading ? 'Loading TUS nodes…' : 'No TUS nodes configured'}
                         </td>
                       </tr>
                     ) : (
                       sortedNodes.map((node) => (
                         <tr key={node.id}>
-                          <td>{node.id}</td>
+                          <td>{node.tss_name}</td>
                           <td className="atas-configuration-name">{node.tus_name}</td>
+                          <td>{optionalText(node.nickname)}</td>
                           <td>{optionalText(node.role)}</td>
                           <td>{optionalText(node.replenishment_priority)}</td>
-                          <td>{node.in_operation ? 1 : 0}</td>
+                          <td>{node.in_operation ? 'Yes' : 'No'}</td>
+                          <td>
+                            <button
+                              className="atas-configuration-edit-button"
+                              type="button"
+                              onClick={() => {
+                                setNodeUpdateMessage(null);
+                                setSelectedNode(node);
+                              }}
+                            >
+                              Edit
+                            </button>
+                          </td>
                         </tr>
                       ))
                     )}
@@ -364,6 +376,18 @@ export function AtasConfigurationPage({
           </p>
         </section>
       </aside>
+
+      <AtasTusNodeEditDialog
+        node={selectedNode}
+        serverUrl={normalizedServerUrl}
+        onClose={() => setSelectedNode(null)}
+        onSaved={(updatedNode) => {
+          setNodes((current) =>
+            current.map((node) => (node.id === updatedNode.id ? updatedNode : node)),
+          );
+          setNodeUpdateMessage(updatedNode.tus_name + ' updated successfully.');
+        }}
+      />
     </section>
   );
 }

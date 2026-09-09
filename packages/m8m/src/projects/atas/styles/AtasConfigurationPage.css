@@ -106,9 +106,17 @@
 }
 
 .atas-configuration-action:focus-visible,
+.atas-configuration-edit-button:focus-visible,
 .atas-command-grid button:focus-visible {
   outline: 2px solid var(--m8m-primary);
   outline-offset: 2px;
+}
+
+.atas-configuration-success {
+  flex: 0 0 auto;
+  margin: 0 0 6px;
+  color: #4ade80;
+  font-size: 1.2vh;
 }
 
 .atas-configuration-error {
@@ -184,10 +192,38 @@
   font-weight: 600;
 }
 
+.atas-configuration-edit-button {
+  padding: 3px 10px;
+  border: 1px solid var(--m8m-primary);
+  border-radius: 999px;
+  background: var(--m8m-nav-active-bg);
+  color: var(--m8m-text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.atas-configuration-edit-button:hover {
+  background: var(--m8m-primary-hover);
+  color: var(--m8m-header-bg);
+}
+
 .atas-configuration-empty {
   padding: 2rem !important;
   color: var(--m8m-text-muted) !important;
   text-align: center;
+}
+
+.atas-node-edit-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 700px) {
+  .atas-node-edit-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .atas-command-panel {
