@@ -184,23 +184,23 @@ export function AtasConfigurationPage({
               <div className="atas-configuration-table-wrapper">
                 <table className="atas-configuration-table">
                   <colgroup>
-                    <col style={{ width: '14%' }} />
-                    <col style={{ width: '15%' }} />
-                    <col style={{ width: '17%' }} />
-                    <col style={{ width: '12%' }} />
-                    <col style={{ width: '24%' }} />
                     <col style={{ width: '10%' }} />
-                    <col style={{ width: '8%' }} />
+                    <col style={{ width: '10%' }} />
+                    <col style={{ width: '20%' }} />
+                    <col style={{ width: '16%' }} />
+                    <col style={{ width: '20%' }} />
+                    <col style={{ width: '13%' }} />
+                    <col style={{ width: '11%' }} />
                   </colgroup>
                   <thead>
                     <tr>
-                      <th>TSS Name</th>
-                      <th>Node Name</th>
+                      <th className="atas-configuration-compact-column">TSS Name</th>
+                      <th className="atas-configuration-compact-column">TUS ID</th>
                       <th>Nickname</th>
                       <th>Role</th>
-                      <th>
+                      <th className="atas-configuration-priority-column">
                         Replenishment Priority
-                        <span>(0 = Disable, 1 = Highest, 255 = Lowest)</span>
+                        <span>(0 Off · 1 High · 255 Low)</span>
                       </th>
                       <th>In Operation</th>
                       <th>Actions</th>
@@ -216,8 +216,10 @@ export function AtasConfigurationPage({
                     ) : (
                       sortedNodes.map((node) => (
                         <tr key={node.id}>
-                          <td>{node.tss_name}</td>
-                          <td className="atas-configuration-name">{node.tus_name}</td>
+                          <td className="atas-configuration-compact-column">{node.tss_name}</td>
+                          <td className="atas-configuration-name atas-configuration-compact-column">
+                            {node.tus_name}
+                          </td>
                           <td>{optionalText(node.nickname)}</td>
                           <td>{optionalText(node.role)}</td>
                           <td>{optionalText(node.replenishment_priority)}</td>

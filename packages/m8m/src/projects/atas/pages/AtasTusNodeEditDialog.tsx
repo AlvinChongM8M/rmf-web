@@ -244,7 +244,7 @@ export function AtasTusNodeEditDialog({
                 InputProps={{ readOnly: true }}
               />
               <TextField
-                label="Node Name"
+                label="TUS ID"
                 value={node?.tus_name ?? ''}
                 InputProps={{ readOnly: true }}
               />

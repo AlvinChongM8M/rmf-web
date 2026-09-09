@@ -163,11 +163,21 @@
   color: var(--m8m-text);
   font-weight: 600;
   text-align: left;
+  vertical-align: top;
 }
 
 .atas-configuration-table thead th span {
   display: block;
   font-weight: 400;
+}
+
+.atas-configuration-table .atas-configuration-compact-column {
+  white-space: nowrap;
+}
+
+.atas-configuration-table .atas-configuration-priority-column,
+.atas-configuration-table .atas-configuration-priority-column span {
+  white-space: nowrap;
 }
 
 .atas-configuration-table tbody td {
