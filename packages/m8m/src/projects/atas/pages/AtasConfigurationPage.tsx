@@ -18,6 +18,17 @@ interface TusNetworkConfiguration {
   enabled: boolean;
 }
 
+interface TusRmfWaypointConfiguration {
+  id: number;
+  tus_node_id: number;
+  tss_name: string;
+  tus_name: string;
+  nickname: string | null;
+  waypoint_name: string;
+  action: string | null;
+  enabled: boolean;
+}
+
 interface AtasConfigurationPageProps {
   serverUrl: string;
   refreshIntervalMs?: number;
@@ -52,10 +63,13 @@ export function AtasConfigurationPage({
   const normalizedServerUrl = React.useMemo(() => serverUrl.replace(/\/$/, ''), [serverUrl]);
   const [nodes, setNodes] = React.useState<TusNodeConfiguration[]>([]);
   const [networks, setNetworks] = React.useState<TusNetworkConfiguration[]>([]);
+  const [waypoints, setWaypoints] = React.useState<TusRmfWaypointConfiguration[]>([]);
   const [nodesLoading, setNodesLoading] = React.useState(true);
   const [networksLoading, setNetworksLoading] = React.useState(true);
+  const [waypointsLoading, setWaypointsLoading] = React.useState(true);
   const [nodesError, setNodesError] = React.useState<string | null>(null);
   const [networksError, setNetworksError] = React.useState<string | null>(null);
+  const [waypointsError, setWaypointsError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     const controller = new AbortController();
@@ -100,9 +114,30 @@ export function AtasConfigurationPage({
       }
     };
 
+    const refreshWaypoints = async () => {
+      try {
+        const data = await fetchConfiguration<TusRmfWaypointConfiguration[]>(
+          normalizedServerUrl + '/api/tus-rmf-waypoints?limit=1000&offset=0',
+          controller.signal,
+        );
+        setWaypoints(data);
+        setWaypointsError(null);
+      } catch (error) {
+        if ((error as Error).name !== 'AbortError') {
+          console.error('Failed to load TUS RMF waypoint configuration:', error);
+          setWaypointsError((error as Error).message);
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setWaypointsLoading(false);
+        }
+      }
+    };
+
     const refresh = () => {
       void refreshNodes();
       void refreshNetworks();
+      void refreshWaypoints();
     };
 
     refresh();
@@ -124,6 +159,10 @@ export function AtasConfigurationPage({
     () => [...networks].sort((left, right) => left.id - right.id),
     [networks],
   );
+  const sortedWaypoints = React.useMemo(
+    () => [...waypoints].sort((left, right) => left.id - right.id),
+    [waypoints],
+  );
 
   return (
     <section className="atas-configuration-page" aria-label="Configuration">
@@ -133,62 +172,125 @@ export function AtasConfigurationPage({
         </h2>
 
         <div className="atas-configuration-grid">
-          <section className="atas-configuration-block">
-            <div className="atas-configuration-header">
-              <h3>TUS Node Configuration</h3>
-              <button className="atas-configuration-action" type="button">
-                Configure Node
-              </button>
-            </div>
-            {nodesError && (
-              <div className="atas-configuration-error">Node configuration: {nodesError}</div>
-            )}
-            <div className="atas-configuration-table-wrapper">
-              <table className="atas-configuration-table">
-                <colgroup>
-                  <col style={{ width: '10%' }} />
-                  <col style={{ width: '15%' }} />
-                  <col style={{ width: '17%' }} />
-                  <col style={{ width: '38%' }} />
-                  <col style={{ width: '20%' }} />
-                </colgroup>
-                <thead>
-                  <tr>
-                    <th>Node ID</th>
-                    <th>Node Name</th>
-                    <th>Role</th>
-                    <th>
-                      Replenishment Priority
-                      <span>(0 = Disable, 1 = Highest, 255 = Lowest)</span>
-                    </th>
-                    <th>
-                      In Operation
-                      <span>(0 = No, 1 = Yes)</span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sortedNodes.length === 0 ? (
+          <div className="atas-configuration-left-stack">
+            <section className="atas-configuration-block">
+              <div className="atas-configuration-header">
+                <h3>TUS Node Configuration</h3>
+                <button className="atas-configuration-action" type="button">
+                  Configure Node
+                </button>
+              </div>
+              {nodesError && (
+                <div className="atas-configuration-error">Node configuration: {nodesError}</div>
+              )}
+              <div className="atas-configuration-table-wrapper">
+                <table className="atas-configuration-table">
+                  <colgroup>
+                    <col style={{ width: '10%' }} />
+                    <col style={{ width: '15%' }} />
+                    <col style={{ width: '17%' }} />
+                    <col style={{ width: '38%' }} />
+                    <col style={{ width: '20%' }} />
+                  </colgroup>
+                  <thead>
                     <tr>
-                      <td className="atas-configuration-empty" colSpan={5}>
-                        {nodesLoading ? 'Loading TUS nodes…' : 'No TUS nodes configured'}
-                      </td>
+                      <th>Node ID</th>
+                      <th>Node Name</th>
+                      <th>Role</th>
+                      <th>
+                        Replenishment Priority
+                        <span>(0 = Disable, 1 = Highest, 255 = Lowest)</span>
+                      </th>
+                      <th>
+                        In Operation
+                        <span>(0 = No, 1 = Yes)</span>
+                      </th>
                     </tr>
-                  ) : (
-                    sortedNodes.map((node) => (
-                      <tr key={node.id}>
-                        <td>{node.id}</td>
-                        <td className="atas-configuration-name">{node.tus_name}</td>
-                        <td>{optionalText(node.role)}</td>
-                        <td>{optionalText(node.replenishment_priority)}</td>
-                        <td>{node.in_operation ? 1 : 0}</td>
+                  </thead>
+                  <tbody>
+                    {sortedNodes.length === 0 ? (
+                      <tr>
+                        <td className="atas-configuration-empty" colSpan={5}>
+                          {nodesLoading ? 'Loading TUS nodes…' : 'No TUS nodes configured'}
+                        </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </section>
+                    ) : (
+                      sortedNodes.map((node) => (
+                        <tr key={node.id}>
+                          <td>{node.id}</td>
+                          <td className="atas-configuration-name">{node.tus_name}</td>
+                          <td>{optionalText(node.role)}</td>
+                          <td>{optionalText(node.replenishment_priority)}</td>
+                          <td>{node.in_operation ? 1 : 0}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section className="atas-configuration-block">
+              <div className="atas-configuration-header">
+                <h3>TUS RMF Waypoint Configuration</h3>
+                <button className="atas-configuration-action" type="button">
+                  Configure Waypoint
+                </button>
+              </div>
+              {waypointsError && (
+                <div className="atas-configuration-error">
+                  RMF waypoint configuration: {waypointsError}
+                </div>
+              )}
+              <div className="atas-configuration-table-wrapper">
+                <table className="atas-configuration-table atas-waypoint-table">
+                  <colgroup>
+                    <col style={{ width: '10%' }} />
+                    <col style={{ width: '14%' }} />
+                    <col style={{ width: '14%' }} />
+                    <col style={{ width: '17%' }} />
+                    <col style={{ width: '21%' }} />
+                    <col style={{ width: '14%' }} />
+                    <col style={{ width: '10%' }} />
+                  </colgroup>
+                  <thead>
+                    <tr>
+                      <th>Mapping ID</th>
+                      <th>TSS Name</th>
+                      <th>TUS Name</th>
+                      <th>Nickname</th>
+                      <th>RMF Waypoint</th>
+                      <th>Action</th>
+                      <th>Enabled</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sortedWaypoints.length === 0 ? (
+                      <tr>
+                        <td className="atas-configuration-empty" colSpan={7}>
+                          {waypointsLoading
+                            ? 'Loading TUS RMF waypoints…'
+                            : 'No TUS RMF waypoints configured'}
+                        </td>
+                      </tr>
+                    ) : (
+                      sortedWaypoints.map((waypoint) => (
+                        <tr key={waypoint.id}>
+                          <td>{waypoint.id}</td>
+                          <td>{waypoint.tss_name}</td>
+                          <td className="atas-configuration-name">{waypoint.tus_name}</td>
+                          <td>{optionalText(waypoint.nickname)}</td>
+                          <td>{waypoint.waypoint_name}</td>
+                          <td>{optionalText(waypoint.action)}</td>
+                          <td>{waypoint.enabled ? 1 : 0}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </div>
 
           <section className="atas-configuration-block">
             <div className="atas-configuration-header">

@@ -47,6 +47,19 @@
   overflow: hidden;
 }
 
+.atas-configuration-left-stack {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  gap: 10px;
+}
+
+.atas-configuration-left-stack > .atas-configuration-block {
+  flex: 1 1 0;
+}
+
 .atas-configuration-block {
   display: flex;
   flex: 1 1 0;
@@ -122,6 +135,10 @@
   background: var(--m8m-header-bg);
   color: var(--m8m-text);
   font-size: 1.35vh;
+}
+
+.atas-waypoint-table {
+  font-size: 1.2vh;
 }
 
 .atas-configuration-table thead th {
@@ -232,5 +249,9 @@
 
   .atas-configuration-grid {
     flex-direction: column;
+  }
+
+  .atas-configuration-left-stack {
+    flex-direction: row;
   }
 }
