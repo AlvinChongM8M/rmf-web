@@ -22,12 +22,12 @@
 }
 
 .atas-configuration-main {
-  flex: 0 0 calc(80% - 6px);
+  flex: 0 0 calc(84% - 6px);
   flex-direction: column;
 }
 
 .atas-command-center {
-  flex: 1 1 calc(20% - 6px);
+  flex: 1 1 calc(16% - 6px);
   flex-direction: column;
 }
 
@@ -49,11 +49,15 @@
 
 .atas-configuration-left-stack {
   display: flex;
-  flex: 1 1 0;
+  flex: 0 0 calc(60% - 5px);
   flex-direction: column;
   min-width: 0;
   min-height: 0;
   gap: 10px;
+}
+
+.atas-configuration-grid > .atas-configuration-block {
+  flex: 1 1 calc(40% - 5px);
 }
 
 .atas-configuration-left-stack > .atas-configuration-block {
