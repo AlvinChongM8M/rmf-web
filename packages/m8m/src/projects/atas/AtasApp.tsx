@@ -28,6 +28,7 @@ import {
   ATAS_SHOW_NEW_TASK_BUTTON,
   ATAS_TITLE,
   ATAS_TRAJECTORY_SERVER_URL,
+  ATAS_TUS_CONFIG_REFRESH_INTERVAL_MS,
   ATAS_TUS_EVENT_RECORD_LIMIT,
   ATAS_TUS_EVENT_REFRESH_INTERVAL_MS,
   ATAS_TUS_SERVER_URL,
@@ -38,6 +39,7 @@ import { AtasAlarmProvider, useAtasAlarms } from './AtasAlarmProvider';
 import { AtasRmfProviders } from './AtasRmfProviders';
 import { AtasActiveAlarmPage } from './pages/AtasActiveAlarmPage';
 import { AtasAmrPage } from './pages/AtasAmrPage';
+import { AtasConfigurationPage } from './pages/AtasConfigurationPage';
 import { AtasHistoricalAlarmPage } from './pages/AtasHistoricalAlarmPage';
 import { AtasSystemOverviewPage } from './pages/AtasSystemOverviewPage';
 import { AtasTaskPage } from './pages/AtasTaskPage';
@@ -208,7 +210,18 @@ export function AtasApp() {
         <Route path="/scheduler"        element={<AtasPage subtitle="Scheduler"><ComingSoon name="Scheduler" /></AtasPage>} />
         <Route path="/path-planning"    element={<AtasPage subtitle="Path Planning"><ComingSoon name="Path Planning" /></AtasPage>} />
         <Route path="/legend"           element={<AtasPage subtitle="Legend"><ComingSoon name="Legend" /></AtasPage>} />
-        <Route path="/maintenance"      element={<AtasPage subtitle="Maintenance"><ComingSoon name="Maintenance" /></AtasPage>} />
+        <Route
+          path="/configuration"
+          element={
+            <AtasPage subtitle="Configuration">
+              <AtasConfigurationPage
+                serverUrl={ATAS_TUS_SERVER_URL}
+                refreshIntervalMs={ATAS_TUS_CONFIG_REFRESH_INTERVAL_MS}
+              />
+            </AtasPage>
+          }
+        />
+        <Route path="/maintenance" element={<Navigate to="/configuration" replace />} />
         <Route path="/report"           element={<AtasPage subtitle="Report"><ComingSoon name="Report" /></AtasPage>} />
 
         {/* ── Fallback ── */}

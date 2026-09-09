@@ -1,0 +1,236 @@
+.atas-configuration-page {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  gap: 12px;
+  padding: 0 16px;
+  overflow: hidden;
+  background: var(--m8m-content-bg);
+}
+
+.atas-configuration-main,
+.atas-command-center {
+  display: flex;
+  height: 100%;
+  min-width: 0;
+  padding: 8px;
+  overflow: hidden;
+  border: 1px solid var(--m8m-border);
+  border-radius: 8px;
+  background: var(--m8m-header-bg);
+}
+
+.atas-configuration-main {
+  flex: 0 0 calc(80% - 6px);
+  flex-direction: column;
+}
+
+.atas-command-center {
+  flex: 1 1 calc(20% - 6px);
+  flex-direction: column;
+}
+
+.atas-configuration-main-title {
+  flex: 0 0 auto;
+  margin: 0 0 6px;
+  color: var(--m8m-text);
+  font-size: 1.8vh;
+  font-weight: 600;
+}
+
+.atas-configuration-grid {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.atas-configuration-block {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-width: 0;
+  padding: 8px;
+  overflow: hidden;
+  border: 1px solid var(--m8m-border);
+  border-radius: 6px;
+  background: var(--m8m-panel-bg);
+}
+
+.atas-configuration-header {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.atas-configuration-header h3 {
+  margin: 0;
+  color: var(--m8m-text);
+  font-size: 1.6vh;
+  font-weight: 600;
+}
+
+.atas-configuration-action {
+  flex: 0 0 auto;
+  padding: 4px 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--m8m-primary-hover);
+  color: var(--m8m-header-bg);
+  font-size: 1.4vh;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.atas-configuration-action:hover {
+  background: var(--m8m-primary);
+}
+
+.atas-configuration-action:focus-visible,
+.atas-command-grid button:focus-visible {
+  outline: 2px solid var(--m8m-primary);
+  outline-offset: 2px;
+}
+
+.atas-configuration-error {
+  flex: 0 0 auto;
+  margin: 0 0 6px;
+  overflow: hidden;
+  color: #fca5a5;
+  font-size: 1.2vh;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.atas-configuration-table-wrapper {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+
+.atas-configuration-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  background: var(--m8m-header-bg);
+  color: var(--m8m-text);
+  font-size: 1.35vh;
+}
+
+.atas-configuration-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--m8m-border-alt);
+  background: var(--m8m-panel-bg-alt);
+  color: var(--m8m-text);
+  font-weight: 600;
+  text-align: left;
+}
+
+.atas-configuration-table thead th span {
+  display: block;
+  font-weight: 400;
+}
+
+.atas-configuration-table tbody td {
+  padding: 4px 6px;
+  overflow: hidden;
+  border-bottom: 1px solid #111827;
+  color: #d1d5db;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.atas-configuration-table tbody tr:nth-child(odd) {
+  background: #030712;
+}
+
+.atas-configuration-table tbody tr:nth-child(even) {
+  background: var(--m8m-header-bg);
+}
+
+.atas-configuration-table tbody tr:hover {
+  background: var(--m8m-panel-bg-alt);
+}
+
+.atas-configuration-name {
+  color: var(--m8m-primary) !important;
+  font-weight: 600;
+}
+
+.atas-configuration-empty {
+  padding: 2rem !important;
+  color: var(--m8m-text-muted) !important;
+  text-align: center;
+}
+
+.atas-command-panel {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--m8m-border);
+  border-radius: 6px;
+  background: var(--m8m-panel-bg);
+}
+
+.atas-command-panel h2 {
+  margin: 0 0 8px;
+  color: var(--m8m-text);
+  font-size: 1.7vh;
+  font-weight: 600;
+}
+
+.atas-command-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.atas-command-grid button {
+  width: 100%;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 999px;
+  background: #1d4ed8;
+  color: var(--m8m-text);
+  font-size: 1.5vh;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+}
+
+.atas-command-grid button:hover {
+  background: #2563eb;
+}
+
+.atas-command-note {
+  margin: 8px 0 0;
+  color: var(--m8m-text-muted);
+  font-size: 1.2vh;
+}
+
+@media (max-width: 1100px) {
+  .atas-configuration-main {
+    flex-basis: calc(76% - 6px);
+  }
+
+  .atas-command-center {
+    flex-basis: calc(24% - 6px);
+  }
+
+  .atas-configuration-grid {
+    flex-direction: column;
+  }
+}

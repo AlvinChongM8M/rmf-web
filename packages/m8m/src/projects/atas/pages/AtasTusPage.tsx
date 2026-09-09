@@ -111,7 +111,7 @@ function emptyDurationMinutes(node: TusNode, events: TusEvent[], now: number): s
 }
 
 function websocketUrl(serverUrl: string): string {
-  const url = new URL(serverUrl);
+  const url = new URL(serverUrl, window.location.origin);
   url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
   url.pathname = `${url.pathname.replace(/\/$/, '')}/api/tus`;
   url.search = '';

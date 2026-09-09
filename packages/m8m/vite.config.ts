@@ -7,5 +7,13 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 5174,
+    proxy: {
+      '/tus-service': {
+        target: 'http://localhost:10021',
+        changeOrigin: true,
+        ws: true,
+        rewrite: (path) => path.replace(/^\/tus-service/, ''),
+      },
+    },
   },
 });

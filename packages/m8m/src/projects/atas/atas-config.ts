@@ -27,9 +27,10 @@ export const ATAS_ALARM_SERVER_URL =
 export const ATAS_ALARM_REFRESH_INTERVAL_MS = 2500;
 export const ATAS_ALARM_RECORD_LIMIT = 1000;
 export const ATAS_TUS_SERVER_URL =
-  import.meta.env.VITE_ATAS_TUS_SERVER_URL ?? 'http://localhost:10021';
+  import.meta.env.VITE_ATAS_TUS_SERVER_URL ?? '/tus-service';
 export const ATAS_TUS_EVENT_REFRESH_INTERVAL_MS = 5000;
 export const ATAS_TUS_EVENT_RECORD_LIMIT = 1000;
+export const ATAS_TUS_CONFIG_REFRESH_INTERVAL_MS = 5000;
 export const ATAS_USERNAME = 'CAG_Admin';
 export const ATAS_USER_ROLE = 'Administrator';
 // Set VITE_ATAS_SHOW_NEW_TASK_BUTTON=false to hide the floating action without code changes.
@@ -50,7 +51,7 @@ export const ATAS_NAV_ITEMS: M8mNavItem[] = [
   { key: 'sch',    label: 'SCH',    route: '/scheduler',         iconSrc: '/assets/img/icons/schedular_icon.png' },
   { key: 'path',   label: 'PATH',   route: '/path-planning',     iconSrc: '/assets/img/icons/path_planning.png' },
   { key: 'legend', label: 'LEG',    route: '/legend',            iconSrc: '/assets/img/icons/legend_icon.png' },
-  { key: 'mnt',    label: 'MNT',    route: '/maintenance',       iconSrc: '/assets/img/icons/configuration_icon.png' },
+  { key: 'mnt',    label: 'MNT',    route: '/configuration',     iconSrc: '/assets/img/icons/configuration_icon.png' },
   { key: 'report', label: 'RPT',    route: '/report',            iconSrc: '/assets/img/icons/generate_report_icon.png' },
   { key: 'logout', label: 'LOGOUT', route: '/logout', isLogout: true, iconSrc: '/assets/img/icons/logout_icon.png' },
 ];
