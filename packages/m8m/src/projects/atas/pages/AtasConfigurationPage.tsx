@@ -272,20 +272,18 @@ export function AtasConfigurationPage({
               <div className="atas-configuration-table-wrapper">
                 <table className="atas-configuration-table atas-waypoint-table">
                   <colgroup>
-                    <col style={{ width: '7%' }} />
-                    <col style={{ width: '11%' }} />
-                    <col style={{ width: '11%' }} />
-                    <col style={{ width: '14%' }} />
+                    <col style={{ width: '10%' }} />
+                    <col style={{ width: '10%' }} />
+                    <col style={{ width: '17%' }} />
+                    <col style={{ width: '22%' }} />
                     <col style={{ width: '18%' }} />
-                    <col style={{ width: '15%' }} />
-                    <col style={{ width: '8%' }} />
-                    <col style={{ width: '16%' }} />
+                    <col style={{ width: '9%' }} />
+                    <col style={{ width: '14%' }} />
                   </colgroup>
                   <thead>
                     <tr>
-                      <th>Mapping ID</th>
-                      <th>TSS Name</th>
-                      <th>TUS Name</th>
+                      <th className="atas-configuration-compact-column">TSS Name</th>
+                      <th className="atas-configuration-compact-column">TUS ID</th>
                       <th>Nickname</th>
                       <th>RMF Waypoint</th>
                       <th>Waypoint Action</th>
@@ -296,7 +294,7 @@ export function AtasConfigurationPage({
                   <tbody>
                     {sortedWaypoints.length === 0 ? (
                       <tr>
-                        <td className="atas-configuration-empty" colSpan={8}>
+                        <td className="atas-configuration-empty" colSpan={7}>
                           {waypointsLoading
                             ? 'Loading TUS RMF waypoints…'
                             : 'No TUS RMF waypoints configured'}
@@ -305,13 +303,16 @@ export function AtasConfigurationPage({
                     ) : (
                       sortedWaypoints.map((waypoint) => (
                         <tr key={waypoint.id}>
-                          <td>{waypoint.id}</td>
-                          <td>{waypoint.tss_name}</td>
-                          <td className="atas-configuration-name">{waypoint.tus_name}</td>
+                          <td className="atas-configuration-compact-column">
+                            {waypoint.tss_name}
+                          </td>
+                          <td className="atas-configuration-name atas-configuration-compact-column">
+                            {waypoint.tus_name}
+                          </td>
                           <td>{optionalText(waypoint.nickname)}</td>
                           <td>{waypoint.waypoint_name}</td>
                           <td>{optionalText(waypoint.action)}</td>
-                          <td>{waypoint.enabled ? 1 : 0}</td>
+                          <td>{waypoint.enabled ? 'Yes' : 'No'}</td>
                           <td>
                             <div className="atas-configuration-row-actions">
                               <button
