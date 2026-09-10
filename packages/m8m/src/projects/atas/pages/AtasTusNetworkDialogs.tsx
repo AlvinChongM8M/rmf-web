@@ -24,6 +24,7 @@ export interface TusNetworkConfiguration {
   to_tus_name?: string;
   to_nickname?: string | null;
   distance_weight: number;
+  bidirectional: boolean;
   enabled: boolean;
 }
 
@@ -51,6 +52,7 @@ interface NetworkForm {
   fromTusNodeId: string;
   toTusNodeId: string;
   distanceWeight: string;
+  bidirectional: boolean;
   enabled: boolean;
 }
 
@@ -59,6 +61,7 @@ interface NetworkWriteRequest {
   from_tus_node_id: number;
   to_tus_node_id: number;
   distance_weight: number;
+  bidirectional: boolean;
   enabled: boolean;
 }
 
@@ -67,6 +70,7 @@ const EMPTY_FORM: NetworkForm = {
   fromTusNodeId: '',
   toTusNodeId: '',
   distanceWeight: '1',
+  bidirectional: true,
   enabled: true,
 };
 
@@ -106,6 +110,7 @@ function formFromNetwork(network: TusNetworkConfiguration): NetworkForm {
     fromTusNodeId: String(network.from_tus_node_id),
     toTusNodeId: String(network.to_tus_node_id),
     distanceWeight: String(network.distance_weight),
+    bidirectional: network.bidirectional,
     enabled: network.enabled,
   };
 }
@@ -155,6 +160,11 @@ function NetworkDetails({
       <TextField
         label="Distance Weight"
         value={network.distance_weight}
+        InputProps={{ readOnly: true }}
+      />
+      <TextField
+        label="Bidirectional"
+        value={network.bidirectional ? 'Yes' : 'No'}
         InputProps={{ readOnly: true }}
       />
       <TextField
@@ -271,6 +281,7 @@ export function AtasTusNetworkFormDialog({
       from_tus_node_id: fromTusNodeId,
       to_tus_node_id: toTusNodeId,
       distance_weight: distanceWeight,
+      bidirectional: form.bidirectional,
       enabled: form.enabled,
     });
     setError(null);
@@ -375,6 +386,17 @@ export function AtasTusNetworkFormDialog({
                 onChange={(event) => updateForm('distanceWeight', event.target.value)}
                 inputProps={{ min: 0, step: 'any' }}
               />
+              <TextField
+                select
+                label="Bidirectional"
+                value={form.bidirectional ? 'yes' : 'no'}
+                onChange={(event) =>
+                  updateForm('bidirectional', event.target.value === 'yes')
+                }
+              >
+                <MenuItem value="yes">Yes</MenuItem>
+                <MenuItem value="no">No</MenuItem>
+              </TextField>
               <TextField
                 select
                 label="Enabled"

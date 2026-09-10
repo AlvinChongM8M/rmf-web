@@ -38,7 +38,12 @@ type WaypointSortKey =
   | 'waypointName'
   | 'waypointAction'
   | 'enabled';
-type NetworkSortKey = 'networkId' | 'fromNode' | 'toNode' | 'distanceWeight';
+type NetworkSortKey =
+  | 'networkId'
+  | 'fromNode'
+  | 'toNode'
+  | 'distanceWeight'
+  | 'bidirectional';
 
 interface ConfigurationSort<K> {
   key: K;
@@ -281,6 +286,8 @@ export function AtasConfigurationPage({
                 return networkEndpointDisplayLabel(network, 'to', nodes);
               case 'distanceWeight':
                 return network.distance_weight;
+              case 'bidirectional':
+                return network.bidirectional;
             }
           };
           const comparison = compareConfigurationValues(
@@ -612,11 +619,12 @@ export function AtasConfigurationPage({
             <div className="atas-configuration-table-wrapper">
               <table className="atas-configuration-table">
                 <colgroup>
+                  <col style={{ width: '9%' }} />
+                  <col style={{ width: '25%' }} />
+                  <col style={{ width: '25%' }} />
                   <col style={{ width: '11%' }} />
-                  <col style={{ width: '28%' }} />
-                  <col style={{ width: '28%' }} />
-                  <col style={{ width: '13%' }} />
-                  <col style={{ width: '20%' }} />
+                  <col style={{ width: '12%' }} />
+                  <col style={{ width: '18%' }} />
                 </colgroup>
                 <thead>
                   <tr>
@@ -651,13 +659,20 @@ export function AtasConfigurationPage({
                       networkSort,
                       setNetworkSort,
                     )}
+                    {sortHeader(
+                      'Bidirectional',
+                      'Bidirectional',
+                      'bidirectional',
+                      networkSort,
+                      setNetworkSort,
+                    )}
                     <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {sortedNetworks.length === 0 ? (
                     <tr>
-                      <td className="atas-configuration-empty" colSpan={5}>
+                      <td className="atas-configuration-empty" colSpan={6}>
                         {networksLoading ? 'Loading TUS network…' : 'No TUS network configured'}
                       </td>
                     </tr>
@@ -674,6 +689,7 @@ export function AtasConfigurationPage({
                           {networkEndpointDisplayLabel(network, 'to', sortedNodes)}
                         </td>
                         <td>{network.distance_weight}</td>
+                        <td>{network.bidirectional ? 'Yes' : 'No'}</td>
                         <td>
                           <div className="atas-configuration-row-actions">
                             <button
