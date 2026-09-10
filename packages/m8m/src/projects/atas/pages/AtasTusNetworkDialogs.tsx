@@ -70,6 +70,11 @@ const EMPTY_FORM: NetworkForm = {
   enabled: true,
 };
 
+const nodeLabelCollator = new Intl.Collator(undefined, {
+  numeric: true,
+  sensitivity: 'base',
+});
+
 function displayText(value: string | null | undefined): string {
   return value?.trim() || '-';
 }
@@ -174,6 +179,17 @@ export function AtasTusNetworkFormDialog({
   const [confirmationOpen, setConfirmationOpen] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const sortedNodes = React.useMemo(
+    () =>
+      [...nodes].sort((left, right) => {
+        const comparison = nodeLabelCollator.compare(
+          tusNodeDisplayLabel(left),
+          tusNodeDisplayLabel(right),
+        );
+        return comparison === 0 ? left.id - right.id : comparison;
+      }),
+    [nodes],
+  );
 
   React.useEffect(() => {
     if (!mode) {
@@ -184,8 +200,12 @@ export function AtasTusNetworkFormDialog({
         ? formFromNetwork(network)
         : {
             ...EMPTY_FORM,
-            fromTusNodeId: nodes[0] ? String(nodes[0].id) : '',
-            toTusNodeId: nodes[1] ? String(nodes[1].id) : nodes[0] ? String(nodes[0].id) : '',
+            fromTusNodeId: sortedNodes[0] ? String(sortedNodes[0].id) : '',
+            toTusNodeId: sortedNodes[1]
+              ? String(sortedNodes[1].id)
+              : sortedNodes[0]
+                ? String(sortedNodes[0].id)
+                : '',
           },
     );
     setPendingRequest(null);
@@ -195,15 +215,17 @@ export function AtasTusNetworkFormDialog({
   }, [mode, network]);
 
   React.useEffect(() => {
-    if (mode !== 'add' || form.fromTusNodeId || !nodes[0]) {
+    if (mode !== 'add' || form.fromTusNodeId || !sortedNodes[0]) {
       return;
     }
     setForm((current) => ({
       ...current,
-      fromTusNodeId: String(nodes[0].id),
-      toTusNodeId: nodes[1] ? String(nodes[1].id) : String(nodes[0].id),
+      fromTusNodeId: String(sortedNodes[0].id),
+      toTusNodeId: sortedNodes[1]
+        ? String(sortedNodes[1].id)
+        : String(sortedNodes[0].id),
     }));
-  }, [form.fromTusNodeId, mode, nodes]);
+  }, [form.fromTusNodeId, mode, sortedNodes]);
 
   const updateForm = <K extends keyof NetworkForm>(
     key: K,
@@ -326,7 +348,7 @@ export function AtasTusNetworkFormDialog({
                 value={form.fromTusNodeId}
                 onChange={(event) => updateForm('fromTusNodeId', event.target.value)}
               >
-                {nodes.map((node) => (
+                {sortedNodes.map((node) => (
                   <MenuItem key={node.id} value={String(node.id)}>
                     {tusNodeDisplayLabel(node)}
                   </MenuItem>
@@ -339,7 +361,7 @@ export function AtasTusNetworkFormDialog({
                 value={form.toTusNodeId}
                 onChange={(event) => updateForm('toTusNodeId', event.target.value)}
               >
-                {nodes.map((node) => (
+                {sortedNodes.map((node) => (
                   <MenuItem key={node.id} value={String(node.id)}>
                     {tusNodeDisplayLabel(node)}
                   </MenuItem>
