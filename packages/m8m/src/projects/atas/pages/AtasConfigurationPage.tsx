@@ -21,10 +21,96 @@ interface AtasConfigurationPageProps {
   refreshIntervalMs?: number;
 }
 
+type SortDirection = 'asc' | 'desc';
+type ConfigurationSortValue = string | number | boolean | null | undefined;
+
+type NodeSortKey =
+  | 'tssName'
+  | 'tusName'
+  | 'nickname'
+  | 'role'
+  | 'replenishmentPriority'
+  | 'inOperation';
+type WaypointSortKey =
+  | 'tssName'
+  | 'tusName'
+  | 'nickname'
+  | 'waypointName'
+  | 'waypointAction'
+  | 'enabled';
+type NetworkSortKey = 'networkId' | 'fromNode' | 'toNode' | 'distanceWeight';
+
+interface ConfigurationSort<K> {
+  key: K;
+  direction: SortDirection;
+}
+
 const configurationCollator = new Intl.Collator(undefined, {
   numeric: true,
   sensitivity: 'base',
 });
+
+function compareConfigurationValues(
+  left: ConfigurationSortValue,
+  right: ConfigurationSortValue,
+  direction: SortDirection,
+): number {
+  if (left == null && right == null) return 0;
+  if (left == null) return 1;
+  if (right == null) return -1;
+
+  const comparison =
+    typeof left === 'number' && typeof right === 'number'
+      ? left - right
+      : typeof left === 'boolean' && typeof right === 'boolean'
+        ? Number(left) - Number(right)
+        : configurationCollator.compare(String(left), String(right));
+  return comparison * (direction === 'asc' ? 1 : -1);
+}
+
+function nextSort<K>(current: ConfigurationSort<K>, key: K): ConfigurationSort<K> {
+  return {
+    key,
+    direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc',
+  };
+}
+
+function nodeSortValue(node: TusNodeConfiguration, key: NodeSortKey): ConfigurationSortValue {
+  switch (key) {
+    case 'tssName':
+      return node.tss_name;
+    case 'tusName':
+      return node.tus_name;
+    case 'nickname':
+      return node.nickname;
+    case 'role':
+      return node.role;
+    case 'replenishmentPriority':
+      return node.replenishment_priority;
+    case 'inOperation':
+      return node.in_operation;
+  }
+}
+
+function waypointSortValue(
+  waypoint: TusRmfWaypointConfiguration,
+  key: WaypointSortKey,
+): ConfigurationSortValue {
+  switch (key) {
+    case 'tssName':
+      return waypoint.tss_name;
+    case 'tusName':
+      return waypoint.tus_name;
+    case 'nickname':
+      return waypoint.nickname;
+    case 'waypointName':
+      return waypoint.waypoint_name;
+    case 'waypointAction':
+      return waypoint.action;
+    case 'enabled':
+      return waypoint.enabled;
+  }
+}
 
 async function fetchConfiguration<T>(url: string, signal: AbortSignal): Promise<T> {
   const response = await fetch(url, { signal });
@@ -75,6 +161,18 @@ export function AtasConfigurationPage({
   const [deletingNetwork, setDeletingNetwork] =
     React.useState<TusNetworkConfiguration | null>(null);
   const [networkUpdateMessage, setNetworkUpdateMessage] = React.useState<string | null>(null);
+  const [nodeSort, setNodeSort] = React.useState<ConfigurationSort<NodeSortKey>>({
+    key: 'tusName',
+    direction: 'asc',
+  });
+  const [waypointSort, setWaypointSort] = React.useState<ConfigurationSort<WaypointSortKey>>({
+    key: 'tssName',
+    direction: 'asc',
+  });
+  const [networkSort, setNetworkSort] = React.useState<ConfigurationSort<NetworkSortKey>>({
+    key: 'networkId',
+    direction: 'asc',
+  });
 
   React.useEffect(() => {
     const controller = new AbortController();
@@ -155,19 +253,90 @@ export function AtasConfigurationPage({
 
   const sortedNodes = React.useMemo(
     () =>
-      [...nodes].sort((left, right) =>
-        configurationCollator.compare(left.tus_name, right.tus_name),
-      ),
-    [nodes],
+      nodes
+        .map((node, index) => ({ node, index }))
+        .sort((left, right) => {
+          const comparison = compareConfigurationValues(
+            nodeSortValue(left.node, nodeSort.key),
+            nodeSortValue(right.node, nodeSort.key),
+            nodeSort.direction,
+          );
+          return comparison === 0 ? left.index - right.index : comparison;
+        })
+        .map(({ node }) => node),
+    [nodeSort, nodes],
   );
   const sortedNetworks = React.useMemo(
-    () => [...networks].sort((left, right) => left.id - right.id),
-    [networks],
+    () =>
+      networks
+        .map((network, index) => ({ network, index }))
+        .sort((left, right) => {
+          const value = (network: TusNetworkConfiguration): ConfigurationSortValue => {
+            switch (networkSort.key) {
+              case 'networkId':
+                return network.id;
+              case 'fromNode':
+                return networkEndpointDisplayLabel(network, 'from', nodes);
+              case 'toNode':
+                return networkEndpointDisplayLabel(network, 'to', nodes);
+              case 'distanceWeight':
+                return network.distance_weight;
+            }
+          };
+          const comparison = compareConfigurationValues(
+            value(left.network),
+            value(right.network),
+            networkSort.direction,
+          );
+          return comparison === 0 ? left.index - right.index : comparison;
+        })
+        .map(({ network }) => network),
+    [networkSort, networks, nodes],
   );
   const sortedWaypoints = React.useMemo(
-    () => [...waypoints].sort((left, right) => left.id - right.id),
-    [waypoints],
+    () =>
+      waypoints
+        .map((waypoint, index) => ({ waypoint, index }))
+        .sort((left, right) => {
+          const comparison = compareConfigurationValues(
+            waypointSortValue(left.waypoint, waypointSort.key),
+            waypointSortValue(right.waypoint, waypointSort.key),
+            waypointSort.direction,
+          );
+          return comparison === 0 ? left.index - right.index : comparison;
+        })
+        .map(({ waypoint }) => waypoint),
+    [waypointSort, waypoints],
   );
+
+  const sortHeader = <K,>(
+    label: React.ReactNode,
+    accessibleLabel: string,
+    key: K,
+    sort: ConfigurationSort<K>,
+    onSort: React.Dispatch<React.SetStateAction<ConfigurationSort<K>>>,
+    className?: string,
+  ) => {
+    const active = sort.key === key;
+    return (
+      <th
+        className={className}
+        aria-sort={active ? (sort.direction === 'asc' ? 'ascending' : 'descending') : 'none'}
+      >
+        <button
+          className="atas-configuration-sort-button"
+          type="button"
+          onClick={() => onSort((current) => nextSort(current, key))}
+          title={`Sort by ${accessibleLabel}`}
+        >
+          <span className="atas-configuration-sort-label">{label}</span>
+          <span className="atas-configuration-sort-indicator" aria-hidden="true">
+            {active ? (sort.direction === 'asc' ? '▲' : '▼') : '↕'}
+          </span>
+        </button>
+      </th>
+    );
+  };
 
   return (
     <section className="atas-configuration-page" aria-label="Configuration">
@@ -201,15 +370,42 @@ export function AtasConfigurationPage({
                   </colgroup>
                   <thead>
                     <tr>
-                      <th className="atas-configuration-compact-column">TSS Name</th>
-                      <th className="atas-configuration-compact-column">TUS ID</th>
-                      <th>Nickname</th>
-                      <th>Role</th>
-                      <th className="atas-configuration-priority-column">
-                        Replenishment Priority
-                        <span>(0 Off · 1 High · 255 Low)</span>
-                      </th>
-                      <th>In Operation</th>
+                      {sortHeader(
+                        'TSS Name',
+                        'TSS Name',
+                        'tssName',
+                        nodeSort,
+                        setNodeSort,
+                        'atas-configuration-compact-column',
+                      )}
+                      {sortHeader(
+                        'TUS ID',
+                        'TUS ID',
+                        'tusName',
+                        nodeSort,
+                        setNodeSort,
+                        'atas-configuration-compact-column',
+                      )}
+                      {sortHeader('Nickname', 'Nickname', 'nickname', nodeSort, setNodeSort)}
+                      {sortHeader('Role', 'Role', 'role', nodeSort, setNodeSort)}
+                      {sortHeader(
+                        <>
+                          Replenishment Priority
+                          <span>(0 Off · 1 High · 255 Low)</span>
+                        </>,
+                        'Replenishment Priority',
+                        'replenishmentPriority',
+                        nodeSort,
+                        setNodeSort,
+                        'atas-configuration-priority-column',
+                      )}
+                      {sortHeader(
+                        'In Operation',
+                        'In Operation',
+                        'inOperation',
+                        nodeSort,
+                        setNodeSort,
+                      )}
                       <th>Actions</th>
                     </tr>
                   </thead>
@@ -287,12 +483,50 @@ export function AtasConfigurationPage({
                   </colgroup>
                   <thead>
                     <tr>
-                      <th className="atas-configuration-compact-column">TSS Name</th>
-                      <th className="atas-configuration-compact-column">TUS ID</th>
-                      <th>Nickname</th>
-                      <th>RMF Waypoint</th>
-                      <th>Waypoint Action</th>
-                      <th>Enabled</th>
+                      {sortHeader(
+                        'TSS Name',
+                        'TSS Name',
+                        'tssName',
+                        waypointSort,
+                        setWaypointSort,
+                        'atas-configuration-compact-column',
+                      )}
+                      {sortHeader(
+                        'TUS ID',
+                        'TUS ID',
+                        'tusName',
+                        waypointSort,
+                        setWaypointSort,
+                        'atas-configuration-compact-column',
+                      )}
+                      {sortHeader(
+                        'Nickname',
+                        'Nickname',
+                        'nickname',
+                        waypointSort,
+                        setWaypointSort,
+                      )}
+                      {sortHeader(
+                        'RMF Waypoint',
+                        'RMF Waypoint',
+                        'waypointName',
+                        waypointSort,
+                        setWaypointSort,
+                      )}
+                      {sortHeader(
+                        'Waypoint Action',
+                        'Waypoint Action',
+                        'waypointAction',
+                        waypointSort,
+                        setWaypointSort,
+                      )}
+                      {sortHeader(
+                        'Enabled',
+                        'Enabled',
+                        'enabled',
+                        waypointSort,
+                        setWaypointSort,
+                      )}
                       <th>Actions</th>
                     </tr>
                   </thead>
@@ -386,13 +620,37 @@ export function AtasConfigurationPage({
                 </colgroup>
                 <thead>
                   <tr>
-                    <th>Network ID</th>
-                    <th>From Node</th>
-                    <th>To Node</th>
-                    <th>
-                      Distance
-                      <span>(Weight)</span>
-                    </th>
+                    {sortHeader(
+                      'Network ID',
+                      'Network ID',
+                      'networkId',
+                      networkSort,
+                      setNetworkSort,
+                    )}
+                    {sortHeader(
+                      'From Node',
+                      'From Node',
+                      'fromNode',
+                      networkSort,
+                      setNetworkSort,
+                    )}
+                    {sortHeader(
+                      'To Node',
+                      'To Node',
+                      'toNode',
+                      networkSort,
+                      setNetworkSort,
+                    )}
+                    {sortHeader(
+                      <>
+                        Distance
+                        <span>(Weight)</span>
+                      </>,
+                      'Distance Weight',
+                      'distanceWeight',
+                      networkSort,
+                      setNetworkSort,
+                    )}
                     <th>Actions</th>
                   </tr>
                 </thead>

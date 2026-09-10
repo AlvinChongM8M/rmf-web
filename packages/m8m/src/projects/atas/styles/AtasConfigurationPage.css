@@ -172,6 +172,43 @@
   font-weight: 400;
 }
 
+.atas-configuration-sort-button {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  width: 100%;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.atas-configuration-sort-button:focus-visible {
+  outline: 2px solid var(--m8m-primary);
+  outline-offset: 2px;
+}
+
+.atas-configuration-table thead th .atas-configuration-sort-label {
+  min-width: 0;
+  font-weight: 600;
+}
+
+.atas-configuration-table thead th .atas-configuration-sort-label > span {
+  font-weight: 400;
+}
+
+.atas-configuration-sort-indicator {
+  flex: 0 0 auto;
+  color: var(--m8m-text-muted);
+  font-size: 1.1vh;
+  font-weight: 400;
+}
+
 .atas-configuration-table .atas-configuration-compact-column {
   white-space: nowrap;
 }
