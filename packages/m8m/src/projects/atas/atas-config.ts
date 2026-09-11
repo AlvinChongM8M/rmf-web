@@ -46,6 +46,7 @@ export const ATAS_NAV_ITEMS: M8mNavItem[] = [
   { key: 'amr',    label: 'AMR',    route: '/amr',               iconSrc: '/assets/img/icons/amr_icon.png' },
   { key: 'tus',    label: 'TUS',    route: '/tus',               iconSrc: '/assets/img/icons/tus_icon.png' },
   { key: 'task',   label: 'TASK',   route: '/task',              iconSrc: '/assets/img/icons/task_icon.png' },
+  { key: 'otask',  label: 'ORCH TASK', route: '/orchestrator-task', iconSrc: '/assets/img/icons/task_icon.png' },
   { key: 'alarm',  label: 'ALM',    route: '/alarm',             iconSrc: '/assets/img/icons/alarm_icon.png' },
   { key: 'halarm', label: 'H-ALM',  route: '/historical-alarm',  iconSrc: '/assets/img/icons/historical_alarm_icon.png' },
   { key: 'sch',    label: 'SCH',    route: '/scheduler',         iconSrc: '/assets/img/icons/schedular_icon.png' },

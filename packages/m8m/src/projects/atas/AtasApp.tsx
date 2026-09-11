@@ -41,6 +41,7 @@ import { AtasActiveAlarmPage } from './pages/AtasActiveAlarmPage';
 import { AtasAmrPage } from './pages/AtasAmrPage';
 import { AtasConfigurationPage } from './pages/AtasConfigurationPage';
 import { AtasHistoricalAlarmPage } from './pages/AtasHistoricalAlarmPage';
+import { AtasOrchestratorTaskPage } from './pages/AtasOrchestratorTaskPage';
 import { AtasSystemOverviewPage } from './pages/AtasSystemOverviewPage';
 import { AtasTaskPage } from './pages/AtasTaskPage';
 import { AtasTusPage } from './pages/AtasTusPage';
@@ -192,6 +193,14 @@ export function AtasApp() {
           element={
             <AtasPage subtitle="Task Monitoring">
               <AtasTaskPage />
+            </AtasPage>
+          }
+        />
+        <Route
+          path="/orchestrator-task"
+          element={
+            <AtasPage subtitle="Orchestrator Task Monitoring">
+              <AtasOrchestratorTaskPage />
             </AtasPage>
           }
         />
