@@ -14,6 +14,11 @@ export default defineConfig({
         ws: true,
         rewrite: (path) => path.replace(/^\/tus-service/, ''),
       },
+      '/task-orchestrator-service': {
+        target: 'http://localhost:10022',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/task-orchestrator-service/, ''),
+      },
     },
   },
 });

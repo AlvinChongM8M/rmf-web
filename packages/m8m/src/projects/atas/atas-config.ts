@@ -31,6 +31,11 @@ export const ATAS_TUS_SERVER_URL =
 export const ATAS_TUS_EVENT_REFRESH_INTERVAL_MS = 5000;
 export const ATAS_TUS_EVENT_RECORD_LIMIT = 1000;
 export const ATAS_TUS_CONFIG_REFRESH_INTERVAL_MS = 5000;
+export const ATAS_TASK_ORCHESTRATOR_SERVER_URL =
+  import.meta.env.VITE_ATAS_TASK_ORCHESTRATOR_SERVER_URL ??
+  '/task-orchestrator-service';
+export const ATAS_TASK_ORCHESTRATOR_REFRESH_INTERVAL_MS = 5000;
+export const ATAS_TASK_ORCHESTRATOR_RECORD_LIMIT = 1000;
 export const ATAS_USERNAME = 'CAG_Admin';
 export const ATAS_USER_ROLE = 'Administrator';
 // Set VITE_ATAS_SHOW_NEW_TASK_BUTTON=false to hide the floating action without code changes.

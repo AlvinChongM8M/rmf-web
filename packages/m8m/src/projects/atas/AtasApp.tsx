@@ -26,6 +26,9 @@ import {
   ATAS_LOGO_SRC,
   ATAS_NAV_ITEMS,
   ATAS_SHOW_NEW_TASK_BUTTON,
+  ATAS_TASK_ORCHESTRATOR_RECORD_LIMIT,
+  ATAS_TASK_ORCHESTRATOR_REFRESH_INTERVAL_MS,
+  ATAS_TASK_ORCHESTRATOR_SERVER_URL,
   ATAS_TITLE,
   ATAS_TRAJECTORY_SERVER_URL,
   ATAS_TUS_CONFIG_REFRESH_INTERVAL_MS,
@@ -200,7 +203,11 @@ export function AtasApp() {
           path="/orchestrator-task"
           element={
             <AtasPage subtitle="Orchestrator Task Monitoring">
-              <AtasOrchestratorTaskPage />
+              <AtasOrchestratorTaskPage
+                serverUrl={ATAS_TASK_ORCHESTRATOR_SERVER_URL}
+                refreshIntervalMs={ATAS_TASK_ORCHESTRATOR_REFRESH_INTERVAL_MS}
+                recordLimit={ATAS_TASK_ORCHESTRATOR_RECORD_LIMIT}
+              />
             </AtasPage>
           }
         />
