@@ -110,6 +110,30 @@
   color: var(--m8m-danger-text, #fecaca);
 }
 
+.atas-state-pill--transition {
+  background: #854d0e;
+  color: #fef3c7;
+}
+
+.atas-state-pill--error {
+  background: #991b1b;
+  color: #fee2e2;
+}
+
+.atas-state-pill--unknown {
+  background: #374151;
+  color: #e5e7eb;
+}
+
+.atas-status-error {
+  margin-top: 4px;
+  overflow: hidden;
+  color: #fca5a5;
+  font-size: 1.15vh;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* =====================================================
    SYSTEM PERFORMANCE PANEL
    ===================================================== */
@@ -291,6 +315,21 @@
 
 .atas-control-btn:hover {
   background: #15803d;
+}
+
+.atas-control-btn--stop {
+  background: #b91c1c;
+}
+
+.atas-control-btn--stop:hover {
+  background: #991b1b;
+}
+
+.atas-control-btn:disabled {
+  background: #4b5563;
+  color: #d1d5db;
+  cursor: wait;
+  opacity: 0.8;
 }
 
 .atas-control-note {

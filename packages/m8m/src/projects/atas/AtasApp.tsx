@@ -150,6 +150,10 @@ export function AtasApp() {
           element={
             <AtasPage subtitle="System Overview">
               <AtasSystemOverviewPage
+                taskOrchestratorServerUrl={ATAS_TASK_ORCHESTRATOR_SERVER_URL}
+                taskOrchestratorRefreshIntervalMs={
+                  ATAS_TASK_ORCHESTRATOR_REFRESH_INTERVAL_MS
+                }
                 rmfMapConfig={{
                   apiServerUrl: ATAS_API_SERVER_URL,
                   trajectoryServerUrl: ATAS_TRAJECTORY_SERVER_URL,

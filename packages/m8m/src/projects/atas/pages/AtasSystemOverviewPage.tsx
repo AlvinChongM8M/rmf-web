@@ -37,6 +37,8 @@ export interface AtasSystemOverviewPageProps {
   status?: AtasSystemStatus;
   performance?: AtasSystemPerformance;
   batteries?: AtasAmrBattery[];
+  taskOrchestratorServerUrl?: string;
+  taskOrchestratorRefreshIntervalMs?: number;
   /**
    * RMF API config — when provided the live RMF map is rendered.
    * When omitted a "Map not available" placeholder is shown.
@@ -70,10 +72,49 @@ const DEFAULT_PERFORMANCE: AtasSystemPerformance = {
 const BATTERY_UPDATE_THROTTLE_MS = 1000;
 const batteryCollator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
 
+interface OrchestratorAutomationState {
+  desired_running: boolean;
+  effective_state: string;
+  run_id: string | null;
+  started_by: string | null;
+  changed_by: string;
+  changed_at: string;
+  heartbeat_at: string | null;
+  last_error: string | null;
+  diagnostics: Record<string, unknown>;
+}
+
 function statePillClass(state: string): string {
-  return state.toUpperCase() === 'RUNNING'
-    ? 'atas-state-pill atas-state-pill--running'
-    : 'atas-state-pill atas-state-pill--stopped';
+  switch (state.toUpperCase()) {
+    case 'RUNNING':
+      return 'atas-state-pill atas-state-pill--running';
+    case 'STARTING':
+    case 'STOPPING':
+      return 'atas-state-pill atas-state-pill--transition';
+    case 'WORKER_UNAVAILABLE':
+    case 'UNAVAILABLE':
+      return 'atas-state-pill atas-state-pill--error';
+    case 'STOPPED':
+      return 'atas-state-pill atas-state-pill--stopped';
+    default:
+      return 'atas-state-pill atas-state-pill--unknown';
+  }
+}
+
+function displayState(state: string): string {
+  return state.replace(/_/g, ' ');
+}
+
+async function orchestratorResponseError(response: Response): Promise<Error> {
+  try {
+    const body = (await response.json()) as { detail?: string };
+    if (body.detail) {
+      return new Error(body.detail);
+    }
+  } catch {
+    // Use the HTTP status when the response body is unavailable.
+  }
+  return new Error(`Request failed (${response.status} ${response.statusText})`);
 }
 
 function normalizeBatteryPercentage(battery?: number | null): number | null {
@@ -133,6 +174,8 @@ export function AtasSystemOverviewPage({
   status = DEFAULT_STATUS,
   performance = DEFAULT_PERFORMANCE,
   batteries,
+  taskOrchestratorServerUrl,
+  taskOrchestratorRefreshIntervalMs = 5000,
   rmfMapConfig,
   onStartFms,
 }: AtasSystemOverviewPageProps) {
@@ -141,6 +184,86 @@ export function AtasSystemOverviewPage({
   const [liveBatteries, setLiveBatteries] = useState<AtasAmrBattery[]>([]);
   const [batteryLoading, setBatteryLoading] = useState(true);
   const [batteryError, setBatteryError] = useState<string | null>(null);
+  const [automationState, setAutomationState] = useState<OrchestratorAutomationState | null>(
+    null,
+  );
+  const [automationLoading, setAutomationLoading] = useState(Boolean(taskOrchestratorServerUrl));
+  const [automationError, setAutomationError] = useState<string | null>(null);
+  const [automationControlTarget, setAutomationControlTarget] = useState<boolean | null>(null);
+  const normalizedOrchestratorUrl = React.useMemo(
+    () => taskOrchestratorServerUrl?.replace(/\/$/, ''),
+    [taskOrchestratorServerUrl],
+  );
+
+  useEffect(() => {
+    if (!normalizedOrchestratorUrl) {
+      setAutomationLoading(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    const refreshAutomationState = async () => {
+      try {
+        const response = await fetch(`${normalizedOrchestratorUrl}/api/v1/automation`, {
+          signal: controller.signal,
+        });
+        if (!response.ok) {
+          throw await orchestratorResponseError(response);
+        }
+        setAutomationState((await response.json()) as OrchestratorAutomationState);
+        setAutomationError(null);
+      } catch (error) {
+        if ((error as Error).name !== 'AbortError') {
+          console.error('Failed to load task orchestrator state:', error);
+          setAutomationError((error as Error).message);
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setAutomationLoading(false);
+        }
+      }
+    };
+
+    void refreshAutomationState();
+    const intervalId = window.setInterval(
+      () => void refreshAutomationState(),
+      taskOrchestratorRefreshIntervalMs,
+    );
+    return () => {
+      controller.abort();
+      window.clearInterval(intervalId);
+    };
+  }, [normalizedOrchestratorUrl, taskOrchestratorRefreshIntervalMs]);
+
+  const toggleFms = async () => {
+    if (!normalizedOrchestratorUrl) {
+      onStartFms?.();
+      return;
+    }
+    if (!automationState || automationControlTarget !== null) {
+      return;
+    }
+
+    const targetRunning = !automationState.desired_running;
+    setAutomationControlTarget(targetRunning);
+    setAutomationError(null);
+    try {
+      const action = targetRunning ? 'start' : 'stop';
+      const response = await fetch(
+        `${normalizedOrchestratorUrl}/api/v1/automation/${action}`,
+        { method: 'POST' },
+      );
+      if (!response.ok) {
+        throw await orchestratorResponseError(response);
+      }
+      setAutomationState((await response.json()) as OrchestratorAutomationState);
+    } catch (error) {
+      console.error('Failed to control task orchestrator:', error);
+      setAutomationError((error as Error).message);
+    } finally {
+      setAutomationControlTarget(null);
+    }
+  };
 
   useEffect(() => {
     if (batteries) {
@@ -211,6 +334,24 @@ export function AtasSystemOverviewPage({
   const displayedBatteries = batteries ?? liveBatteries;
   const showBatteryLoading = !batteries && batteryLoading;
   const showBatteryError = !batteries && batteryError;
+  const fmsState = normalizedOrchestratorUrl
+    ? automationError
+      ? 'UNAVAILABLE'
+      : automationState?.effective_state ?? (automationLoading ? 'LOADING' : 'UNAVAILABLE')
+    : status.fmsState;
+  const fmsRunning = automationState?.desired_running ?? false;
+  const fmsControlDisabled = Boolean(
+    normalizedOrchestratorUrl &&
+      (!automationState || automationError || automationControlTarget !== null),
+  );
+  const fmsControlLabel =
+    automationControlTarget === true
+      ? 'STARTING FMS…'
+      : automationControlTarget === false
+        ? 'STOPPING FMS…'
+        : fmsRunning
+          ? 'STOP FMS'
+          : 'START FMS';
 
   return (
     <div className="atas-sysov">
@@ -235,8 +376,19 @@ export function AtasSystemOverviewPage({
 
           <div className="atas-status-row">
             <span>FMS State</span>
-            <span className={statePillClass(status.fmsState)}>{status.fmsState}</span>
+            <span
+              className={statePillClass(fmsState)}
+              title={automationState?.last_error ?? undefined}
+            >
+              {displayState(fmsState)}
+            </span>
           </div>
+
+          {automationError && (
+            <div className="atas-status-error" title={automationError}>
+              {automationError}
+            </div>
+          )}
 
           <div className="atas-status-row">
             <span>TSS State</span>
@@ -329,8 +481,15 @@ export function AtasSystemOverviewPage({
         {/* CONTROL CENTER */}
         <div className="atas-panel atas-panel--control">
           <div className="atas-panel__title">CONTROL CENTER</div>
-          <button className="atas-control-btn" type="button" onClick={onStartFms}>
-            START FMS
+          <button
+            className={`atas-control-btn ${
+              fmsRunning ? 'atas-control-btn--stop' : 'atas-control-btn--start'
+            }`}
+            type="button"
+            disabled={fmsControlDisabled}
+            onClick={() => void toggleFms()}
+          >
+            {fmsControlLabel}
           </button>
           <div className="atas-control-note">
             * Available to Operator and Administrator roles only.
