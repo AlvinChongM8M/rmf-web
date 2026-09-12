@@ -154,6 +154,7 @@ export function AtasApp() {
                 taskOrchestratorRefreshIntervalMs={
                   ATAS_TASK_ORCHESTRATOR_REFRESH_INTERVAL_MS
                 }
+                tssServerUrl={ATAS_TUS_SERVER_URL}
                 rmfMapConfig={{
                   apiServerUrl: ATAS_API_SERVER_URL,
                   trajectoryServerUrl: ATAS_TRAJECTORY_SERVER_URL,

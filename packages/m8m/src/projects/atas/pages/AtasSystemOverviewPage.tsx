@@ -39,6 +39,7 @@ export interface AtasSystemOverviewPageProps {
   batteries?: AtasAmrBattery[];
   taskOrchestratorServerUrl?: string;
   taskOrchestratorRefreshIntervalMs?: number;
+  tssServerUrl?: string;
   /**
    * RMF API config — when provided the live RMF map is rendered.
    * When omitted a "Map not available" placeholder is shown.
@@ -84,15 +85,29 @@ interface OrchestratorAutomationState {
   diagnostics: Record<string, unknown>;
 }
 
+interface TssSystemStatus {
+  tss_name: string;
+  plc_state: number | null;
+  plc_state_description: string;
+  robot_state: number | null;
+  robot_state_description: string;
+}
+
 function statePillClass(state: string): string {
   switch (state.toUpperCase()) {
     case 'RUNNING':
+    case 'ONLINE':
+    case 'READY':
       return 'atas-state-pill atas-state-pill--running';
     case 'STARTING':
     case 'STOPPING':
       return 'atas-state-pill atas-state-pill--transition';
     case 'WORKER_UNAVAILABLE':
     case 'UNAVAILABLE':
+    case 'ERROR':
+    case 'FAULT':
+    case 'OFFLINE':
+    case 'DISCONNECTED':
       return 'atas-state-pill atas-state-pill--error';
     case 'STOPPED':
       return 'atas-state-pill atas-state-pill--stopped';
@@ -103,6 +118,38 @@ function statePillClass(state: string): string {
 
 function displayState(state: string): string {
   return state.replace(/_/g, ' ');
+}
+
+function systemStatusWebsocketUrl(serverUrl: string): string {
+  const url = new URL(serverUrl, window.location.origin);
+  url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
+  url.pathname = `${url.pathname.replace(/\/$/, '')}/api/system-status`;
+  url.search = '';
+  url.hash = '';
+  return url.toString();
+}
+
+function aggregatePlcState(statuses: TssSystemStatus[]): string {
+  if (statuses.length === 0) {
+    return 'WAITING';
+  }
+
+  const states = new Set(
+    statuses.map((status) => status.plc_state_description.trim() || 'UNKNOWN'),
+  );
+  return states.size === 1 ? [...states][0] : 'MIXED';
+}
+
+function systemStatusTitle(statuses: TssSystemStatus[]): string | undefined {
+  if (statuses.length === 0) {
+    return undefined;
+  }
+  return statuses
+    .map(
+      (status) =>
+        `${status.tss_name}: ${displayState(status.plc_state_description)} (${status.plc_state ?? '-'})`,
+    )
+    .join('\n');
 }
 
 async function orchestratorResponseError(response: Response): Promise<Error> {
@@ -176,6 +223,7 @@ export function AtasSystemOverviewPage({
   batteries,
   taskOrchestratorServerUrl,
   taskOrchestratorRefreshIntervalMs = 5000,
+  tssServerUrl,
   rmfMapConfig,
   onStartFms,
 }: AtasSystemOverviewPageProps) {
@@ -190,9 +238,16 @@ export function AtasSystemOverviewPage({
   const [automationLoading, setAutomationLoading] = useState(Boolean(taskOrchestratorServerUrl));
   const [automationError, setAutomationError] = useState<string | null>(null);
   const [automationControlTarget, setAutomationControlTarget] = useState<boolean | null>(null);
+  const [tssSystemStatuses, setTssSystemStatuses] = useState<TssSystemStatus[]>([]);
+  const [tssStatusLoading, setTssStatusLoading] = useState(Boolean(tssServerUrl));
+  const [tssStatusError, setTssStatusError] = useState<string | null>(null);
   const normalizedOrchestratorUrl = React.useMemo(
     () => taskOrchestratorServerUrl?.replace(/\/$/, ''),
     [taskOrchestratorServerUrl],
+  );
+  const normalizedTssServerUrl = React.useMemo(
+    () => tssServerUrl?.replace(/\/$/, ''),
+    [tssServerUrl],
   );
 
   useEffect(() => {
@@ -234,6 +289,66 @@ export function AtasSystemOverviewPage({
       window.clearInterval(intervalId);
     };
   }, [normalizedOrchestratorUrl, taskOrchestratorRefreshIntervalMs]);
+
+  useEffect(() => {
+    if (!normalizedTssServerUrl) {
+      setTssStatusLoading(false);
+      return;
+    }
+
+    let stopped = false;
+    let socket: WebSocket | undefined;
+    let reconnectTimer: number | undefined;
+
+    const connect = () => {
+      setTssStatusLoading(true);
+      try {
+        socket = new WebSocket(systemStatusWebsocketUrl(normalizedTssServerUrl));
+      } catch (error) {
+        setTssStatusLoading(false);
+        setTssStatusError((error as Error).message);
+        reconnectTimer = window.setTimeout(connect, 3000);
+        return;
+      }
+
+      socket.onopen = () => setTssStatusError(null);
+      socket.onmessage = (message) => {
+        try {
+          const data = JSON.parse(String(message.data)) as unknown;
+          if (!Array.isArray(data)) {
+            throw new Error('Unexpected TSS system-status response');
+          }
+          setTssSystemStatuses(data as TssSystemStatus[]);
+          setTssStatusLoading(false);
+          setTssStatusError(null);
+        } catch (error) {
+          console.error('Failed to read TSS system status:', error);
+          setTssStatusLoading(false);
+          setTssStatusError((error as Error).message);
+        }
+      };
+      socket.onerror = () => {
+        setTssStatusLoading(false);
+        setTssStatusError('TSS system-status connection failed');
+      };
+      socket.onclose = () => {
+        if (!stopped) {
+          setTssStatusLoading(false);
+          setTssStatusError('TSS system-status connection lost; reconnecting…');
+          reconnectTimer = window.setTimeout(connect, 3000);
+        }
+      };
+    };
+
+    connect();
+    return () => {
+      stopped = true;
+      if (reconnectTimer !== undefined) {
+        window.clearTimeout(reconnectTimer);
+      }
+      socket?.close();
+    };
+  }, [normalizedTssServerUrl]);
 
   const toggleFms = async () => {
     if (!normalizedOrchestratorUrl) {
@@ -352,6 +467,16 @@ export function AtasSystemOverviewPage({
         : fmsRunning
           ? 'STOP FMS'
           : 'START FMS';
+  const tssState = normalizedTssServerUrl
+    ? tssStatusError
+      ? 'UNAVAILABLE'
+      : tssStatusLoading
+        ? 'LOADING'
+        : aggregatePlcState(tssSystemStatuses)
+    : status.tssState;
+  const tssStateTitle = tssStatusError
+    ? tssStatusError
+    : systemStatusTitle(tssSystemStatuses);
 
   return (
     <div className="atas-sysov">
@@ -386,14 +511,22 @@ export function AtasSystemOverviewPage({
 
           {automationError && (
             <div className="atas-status-error" title={automationError}>
-              {automationError}
+              FMS: {automationError}
             </div>
           )}
 
           <div className="atas-status-row">
             <span>TSS State</span>
-            <span className={statePillClass(status.tssState)}>{status.tssState}</span>
+            <span className={statePillClass(tssState)} title={tssStateTitle}>
+              {displayState(tssState)}
+            </span>
           </div>
+
+          {tssStatusError && (
+            <div className="atas-status-error" title={tssStatusError}>
+              TSS: {tssStatusError}
+            </div>
+          )}
         </div>
 
         {/* SYSTEM PERFORMANCE */}
