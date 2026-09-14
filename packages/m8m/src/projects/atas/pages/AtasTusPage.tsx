@@ -129,10 +129,8 @@ function nodeSortValue(
       return node.presence == null ? null : Number(node.presence);
     case 'reservedState':
       return Number(Boolean(node.reserved_task_id));
-    case 'emptyDuration': {
-      const duration = emptyDurationMinutes(node, events, now);
-      return duration === '-' ? null : Number(duration);
-    }
+    case 'emptyDuration':
+      return emptyDurationMinutes(node, events, now);
     case 'replenishmentCount':
       return node.replenishment_count;
   }
@@ -158,27 +156,55 @@ function compareNodes(
   return comparison * (sort.direction === 'asc' ? 1 : -1);
 }
 
-function isFalseValue(value: string | null): boolean {
-  return value?.trim().toLowerCase() === 'false';
+function presenceValue(value: string | null): boolean | null {
+  const normalizedValue = value?.trim().toLowerCase();
+  if (normalizedValue === 'true') return true;
+  if (normalizedValue === 'false') return false;
+  return null;
 }
 
-function emptyDurationMinutes(node: TusNode, events: TusEvent[], now: number): string {
-  if (node.presence !== false) {
-    return '-';
+function emptyDurationMinutes(node: TusNode, events: TusEvent[], now: number): number | null {
+  const transitions: Array<{ presence: boolean; timestamp: number }> = [];
+
+  for (const event of events) {
+    if (
+      event.tss_name !== node.tss_name ||
+      event.tus_name !== node.tus_name ||
+      event.event_name !== 'presence_changed'
+    ) {
+      continue;
+    }
+
+    const presence = presenceValue(event.event_value);
+    const timestamp = Date.parse(event.timestamp);
+    if (presence == null || Number.isNaN(timestamp) || timestamp > now) {
+      continue;
+    }
+
+    transitions.push({ presence, timestamp });
   }
 
-  const emptyEvent = events.find(
-    (event) =>
-      event.tus_name === node.tus_name &&
-      event.event_name === 'presence_changed' &&
-      isFalseValue(event.event_value),
-  );
-  const emptySince = Date.parse(emptyEvent?.timestamp ?? node.last_update);
-  if (Number.isNaN(emptySince) || emptySince > now) {
-    return '-';
+  transitions.sort((left, right) => left.timestamp - right.timestamp);
+
+  let emptyStartedAt: number | null = null;
+  let latestEmptyDurationMs: number | null = null;
+
+  for (const transition of transitions) {
+    if (!transition.presence) {
+      // Repeated empty records belong to the same continuous empty period.
+      emptyStartedAt ??= transition.timestamp;
+    } else if (emptyStartedAt !== null) {
+      latestEmptyDurationMs = transition.timestamp - emptyStartedAt;
+      emptyStartedAt = null;
+    }
   }
 
-  return String(Math.floor((now - emptySince) / 60_000));
+  // A currently empty TUS has an ongoing latest period that ends at the present time.
+  if (node.presence === false && emptyStartedAt !== null) {
+    latestEmptyDurationMs = now - emptyStartedAt;
+  }
+
+  return latestEmptyDurationMs === null ? null : Math.round(latestEmptyDurationMs / 60_000);
 }
 
 function websocketUrl(serverUrl: string): string {
@@ -452,7 +478,7 @@ export function AtasTusPage({
                         </span>
                       </td>
                       <td>{node.reserved_task_id ? 'RESERVED' : 'NOT RESERVED'}</td>
-                      <td>{emptyDurationMinutes(node, events, now)}</td>
+                      <td>{emptyDurationMinutes(node, events, now) ?? '-'}</td>
                       <td>{node.replenishment_count}</td>
                     </tr>
                   ))
