@@ -41,6 +41,21 @@ interface TusEventSort {
   direction: 'asc' | 'desc';
 }
 
+type TusNodeSortKey =
+  | 'tssName'
+  | 'tusName'
+  | 'nickname'
+  | 'battery'
+  | 'presence'
+  | 'reservedState'
+  | 'emptyDuration'
+  | 'replenishmentCount';
+
+interface TusNodeSort {
+  key: TusNodeSortKey;
+  direction: 'asc' | 'desc';
+}
+
 interface AtasTusPageProps {
   serverUrl: string;
   eventRefreshIntervalMs?: number;
@@ -95,6 +110,54 @@ function compareEvents(left: TusEvent, right: TusEvent, sort: TusEventSort): num
   return comparison * (sort.direction === 'asc' ? 1 : -1);
 }
 
+function nodeSortValue(
+  node: TusNode,
+  key: TusNodeSortKey,
+  events: TusEvent[],
+  now: number,
+): string | number | null {
+  switch (key) {
+    case 'tssName':
+      return node.tss_name;
+    case 'tusName':
+      return node.tus_name;
+    case 'nickname':
+      return node.nickname;
+    case 'battery':
+      return node.battery_percentage;
+    case 'presence':
+      return node.presence == null ? null : Number(node.presence);
+    case 'reservedState':
+      return Number(Boolean(node.reserved_task_id));
+    case 'emptyDuration': {
+      const duration = emptyDurationMinutes(node, events, now);
+      return duration === '-' ? null : Number(duration);
+    }
+    case 'replenishmentCount':
+      return node.replenishment_count;
+  }
+}
+
+function compareNodes(
+  left: TusNode,
+  right: TusNode,
+  sort: TusNodeSort,
+  events: TusEvent[],
+  now: number,
+): number {
+  const leftValue = nodeSortValue(left, sort.key, events, now);
+  const rightValue = nodeSortValue(right, sort.key, events, now);
+  if (leftValue == null && rightValue == null) return 0;
+  if (leftValue == null) return 1;
+  if (rightValue == null) return -1;
+
+  const comparison =
+    typeof leftValue === 'number' && typeof rightValue === 'number'
+      ? leftValue - rightValue
+      : tusCollator.compare(String(leftValue), String(rightValue));
+  return comparison * (sort.direction === 'asc' ? 1 : -1);
+}
+
 function isFalseValue(value: string | null): boolean {
   return value?.trim().toLowerCase() === 'false';
 }
@@ -141,6 +204,10 @@ export function AtasTusPage({
   const [sort, setSort] = React.useState<TusEventSort>({
     key: 'timestamp',
     direction: 'desc',
+  });
+  const [nodeSort, setNodeSort] = React.useState<TusNodeSort>({
+    key: 'nickname',
+    direction: 'asc',
   });
   const [now, setNow] = React.useState(() => Date.now());
   const [realtimeError, setRealtimeError] = React.useState<string | null>(null);
@@ -236,8 +303,15 @@ export function AtasTusPage({
   }, []);
 
   const sortedTusNodes = React.useMemo(
-    () => [...tusNodes].sort((left, right) => tusCollator.compare(left.tus_name, right.tus_name)),
-    [tusNodes],
+    () =>
+      tusNodes
+        .map((node, index) => ({ node, index }))
+        .sort((left, right) => {
+          const comparison = compareNodes(left.node, right.node, nodeSort, events, now);
+          return comparison === 0 ? left.index - right.index : comparison;
+        })
+        .map(({ node }) => node),
+    [events, nodeSort, now, tusNodes],
   );
 
   const filteredEvents = React.useMemo(() => {
@@ -292,6 +366,36 @@ export function AtasTusPage({
     );
   };
 
+  const handleNodeSort = (key: TusNodeSortKey) => {
+    setNodeSort((current) => ({
+      key,
+      direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc',
+    }));
+  };
+
+  const nodeSortHeader = (label: string, key: TusNodeSortKey) => {
+    const active = nodeSort.key === key;
+    return (
+      <th
+        aria-sort={
+          active ? (nodeSort.direction === 'asc' ? 'ascending' : 'descending') : 'none'
+        }
+      >
+        <button
+          className="atas-tus-sort-button"
+          type="button"
+          onClick={() => handleNodeSort(key)}
+          title={`Sort by ${label}`}
+        >
+          <span>{label}</span>
+          <span className="atas-tus-sort-indicator" aria-hidden="true">
+            {active ? (nodeSort.direction === 'asc' ? '▲' : '▼') : '↕'}
+          </span>
+        </button>
+      </th>
+    );
+  };
+
   return (
     <section
       className={`atas-tus-page${eventsVisible ? '' : ' atas-tus-page--events-hidden'}`}
@@ -318,14 +422,14 @@ export function AtasTusPage({
               </colgroup>
               <thead>
                 <tr>
-                  <th>TSS Name</th>
-                  <th>TUS ID</th>
-                  <th>Nickname</th>
-                  <th>Battery (%)</th>
-                  <th>Tub Present State</th>
-                  <th>Reserved State</th>
-                  <th>Empty Duration (minutes)</th>
-                  <th>Replenishment Count</th>
+                  {nodeSortHeader('TSS Name', 'tssName')}
+                  {nodeSortHeader('TUS ID', 'tusName')}
+                  {nodeSortHeader('Nickname', 'nickname')}
+                  {nodeSortHeader('Battery (%)', 'battery')}
+                  {nodeSortHeader('Tub Present State', 'presence')}
+                  {nodeSortHeader('Reserved State', 'reservedState')}
+                  {nodeSortHeader('Empty Duration (minutes)', 'emptyDuration')}
+                  {nodeSortHeader('Replenishment Count', 'replenishmentCount')}
                 </tr>
               </thead>
               <tbody>
