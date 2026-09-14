@@ -1,15 +1,24 @@
+import {
+  Alert,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  TextField,
+} from '@mui/material';
 import React from 'react';
 import '../styles/AtasOrchestratorTaskPage.css';
 
 interface OrchestratorTask {
   id: string;
+  task_number?: number;
+  display_id?: string;
   status: string;
   priority: number;
-  created_at: string;
-  updated_at: string;
+  started_at: string | null;
   finished_at: string | null;
-  created_by: string;
-  creation_method: string;
   source_tss_name: string;
   source_tus_name: string;
   source_nickname: string | null;
@@ -18,10 +27,8 @@ interface OrchestratorTask {
   destination_tus_name: string;
   destination_nickname: string | null;
   destination_waypoint_name: string;
-  reason_code: string | null;
-  hold_reason: string | null;
-  remark: string | null;
-  rmf_task_id: string | null;
+  assigned_robot_name?: string | null;
+  cancel_requested: boolean;
 }
 
 interface OrchestratorTaskResponse {
@@ -36,16 +43,15 @@ interface AtasOrchestratorTaskPageProps {
 }
 
 type TaskSortKey =
-  | 'createdAt'
   | 'taskId'
   | 'source'
   | 'destination'
+  | 'startTime'
+  | 'endTime'
+  | 'duration'
+  | 'amrId'
   | 'priority'
-  | 'creationMethod'
-  | 'rmfTaskId'
-  | 'status'
-  | 'updatedAt'
-  | 'reason';
+  | 'status';
 
 interface TaskSort {
   key: TaskSortKey;
@@ -81,13 +87,45 @@ function destinationLabel(task: OrchestratorTask): string {
   );
 }
 
-function taskReason(task: OrchestratorTask): string {
-  return task.reason_code ?? task.hold_reason ?? task.remark ?? '-';
+function taskDisplayId(task: OrchestratorTask): string {
+  if (task.display_id?.trim()) {
+    return task.display_id;
+  }
+  if (task.task_number != null) {
+    return `ATAS-${String(task.task_number).padStart(6, '0')}`;
+  }
+  return task.id;
 }
 
-function dateTimeValue(value: string): number | null {
+function dateTimeValue(value: string | null): number | null {
+  if (!value) return null;
   const timestamp = Date.parse(value);
   return Number.isNaN(timestamp) ? null : timestamp;
+}
+
+function taskDurationMs(task: OrchestratorTask): number | null {
+  const start = dateTimeValue(task.started_at);
+  const end = dateTimeValue(task.finished_at);
+  return start == null || end == null ? null : end - start;
+}
+
+function formatDuration(value: number | null): string {
+  if (value == null) return '-';
+  const sign = value < 0 ? '-' : '';
+  let remaining = Math.abs(value);
+  const days = Math.floor(remaining / 86_400_000);
+  remaining %= 86_400_000;
+  const hours = Math.floor(remaining / 3_600_000);
+  remaining %= 3_600_000;
+  const minutes = Math.floor(remaining / 60_000);
+  remaining %= 60_000;
+  const seconds = Math.floor(remaining / 1000);
+  const milliseconds = remaining % 1000;
+  const pad = (part: number, length = 2) => String(part).padStart(length, '0');
+  return `${sign}${pad(days, 3)}:${pad(hours)}:${pad(minutes)}:${pad(seconds)}.${pad(
+    milliseconds,
+    3,
+  )}`;
 }
 
 function formatDateTime(value: string | null): string {
@@ -108,27 +146,35 @@ function formatDateTime(value: string | null): string {
 
 function taskSortValue(task: OrchestratorTask, key: TaskSortKey): string | number | null {
   switch (key) {
-    case 'createdAt':
-      return dateTimeValue(task.created_at);
     case 'taskId':
-      return task.id;
+      return task.task_number ?? taskDisplayId(task);
     case 'source':
       return sourceLabel(task);
     case 'destination':
       return destinationLabel(task);
+    case 'startTime':
+      return dateTimeValue(task.started_at);
+    case 'endTime':
+      return dateTimeValue(task.finished_at);
+    case 'duration':
+      return taskDurationMs(task);
+    case 'amrId':
+      return task.assigned_robot_name ?? null;
     case 'priority':
       return task.priority;
-    case 'creationMethod':
-      return task.creation_method;
-    case 'rmfTaskId':
-      return task.rmf_task_id;
     case 'status':
       return task.status;
-    case 'updatedAt':
-      return dateTimeValue(task.updated_at);
-    case 'reason':
-      return taskReason(task);
   }
+}
+
+const TERMINAL_TASK_STATUSES = new Set(['COMPLETED', 'CANCELLED', 'FAILED']);
+
+function isTaskCancellable(task: OrchestratorTask): boolean {
+  return (
+    !TERMINAL_TASK_STATUSES.has(task.status.toUpperCase()) &&
+    task.status.toUpperCase() !== 'CANCEL_REQUESTED' &&
+    !task.cancel_requested
+  );
 }
 
 function compareTasks(left: OrchestratorTask, right: OrchestratorTask, sort: TaskSort): number {
@@ -172,8 +218,13 @@ function statusClass(status: string): string {
 
 async function responseError(response: Response): Promise<Error> {
   try {
-    const body = (await response.json()) as { detail?: string };
-    if (body.detail) return new Error(body.detail);
+    const body = (await response.json()) as {
+      detail?: string | Array<{ msg?: string }>;
+    };
+    const detail = Array.isArray(body.detail)
+      ? body.detail.map((item) => item.msg).filter(Boolean).join('; ')
+      : body.detail;
+    if (detail) return new Error(detail);
   } catch {
     // Fall back to the HTTP status when the response is not JSON.
   }
@@ -191,9 +242,14 @@ export function AtasOrchestratorTaskPage({
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [sort, setSort] = React.useState<TaskSort>({
-    key: 'createdAt',
+    key: 'startTime',
     direction: 'desc',
   });
+  const [selectedCancelTask, setSelectedCancelTask] =
+    React.useState<OrchestratorTask | null>(null);
+  const [cancellationRemark, setCancellationRemark] = React.useState('');
+  const [cancellationError, setCancellationError] = React.useState<string | null>(null);
+  const [cancellationSubmitting, setCancellationSubmitting] = React.useState(false);
 
   React.useEffect(() => {
     const controller = new AbortController();
@@ -252,6 +308,53 @@ export function AtasOrchestratorTaskPage({
     }));
   };
 
+  const openCancellationDialog = (task: OrchestratorTask) => {
+    setSelectedCancelTask(task);
+    setCancellationRemark('');
+    setCancellationError(null);
+  };
+
+  const closeCancellationDialog = () => {
+    if (cancellationSubmitting) return;
+    setSelectedCancelTask(null);
+    setCancellationRemark('');
+    setCancellationError(null);
+  };
+
+  const cancelTask = async () => {
+    if (!selectedCancelTask || cancellationSubmitting) return;
+    const remark = cancellationRemark.trim();
+    if (!remark) {
+      setCancellationError('Cancellation remark is required.');
+      return;
+    }
+
+    setCancellationSubmitting(true);
+    setCancellationError(null);
+    try {
+      const response = await fetch(
+        `${normalizedServerUrl}/api/v1/tasks/${encodeURIComponent(selectedCancelTask.id)}/cancel`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ remark }),
+        },
+      );
+      if (!response.ok) throw await responseError(response);
+      const updatedTask = (await response.json()) as OrchestratorTask;
+      setTasks((current) =>
+        current.map((task) => (task.id === updatedTask.id ? updatedTask : task)),
+      );
+      setSelectedCancelTask(null);
+      setCancellationRemark('');
+    } catch (cancelError) {
+      console.error('Failed to cancel orchestrator task:', cancelError);
+      setCancellationError((cancelError as Error).message);
+    } finally {
+      setCancellationSubmitting(false);
+    }
+  };
+
   const sortHeader = (label: string, key: TaskSortKey) => {
     const active = sort.key === key;
     return (
@@ -272,87 +375,155 @@ export function AtasOrchestratorTaskPage({
   };
 
   return (
-    <section className="atas-orchestrator-task-page" aria-label="Orchestrator task monitoring">
-      <div className="atas-orchestrator-task-summary">
-        <span>Total Tasks: {total}</span>
-        {total > tasks.length && <span>Showing newest {tasks.length}</span>}
-      </div>
-      {error && <div className="atas-orchestrator-task-error">{error}</div>}
-      <div className="atas-orchestrator-task-table-wrapper">
-        {loading ? (
-          <div className="atas-orchestrator-task-message">Loading orchestrator tasks…</div>
-        ) : (
-          <table className="atas-orchestrator-task-table">
-            <thead>
-              <tr>
-                {sortHeader('Created At', 'createdAt')}
-                {sortHeader('Task ID', 'taskId')}
-                {sortHeader('Source', 'source')}
-                {sortHeader('Destination', 'destination')}
-                {sortHeader('Priority', 'priority')}
-                {sortHeader('Method', 'creationMethod')}
-                {sortHeader('RMF Task ID', 'rmfTaskId')}
-                {sortHeader('Status', 'status')}
-                {sortHeader('Updated At', 'updatedAt')}
-                {sortHeader('Reason', 'reason')}
-              </tr>
-            </thead>
-            <tbody>
-              {sortedTasks.length === 0 ? (
+    <>
+      <section className="atas-orchestrator-task-page" aria-label="Orchestrator task monitoring">
+        <div className="atas-orchestrator-task-summary">
+          <span>Total Tasks: {total}</span>
+          {total > tasks.length && <span>Showing newest {tasks.length}</span>}
+        </div>
+        {error && <div className="atas-orchestrator-task-error">{error}</div>}
+        <div className="atas-orchestrator-task-table-wrapper">
+          {loading ? (
+            <div className="atas-orchestrator-task-message">Loading orchestrator tasks…</div>
+          ) : (
+            <table className="atas-orchestrator-task-table">
+              <thead>
                 <tr>
-                  <td className="atas-orchestrator-task-empty" colSpan={10}>
-                    No orchestrator tasks available
-                  </td>
+                  {sortHeader('Task ID', 'taskId')}
+                  {sortHeader('Source', 'source')}
+                  {sortHeader('Destination', 'destination')}
+                  {sortHeader('Start Time', 'startTime')}
+                  {sortHeader('End Time', 'endTime')}
+                  {sortHeader('Duration', 'duration')}
+                  {sortHeader('AMR ID', 'amrId')}
+                  {sortHeader('Priority', 'priority')}
+                  {sortHeader('Status', 'status')}
+                  <th>Actions</th>
                 </tr>
-              ) : (
-                sortedTasks.map((task) => {
-                  const source = sourceLabel(task);
-                  const destination = destinationLabel(task);
-                  const reason = taskReason(task);
-                  return (
-                    <tr key={task.id}>
-                      <td className="atas-orchestrator-task-time">
-                        {formatDateTime(task.created_at)}
-                      </td>
-                      <td className="atas-orchestrator-task-id" title={task.id}>
-                        {task.id}
-                      </td>
-                      <td title={`${source} · ${task.source_waypoint_name}`}>
-                        <span className="atas-orchestrator-task-node">{source}</span>
-                        <span className="atas-orchestrator-task-waypoint">
-                          {task.source_waypoint_name}
-                        </span>
-                      </td>
-                      <td title={`${destination} · ${task.destination_waypoint_name}`}>
-                        <span className="atas-orchestrator-task-node">{destination}</span>
-                        <span className="atas-orchestrator-task-waypoint">
-                          {task.destination_waypoint_name}
-                        </span>
-                      </td>
-                      <td>{task.priority}</td>
-                      <td>{displayText(task.creation_method)}</td>
-                      <td className="atas-orchestrator-task-id" title={task.rmf_task_id ?? ''}>
-                        {displayText(task.rmf_task_id)}
-                      </td>
-                      <td>
-                        <span
-                          className={`atas-orchestrator-task-status ${statusClass(task.status)}`}
-                        >
-                          {displayText(task.status)}
-                        </span>
-                      </td>
-                      <td className="atas-orchestrator-task-time">
-                        {formatDateTime(task.updated_at)}
-                      </td>
-                      <td title={reason}>{reason}</td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        )}
-      </div>
-    </section>
+              </thead>
+              <tbody>
+                {sortedTasks.length === 0 ? (
+                  <tr>
+                    <td className="atas-orchestrator-task-empty" colSpan={10}>
+                      No orchestrator tasks available
+                    </td>
+                  </tr>
+                ) : (
+                  sortedTasks.map((task) => {
+                    const source = sourceLabel(task);
+                    const destination = destinationLabel(task);
+                    const cancellable = isTaskCancellable(task);
+                    return (
+                      <tr key={task.id}>
+                        <td className="atas-orchestrator-task-id" title={task.id}>
+                          {taskDisplayId(task)}
+                        </td>
+                        <td title={`${source} · ${task.source_waypoint_name}`}>
+                          <span className="atas-orchestrator-task-node">{source}</span>
+                          <span className="atas-orchestrator-task-waypoint">
+                            {task.source_waypoint_name}
+                          </span>
+                        </td>
+                        <td title={`${destination} · ${task.destination_waypoint_name}`}>
+                          <span className="atas-orchestrator-task-node">{destination}</span>
+                          <span className="atas-orchestrator-task-waypoint">
+                            {task.destination_waypoint_name}
+                          </span>
+                        </td>
+                        <td className="atas-orchestrator-task-time">
+                          {formatDateTime(task.started_at)}
+                        </td>
+                        <td className="atas-orchestrator-task-time">
+                          {formatDateTime(task.finished_at)}
+                        </td>
+                        <td className="atas-orchestrator-task-duration">
+                          {formatDuration(taskDurationMs(task))}
+                        </td>
+                        <td className="atas-orchestrator-task-amr">
+                          {displayText(task.assigned_robot_name)}
+                        </td>
+                        <td>{task.priority}</td>
+                        <td>
+                          <span
+                            className={`atas-orchestrator-task-status ${statusClass(task.status)}`}
+                          >
+                            {displayText(task.status)}
+                          </span>
+                        </td>
+                        <td className="atas-orchestrator-task-actions">
+                          <button
+                            className="atas-orchestrator-task-cancel-button"
+                            type="button"
+                            disabled={!cancellable}
+                            title={
+                              cancellable
+                                ? `Cancel ${taskDisplayId(task)}`
+                                : `${taskDisplayId(task)} cannot be cancelled in its current state`
+                            }
+                            onClick={() => openCancellationDialog(task)}
+                          >
+                            Cancel Task
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </section>
+
+      <Dialog
+        open={selectedCancelTask !== null}
+        onClose={closeCancellationDialog}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          Cancel Task {selectedCancelTask ? taskDisplayId(selectedCancelTask) : ''}
+        </DialogTitle>
+        <DialogContent dividers>
+          {cancellationError && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {cancellationError}
+            </Alert>
+          )}
+          <DialogContentText sx={{ mb: 2 }}>
+            Confirm that you want to request cancellation of this orchestrator task.
+          </DialogContentText>
+          <TextField
+            autoFocus
+            required
+            fullWidth
+            multiline
+            minRows={2}
+            label="Cancellation Remark"
+            value={cancellationRemark}
+            disabled={cancellationSubmitting}
+            inputProps={{ maxLength: 2000 }}
+            onChange={(event) => setCancellationRemark(event.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button
+            variant="outlined"
+            disabled={cancellationSubmitting}
+            onClick={closeCancellationDialog}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            disabled={cancellationSubmitting || !cancellationRemark.trim()}
+            onClick={() => void cancelTask()}
+          >
+            {cancellationSubmitting ? 'Submitting…' : 'Confirm Cancellation'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
   );
 }

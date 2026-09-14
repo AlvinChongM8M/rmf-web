@@ -46,7 +46,7 @@
 
 .atas-orchestrator-task-table {
   width: 100%;
-  min-width: 1320px;
+  min-width: 1400px;
   border-collapse: collapse;
   table-layout: fixed;
   color: var(--m8m-text);
@@ -68,33 +68,27 @@
 }
 
 .atas-orchestrator-task-table th:nth-child(1),
-.atas-orchestrator-task-table th:nth-child(9) {
-  width: 11%;
-}
-
-.atas-orchestrator-task-table th:nth-child(2),
-.atas-orchestrator-task-table th:nth-child(7) {
-  width: 11%;
+.atas-orchestrator-task-table th:nth-child(9),
+.atas-orchestrator-task-table th:nth-child(10) {
+  width: 9%;
 }
 
 .atas-orchestrator-task-table th:nth-child(3),
-.atas-orchestrator-task-table th:nth-child(4) {
-  width: 14%;
+.atas-orchestrator-task-table th:nth-child(2) {
+  width: 13%;
 }
 
-.atas-orchestrator-task-table th:nth-child(5) {
-  width: 5%;
-}
-
+.atas-orchestrator-task-table th:nth-child(4),
+.atas-orchestrator-task-table th:nth-child(5),
 .atas-orchestrator-task-table th:nth-child(6) {
-  width: 7%;
+  width: 11%;
+}
+
+.atas-orchestrator-task-table th:nth-child(7) {
+  width: 8%;
 }
 
 .atas-orchestrator-task-table th:nth-child(8) {
-  width: 10%;
-}
-
-.atas-orchestrator-task-table th:nth-child(10) {
   width: 6%;
 }
 
@@ -156,6 +150,17 @@
   font-size: 0.78rem;
 }
 
+.atas-orchestrator-task-duration,
+.atas-orchestrator-task-amr {
+  font-family: Monaco, Menlo, 'Ubuntu Mono', monospace;
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.atas-orchestrator-task-amr {
+  font-weight: 600;
+}
+
 .atas-orchestrator-task-node,
 .atas-orchestrator-task-waypoint {
   display: block;
@@ -211,6 +216,40 @@
 .atas-orchestrator-task-status--unknown {
   background: #4b5563;
   color: #fff;
+}
+
+.atas-orchestrator-task-actions {
+  text-align: center;
+}
+
+.atas-orchestrator-task-cancel-button {
+  min-width: 78px;
+  padding: 3px 7px;
+  border: 1px solid #ef4444;
+  border-radius: 999px;
+  background: #7f1d1d;
+  color: #fecaca;
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.atas-orchestrator-task-cancel-button:hover:not(:disabled) {
+  background: #b91c1c;
+  color: #fff;
+}
+
+.atas-orchestrator-task-cancel-button:focus-visible {
+  outline: 2px solid var(--m8m-primary);
+  outline-offset: 2px;
+}
+
+.atas-orchestrator-task-cancel-button:disabled {
+  border-color: #4b5563;
+  background: #1f2937;
+  color: #6b7280;
+  cursor: not-allowed;
 }
 
 .atas-orchestrator-task-empty {
