@@ -129,13 +129,21 @@ function systemStatusWebsocketUrl(serverUrl: string): string {
   return url.toString();
 }
 
+function normalizePlcStateDescription(description: string): string {
+  const state = description.trim() || 'UNKNOWN';
+  const comparableState = state.replace(/_/g, ' ').replace(/\s+/g, ' ').toUpperCase();
+  return comparableState === 'FAULT' || comparableState === 'FAULT REQUIRED RESET'
+    ? 'Fault'
+    : state;
+}
+
 function aggregatePlcState(statuses: TssSystemStatus[]): string {
   if (statuses.length === 0) {
     return 'WAITING';
   }
 
   const states = new Set(
-    statuses.map((status) => status.plc_state_description.trim() || 'UNKNOWN'),
+    statuses.map((status) => normalizePlcStateDescription(status.plc_state_description)),
   );
   return states.size === 1 ? [...states][0] : 'MIXED';
 }
