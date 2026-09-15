@@ -1,17 +1,27 @@
 import {
   Alert,
+  Box,
   Button,
+  Checkbox,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
   DialogContentText,
   DialogTitle,
+  FormControl,
+  FormControlLabel,
+  FormLabel,
+  Radio,
+  RadioGroup,
   TextField,
+  Typography,
 } from '@mui/material';
 import React from 'react';
+import { useAppController, useAuthenticator } from 'rmf-dashboard-framework/hooks';
 import '../styles/AtasOrchestratorTaskPage.css';
 
-interface OrchestratorTask {
+export interface OrchestratorTask {
   id: string;
   task_number?: number;
   display_id?: string;
@@ -28,7 +38,14 @@ interface OrchestratorTask {
   destination_nickname: string | null;
   destination_waypoint_name: string;
   assigned_robot_name?: string | null;
+  assigned_fleet_name?: string | null;
+  rmf_state?: { status?: string | null } | null;
+  pickup_completed_at?: string | null;
+  placement_completed_at?: string | null;
+  cleanup_status?: string | null;
+  remark?: string | null;
   cancel_requested: boolean;
+  recovery_resolved?: boolean;
 }
 
 interface OrchestratorTaskResponse {
@@ -58,6 +75,8 @@ interface TaskSort {
   direction: 'asc' | 'desc';
 }
 
+type RecoveryDisposition = 'safe_to_release' | 'placement_completed';
+
 const taskCollator = new Intl.Collator(undefined, {
   numeric: true,
   sensitivity: 'base',
@@ -67,11 +86,7 @@ function displayText(value: string | null | undefined): string {
   return value?.trim() || '-';
 }
 
-function tusDisplayLabel(
-  nickname: string | null,
-  tssName: string,
-  tusName: string,
-): string {
+function tusDisplayLabel(nickname: string | null, tssName: string, tusName: string): string {
   return `${displayText(nickname)} (${tssName} / ${tusName})`;
 }
 
@@ -163,16 +178,39 @@ function taskSortValue(task: OrchestratorTask, key: TaskSortKey): string | numbe
     case 'priority':
       return task.priority;
     case 'status':
-      return task.status;
+      return taskStatusLabel(task);
   }
 }
 
 const TERMINAL_TASK_STATUSES = new Set(['COMPLETED', 'CANCELLED', 'FAILED']);
 
+function isRecoveryRequired(task: OrchestratorTask): boolean {
+  return task.status.toUpperCase() === 'RECOVERY_REQUIRED';
+}
+
+function isRecoveryProcessing(task: OrchestratorTask): boolean {
+  return Boolean(
+    task.recovery_resolved &&
+      task.cleanup_status &&
+      task.cleanup_status.toUpperCase() !== 'COMPLETE',
+  );
+}
+
+function taskStatusLabel(task: OrchestratorTask): string {
+  if (isRecoveryProcessing(task)) {
+    return task.cleanup_status?.toUpperCase() === 'PROCESSING'
+      ? 'Recovery processing'
+      : 'Cleanup pending';
+  }
+  return displayText(task.status).replace(/_/g, ' ');
+}
+
 function isTaskCancellable(task: OrchestratorTask): boolean {
   return (
     !TERMINAL_TASK_STATUSES.has(task.status.toUpperCase()) &&
     task.status.toUpperCase() !== 'CANCEL_REQUESTED' &&
+    !isRecoveryRequired(task) &&
+    !isRecoveryProcessing(task) &&
     !task.cancel_requested
   );
 }
@@ -191,8 +229,12 @@ function compareTasks(left: OrchestratorTask, right: OrchestratorTask, sort: Tas
   return comparison * (sort.direction === 'asc' ? 1 : -1);
 }
 
-function statusClass(status: string): string {
-  switch (status.toUpperCase()) {
+function statusClass(task: OrchestratorTask): string {
+  if (isRecoveryProcessing(task)) {
+    return 'atas-orchestrator-task-status--warning';
+  }
+
+  switch (task.status.toUpperCase()) {
     case 'ASSIGNED':
     case 'EXECUTING':
       return 'atas-orchestrator-task-status--active';
@@ -222,7 +264,10 @@ async function responseError(response: Response): Promise<Error> {
       detail?: string | Array<{ msg?: string }>;
     };
     const detail = Array.isArray(body.detail)
-      ? body.detail.map((item) => item.msg).filter(Boolean).join('; ')
+      ? body.detail
+          .map((item) => item.msg)
+          .filter(Boolean)
+          .join('; ')
       : body.detail;
     if (detail) return new Error(detail);
   } catch {
@@ -236,6 +281,8 @@ export function AtasOrchestratorTaskPage({
   refreshIntervalMs = 5000,
   recordLimit = 1000,
 }: AtasOrchestratorTaskPageProps): JSX.Element {
+  const authenticator = useAuthenticator();
+  const appController = useAppController();
   const normalizedServerUrl = React.useMemo(() => serverUrl.replace(/\/$/, ''), [serverUrl]);
   const [tasks, setTasks] = React.useState<OrchestratorTask[]>([]);
   const [total, setTotal] = React.useState(0);
@@ -245,23 +292,52 @@ export function AtasOrchestratorTaskPage({
     key: 'startTime',
     direction: 'desc',
   });
-  const [selectedCancelTask, setSelectedCancelTask] =
-    React.useState<OrchestratorTask | null>(null);
+  const [selectedCancelTask, setSelectedCancelTask] = React.useState<OrchestratorTask | null>(null);
   const [cancellationRemark, setCancellationRemark] = React.useState('');
   const [cancellationError, setCancellationError] = React.useState<string | null>(null);
   const [cancellationSubmitting, setCancellationSubmitting] = React.useState(false);
+  const [selectedRecoveryTask, setSelectedRecoveryTask] = React.useState<OrchestratorTask | null>(
+    null,
+  );
+  const [recoveryDisposition, setRecoveryDisposition] = React.useState<RecoveryDisposition | null>(
+    null,
+  );
+  const [recoveryRemark, setRecoveryRemark] = React.useState('');
+  const [recoveryVerified, setRecoveryVerified] = React.useState(false);
+  const [recoveryError, setRecoveryError] = React.useState<string | null>(null);
+  const [recoverySubmitting, setRecoverySubmitting] = React.useState(false);
+  const recoverySubmitLock = React.useRef(false);
 
-  React.useEffect(() => {
-    const controller = new AbortController();
+  const apiFetch = React.useCallback(
+    async (input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> => {
+      await authenticator.refreshToken();
+      const headers = new Headers(init.headers);
+      if (authenticator.token) {
+        headers.set('Authorization', `Bearer ${authenticator.token}`);
+      }
 
-    const refreshTasks = async () => {
+      const response = await fetch(input, { ...init, headers });
+      if (response.status === 401) {
+        try {
+          await authenticator.logout();
+        } catch (logoutError) {
+          console.error('Failed to complete authentication logout:', logoutError);
+        }
+      }
+      return response;
+    },
+    [authenticator],
+  );
+
+  const refreshTasks = React.useCallback(
+    async (signal?: AbortSignal) => {
       try {
         const params = new URLSearchParams({
           limit: String(Math.min(1000, Math.max(1, recordLimit))),
           offset: '0',
         });
-        const response = await fetch(`${normalizedServerUrl}/api/v1/tasks?${params}`, {
-          signal: controller.signal,
+        const response = await apiFetch(`${normalizedServerUrl}/api/v1/tasks?${params}`, {
+          signal,
         });
         if (!response.ok) throw await responseError(response);
         const data = (await response.json()) as OrchestratorTaskResponse;
@@ -277,17 +353,22 @@ export function AtasOrchestratorTaskPage({
           setError((fetchError as Error).message);
         }
       } finally {
-        if (!controller.signal.aborted) setLoading(false);
+        if (!signal?.aborted) setLoading(false);
       }
-    };
+    },
+    [apiFetch, normalizedServerUrl, recordLimit],
+  );
 
-    void refreshTasks();
+  React.useEffect(() => {
+    const controller = new AbortController();
+
+    void refreshTasks(controller.signal);
     const intervalId = window.setInterval(() => void refreshTasks(), refreshIntervalMs);
     return () => {
       controller.abort();
       window.clearInterval(intervalId);
     };
-  }, [normalizedServerUrl, recordLimit, refreshIntervalMs]);
+  }, [refreshIntervalMs, refreshTasks]);
 
   const sortedTasks = React.useMemo(
     () =>
@@ -332,7 +413,7 @@ export function AtasOrchestratorTaskPage({
     setCancellationSubmitting(true);
     setCancellationError(null);
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `${normalizedServerUrl}/api/v1/tasks/${encodeURIComponent(selectedCancelTask.id)}/cancel`,
         {
           method: 'POST',
@@ -341,17 +422,98 @@ export function AtasOrchestratorTaskPage({
         },
       );
       if (!response.ok) throw await responseError(response);
-      const updatedTask = (await response.json()) as OrchestratorTask;
-      setTasks((current) =>
-        current.map((task) => (task.id === updatedTask.id ? updatedTask : task)),
-      );
       setSelectedCancelTask(null);
       setCancellationRemark('');
+      appController.showAlert(
+        'success',
+        `Cancellation requested for ${taskDisplayId(selectedCancelTask)}`,
+      );
+      await refreshTasks();
     } catch (cancelError) {
       console.error('Failed to cancel orchestrator task:', cancelError);
       setCancellationError((cancelError as Error).message);
     } finally {
       setCancellationSubmitting(false);
+    }
+  };
+
+  const openRecoveryDialog = (task: OrchestratorTask) => {
+    setSelectedRecoveryTask(task);
+    setRecoveryDisposition(null);
+    setRecoveryRemark('');
+    setRecoveryVerified(false);
+    setRecoveryError(null);
+  };
+
+  const closeRecoveryDialog = () => {
+    if (recoverySubmitting) return;
+    setSelectedRecoveryTask(null);
+    setRecoveryDisposition(null);
+    setRecoveryRemark('');
+    setRecoveryVerified(false);
+    setRecoveryError(null);
+  };
+
+  const resolveRecovery = async () => {
+    if (!selectedRecoveryTask || recoverySubmitting || recoverySubmitLock.current) return;
+
+    const remark = recoveryRemark.trim();
+    if (!recoveryDisposition || !remark || !recoveryVerified) {
+      setRecoveryError(
+        'Select a recovery outcome, enter a verification remark, and confirm the physical check.',
+      );
+      return;
+    }
+
+    recoverySubmitLock.current = true;
+    setRecoverySubmitting(true);
+    setRecoveryError(null);
+    try {
+      const response = await apiFetch(
+        `${normalizedServerUrl}/api/v1/tasks/${encodeURIComponent(selectedRecoveryTask.id)}/recovery`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ disposition: recoveryDisposition, remark }),
+        },
+      );
+
+      if (response.status === 409) {
+        const conflictError = await responseError(response);
+        const message = `This task is no longer eligible for recovery. ${conflictError.message}`;
+        setRecoveryError(message);
+        appController.showAlert('warning', message);
+        await refreshTasks();
+        return;
+      }
+
+      if (response.status === 401) {
+        const authenticationError = await responseError(response);
+        setRecoveryError(
+          `Authentication is required to resolve this recovery. ${authenticationError.message}`,
+        );
+        return;
+      }
+
+      if (response.status !== 202) {
+        throw await responseError(response);
+      }
+
+      const recoveredTaskLabel = taskDisplayId(selectedRecoveryTask);
+      setSelectedRecoveryTask(null);
+      setRecoveryDisposition(null);
+      setRecoveryRemark('');
+      setRecoveryVerified(false);
+      appController.showAlert('success', `Recovery resolution accepted for ${recoveredTaskLabel}`);
+      await refreshTasks();
+    } catch (submitError) {
+      console.error('Failed to resolve orchestrator task recovery:', submitError);
+      const message = `Failed to resolve recovery: ${(submitError as Error).message}`;
+      setRecoveryError(message);
+      appController.showAlert('error', message);
+    } finally {
+      recoverySubmitLock.current = false;
+      setRecoverySubmitting(false);
     }
   };
 
@@ -413,6 +575,7 @@ export function AtasOrchestratorTaskPage({
                     const source = sourceLabel(task);
                     const destination = destinationLabel(task);
                     const cancellable = isTaskCancellable(task);
+                    const recoveryRequired = isRecoveryRequired(task);
                     return (
                       <tr key={task.id}>
                         <td className="atas-orchestrator-task-id" title={task.id}>
@@ -444,26 +607,36 @@ export function AtasOrchestratorTaskPage({
                         </td>
                         <td>{task.priority}</td>
                         <td>
-                          <span
-                            className={`atas-orchestrator-task-status ${statusClass(task.status)}`}
-                          >
-                            {displayText(task.status)}
+                          <span className={`atas-orchestrator-task-status ${statusClass(task)}`}>
+                            {taskStatusLabel(task)}
                           </span>
                         </td>
                         <td className="atas-orchestrator-task-actions">
-                          <button
-                            className="atas-orchestrator-task-cancel-button"
-                            type="button"
-                            disabled={!cancellable}
-                            title={
-                              cancellable
-                                ? `Cancel ${taskDisplayId(task)}`
-                                : `${taskDisplayId(task)} cannot be cancelled in its current state`
-                            }
-                            onClick={() => openCancellationDialog(task)}
-                          >
-                            Cancel Task
-                          </button>
+                          {recoveryRequired ? (
+                            <button
+                              className="atas-orchestrator-task-recovery-button"
+                              type="button"
+                              disabled={Boolean(task.recovery_resolved)}
+                              title={`Resolve recovery for ${taskDisplayId(task)}`}
+                              onClick={() => openRecoveryDialog(task)}
+                            >
+                              Resolve recovery
+                            </button>
+                          ) : (
+                            <button
+                              className="atas-orchestrator-task-cancel-button"
+                              type="button"
+                              disabled={!cancellable}
+                              title={
+                                cancellable
+                                  ? `Cancel ${taskDisplayId(task)}`
+                                  : `${taskDisplayId(task)} cannot be cancelled in its current state`
+                              }
+                              onClick={() => openCancellationDialog(task)}
+                            >
+                              Cancel Task
+                            </button>
+                          )}
                         </td>
                       </tr>
                     );
@@ -521,6 +694,171 @@ export function AtasOrchestratorTaskPage({
             onClick={() => void cancelTask()}
           >
             {cancellationSubmitting ? 'Submitting…' : 'Confirm Cancellation'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={selectedRecoveryTask !== null}
+        onClose={closeRecoveryDialog}
+        maxWidth="md"
+        fullWidth
+        aria-busy={recoverySubmitting}
+      >
+        <DialogTitle>
+          Resolve recovery {selectedRecoveryTask ? taskDisplayId(selectedRecoveryTask) : ''}
+        </DialogTitle>
+        <DialogContent dividers>
+          {recoveryError && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {recoveryError}
+            </Alert>
+          )}
+
+          {selectedRecoveryTask && (
+            <dl className="atas-orchestrator-recovery-details">
+              <div>
+                <dt>Display ID</dt>
+                <dd>{displayText(selectedRecoveryTask.display_id)}</dd>
+              </div>
+              <div>
+                <dt>Source TUS</dt>
+                <dd>
+                  {displayText(selectedRecoveryTask.source_tus_name)} —{' '}
+                  {displayText(selectedRecoveryTask.source_nickname)}
+                </dd>
+              </div>
+              <div>
+                <dt>Destination TUS</dt>
+                <dd>
+                  {displayText(selectedRecoveryTask.destination_tus_name)} —{' '}
+                  {displayText(selectedRecoveryTask.destination_nickname)}
+                </dd>
+              </div>
+              <div>
+                <dt>Assigned AMR</dt>
+                <dd>{displayText(selectedRecoveryTask.assigned_robot_name)}</dd>
+              </div>
+              <div>
+                <dt>Assigned Fleet</dt>
+                <dd>{displayText(selectedRecoveryTask.assigned_fleet_name)}</dd>
+              </div>
+              <div>
+                <dt>RMF Status</dt>
+                <dd>{displayText(selectedRecoveryTask.rmf_state?.status)}</dd>
+              </div>
+              <div>
+                <dt>Pickup Completed At</dt>
+                <dd>{formatDateTime(selectedRecoveryTask.pickup_completed_at ?? null)}</dd>
+              </div>
+              <div>
+                <dt>Placement Completed At</dt>
+                <dd>{formatDateTime(selectedRecoveryTask.placement_completed_at ?? null)}</dd>
+              </div>
+              <div>
+                <dt>Cleanup Status</dt>
+                <dd>{displayText(selectedRecoveryTask.cleanup_status)}</dd>
+              </div>
+              <div className="atas-orchestrator-recovery-details__remark">
+                <dt>Current Remark</dt>
+                <dd>{displayText(selectedRecoveryTask.remark)}</dd>
+              </div>
+            </dl>
+          )}
+
+          <FormControl
+            required
+            disabled={recoverySubmitting}
+            className="atas-orchestrator-recovery-options"
+          >
+            <FormLabel id="atas-orchestrator-recovery-disposition-label">
+              Recovery outcome
+            </FormLabel>
+            <RadioGroup
+              aria-labelledby="atas-orchestrator-recovery-disposition-label"
+              name="recovery-disposition"
+              value={recoveryDisposition ?? ''}
+              onChange={(event) =>
+                setRecoveryDisposition(event.target.value as RecoveryDisposition)
+              }
+            >
+              <FormControlLabel
+                value="safe_to_release"
+                control={<Radio />}
+                label={
+                  <Box>
+                    <Typography component="span" fontWeight={600}>
+                      Delivery not completed — release resources
+                    </Typography>
+                    <Typography component="span" className="atas-orchestrator-recovery-help">
+                      Cancels the task and releases resources without recording completed placement.
+                    </Typography>
+                  </Box>
+                }
+              />
+              <FormControlLabel
+                value="placement_completed"
+                control={<Radio />}
+                label={
+                  <Box>
+                    <Typography component="span" fontWeight={600}>
+                      Delivery completed — release TUS reservations and increment destination
+                      replenishment count
+                    </Typography>
+                    <Typography component="span" className="atas-orchestrator-recovery-help">
+                      Confirm that pickup and placement physically completed. The source reservation
+                      will be released, the destination replenishment count will be incremented
+                      once, and the destination reservation will be released.
+                    </Typography>
+                  </Box>
+                }
+              />
+            </RadioGroup>
+          </FormControl>
+
+          <TextField
+            required
+            fullWidth
+            multiline
+            minRows={3}
+            label="Verification remark"
+            value={recoveryRemark}
+            disabled={recoverySubmitting}
+            inputProps={{ maxLength: 2000 }}
+            onChange={(event) => setRecoveryRemark(event.target.value)}
+            sx={{ mt: 2 }}
+          />
+
+          <FormControlLabel
+            className="atas-orchestrator-recovery-verification"
+            control={
+              <Checkbox
+                required
+                checked={recoveryVerified}
+                disabled={recoverySubmitting}
+                onChange={(event) => setRecoveryVerified(event.target.checked)}
+              />
+            }
+            label="I have physically checked the robot and both TUS locations."
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button variant="outlined" disabled={recoverySubmitting} onClick={closeRecoveryDialog}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="warning"
+            disabled={
+              recoverySubmitting ||
+              !recoveryDisposition ||
+              !recoveryRemark.trim() ||
+              !recoveryVerified
+            }
+            onClick={() => void resolveRecovery()}
+          >
+            {recoverySubmitting && <CircularProgress size={16} color="inherit" sx={{ mr: 1 }} />}
+            {recoverySubmitting ? 'Submitting…' : 'Confirm recovery'}
           </Button>
         </DialogActions>
       </Dialog>
