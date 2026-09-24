@@ -27,6 +27,7 @@ export interface OrchestratorTask {
   display_id?: string;
   status: string;
   priority: number;
+  created_at?: string | null;
   started_at: string | null;
   finished_at: string | null;
   source_tss_name: string;
@@ -63,6 +64,7 @@ type TaskSortKey =
   | 'taskId'
   | 'source'
   | 'destination'
+  | 'createdTime'
   | 'startTime'
   | 'endTime'
   | 'duration'
@@ -76,6 +78,9 @@ interface TaskSort {
 }
 
 type RecoveryDisposition = 'safe_to_release' | 'placement_completed';
+
+// Keep the duration implementation available for when the column is restored.
+const SHOW_DURATION_COLUMN = false;
 
 const taskCollator = new Intl.Collator(undefined, {
   numeric: true,
@@ -167,6 +172,8 @@ function taskSortValue(task: OrchestratorTask, key: TaskSortKey): string | numbe
       return sourceLabel(task);
     case 'destination':
       return destinationLabel(task);
+    case 'createdTime':
+      return dateTimeValue(task.created_at ?? null);
     case 'startTime':
       return dateTimeValue(task.started_at);
     case 'endTime':
@@ -554,9 +561,10 @@ export function AtasOrchestratorTaskPage({
                   {sortHeader('Task ID', 'taskId')}
                   {sortHeader('Source', 'source')}
                   {sortHeader('Destination', 'destination')}
+                  {sortHeader('Created Time', 'createdTime')}
                   {sortHeader('Start Time', 'startTime')}
                   {sortHeader('End Time', 'endTime')}
-                  {sortHeader('Duration', 'duration')}
+                  {SHOW_DURATION_COLUMN && sortHeader('Duration', 'duration')}
                   {sortHeader('AMR ID', 'amrId')}
                   {sortHeader('Priority', 'priority')}
                   {sortHeader('Status', 'status')}
@@ -594,14 +602,19 @@ export function AtasOrchestratorTaskPage({
                           </span>
                         </td>
                         <td className="atas-orchestrator-task-time">
+                          {formatDateTime(task.created_at ?? null)}
+                        </td>
+                        <td className="atas-orchestrator-task-time">
                           {formatDateTime(task.started_at)}
                         </td>
                         <td className="atas-orchestrator-task-time">
                           {formatDateTime(task.finished_at)}
                         </td>
-                        <td className="atas-orchestrator-task-duration">
-                          {formatDuration(taskDurationMs(task))}
-                        </td>
+                        {SHOW_DURATION_COLUMN && (
+                          <td className="atas-orchestrator-task-duration">
+                            {formatDuration(taskDurationMs(task))}
+                          </td>
+                        )}
                         <td className="atas-orchestrator-task-amr">
                           {displayText(task.assigned_robot_name)}
                         </td>

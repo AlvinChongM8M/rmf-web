@@ -20,6 +20,7 @@ function makeTask(overrides: Partial<OrchestratorTask> = {}): OrchestratorTask {
     display_id: 'ATAS-000042',
     status: 'RECOVERY_REQUIRED',
     priority: 2,
+    created_at: '2026-09-15T09:55:00+08:00',
     started_at: '2026-09-15T10:00:00+08:00',
     finished_at: null,
     source_tss_name: 'TSS-A',
@@ -106,6 +107,23 @@ describe('AtasOrchestratorTaskPage recovery actions', () => {
     cleanup();
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
+  });
+
+  it('shows task creation time and keeps the duration column hidden', async () => {
+    const task = makeTask();
+    fetchMock.mockResolvedValueOnce(taskListResponse([task]));
+
+    renderPage([task]);
+
+    expect(await screen.findByRole('columnheader', { name: /Created Time/ })).toBeTruthy();
+    expect(screen.queryByRole('columnheader', { name: /Duration/ })).toBeNull();
+
+    const taskRow = screen.getByText('ATAS-000042').closest('tr');
+    expect(taskRow).not.toBeNull();
+    const timeCells = taskRow!.querySelectorAll('.atas-orchestrator-task-time');
+    expect(timeCells).toHaveLength(3);
+    expect(timeCells[0].textContent).not.toBe('-');
+    expect(timeCells[0].textContent).not.toBe(timeCells[1].textContent);
   });
 
   it('shows Resolve recovery only for RECOVERY_REQUIRED and removes its Cancel action', async () => {
