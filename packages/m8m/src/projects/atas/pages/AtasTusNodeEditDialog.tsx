@@ -49,6 +49,9 @@ interface TusNodeEditForm {
 interface AtasTusNodeEditDialogProps {
   node: TusNodeConfiguration | null;
   serverUrl: string;
+  roleOptions: string[];
+  referenceDataLoading?: boolean;
+  referenceDataError?: string | null;
   onClose: () => void;
   onSaved: (node: TusNodeConfiguration) => void;
 }
@@ -118,7 +121,10 @@ async function responseError(response: Response): Promise<Error> {
       detail?: string | Array<{ msg?: string }>;
     };
     const detail = Array.isArray(body.detail)
-      ? body.detail.map((item) => item.msg).filter(Boolean).join('; ')
+      ? body.detail
+          .map((item) => item.msg)
+          .filter(Boolean)
+          .join('; ')
       : body.detail;
     if (detail) {
       return new Error(detail);
@@ -132,6 +138,9 @@ async function responseError(response: Response): Promise<Error> {
 export function AtasTusNodeEditDialog({
   node,
   serverUrl,
+  roleOptions,
+  referenceDataLoading = false,
+  referenceDataError = null,
   onClose,
   onSaved,
 }: AtasTusNodeEditDialogProps): JSX.Element {
@@ -151,10 +160,7 @@ export function AtasTusNodeEditDialog({
     }
   }, [node]);
 
-  const updateForm = <K extends keyof TusNodeEditForm>(
-    key: K,
-    value: TusNodeEditForm[K],
-  ) => {
+  const updateForm = <K extends keyof TusNodeEditForm>(key: K, value: TusNodeEditForm[K]) => {
     setForm((current) => ({ ...current, [key]: value }));
   };
 
@@ -277,11 +283,29 @@ export function AtasTusNodeEditDialog({
                 inputProps={{ maxLength: 100 }}
               />
               <TextField
+                select
                 label="Role"
                 value={form.role}
                 onChange={(event) => updateForm('role', event.target.value)}
-                inputProps={{ maxLength: 100 }}
-              />
+                disabled={referenceDataLoading}
+                helperText={
+                  referenceDataLoading
+                    ? 'Loading role options…'
+                    : referenceDataError
+                      ? `Unable to load role options: ${referenceDataError}`
+                      : 'Select a role, or leave it unassigned.'
+                }
+              >
+                <MenuItem value="">Unassigned</MenuItem>
+                {form.role && !roleOptions.includes(form.role) && (
+                  <MenuItem value={form.role}>{form.role}</MenuItem>
+                )}
+                {roleOptions.map((role) => (
+                  <MenuItem key={role} value={role}>
+                    {role}
+                  </MenuItem>
+                ))}
+              </TextField>
               <TextField
                 label="Replenishment Priority"
                 type="number"

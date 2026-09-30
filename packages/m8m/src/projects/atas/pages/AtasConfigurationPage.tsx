@@ -1,8 +1,5 @@
 import React from 'react';
-import {
-  AtasTusNodeEditDialog,
-  type TusNodeConfiguration,
-} from './AtasTusNodeEditDialog';
+import { AtasTusNodeEditDialog, type TusNodeConfiguration } from './AtasTusNodeEditDialog';
 import {
   AtasTusNetworkDeleteDialog,
   AtasTusNetworkFormDialog,
@@ -21,6 +18,15 @@ interface AtasConfigurationPageProps {
   refreshIntervalMs?: number;
 }
 
+interface ReferenceCode {
+  code: string;
+}
+
+interface TusReferenceData {
+  tus_roles: ReferenceCode[];
+  waypoint_purposes: ReferenceCode[];
+}
+
 type SortDirection = 'asc' | 'desc';
 type ConfigurationSortValue = string | number | boolean | null | undefined;
 
@@ -36,14 +42,10 @@ type WaypointSortKey =
   | 'tusName'
   | 'nickname'
   | 'waypointName'
+  | 'waypointPurpose'
   | 'waypointAction'
   | 'enabled';
-type NetworkSortKey =
-  | 'networkId'
-  | 'fromNode'
-  | 'toNode'
-  | 'distanceWeight'
-  | 'bidirectional';
+type NetworkSortKey = 'networkId' | 'fromNode' | 'toNode' | 'distanceWeight' | 'bidirectional';
 
 interface ConfigurationSort<K> {
   key: K;
@@ -110,6 +112,8 @@ function waypointSortValue(
       return waypoint.nickname;
     case 'waypointName':
       return waypoint.waypoint_name;
+    case 'waypointPurpose':
+      return waypoint.waypoint_purpose;
     case 'waypointAction':
       return waypoint.action;
     case 'enabled':
@@ -120,9 +124,7 @@ function waypointSortValue(
 async function fetchConfiguration<T>(url: string, signal: AbortSignal): Promise<T> {
   const response = await fetch(url, { signal });
   if (!response.ok) {
-    throw new Error(
-      'Request failed (' + response.status + ' ' + response.statusText + ')',
-    );
+    throw new Error('Request failed (' + response.status + ' ' + response.statusText + ')');
   }
   return (await response.json()) as T;
 }
@@ -142,6 +144,10 @@ export function AtasConfigurationPage({
   const [nodes, setNodes] = React.useState<TusNodeConfiguration[]>([]);
   const [networks, setNetworks] = React.useState<TusNetworkConfiguration[]>([]);
   const [waypoints, setWaypoints] = React.useState<TusRmfWaypointConfiguration[]>([]);
+  const [roleOptions, setRoleOptions] = React.useState<string[]>([]);
+  const [waypointPurposeOptions, setWaypointPurposeOptions] = React.useState<string[]>([]);
+  const [referenceDataLoading, setReferenceDataLoading] = React.useState(true);
+  const [referenceDataError, setReferenceDataError] = React.useState<string | null>(null);
   const [nodesLoading, setNodesLoading] = React.useState(true);
   const [networksLoading, setNetworksLoading] = React.useState(true);
   const [waypointsLoading, setWaypointsLoading] = React.useState(true);
@@ -150,21 +156,19 @@ export function AtasConfigurationPage({
   const [waypointsError, setWaypointsError] = React.useState<string | null>(null);
   const [selectedNode, setSelectedNode] = React.useState<TusNodeConfiguration | null>(null);
   const [nodeUpdateMessage, setNodeUpdateMessage] = React.useState<string | null>(null);
-  const [waypointDialogMode, setWaypointDialogMode] = React.useState<'add' | 'edit' | null>(
-    null,
-  );
+  const [waypointDialogMode, setWaypointDialogMode] = React.useState<'add' | 'edit' | null>(null);
   const [selectedWaypoint, setSelectedWaypoint] =
     React.useState<TusRmfWaypointConfiguration | null>(null);
   const [deletingWaypoint, setDeletingWaypoint] =
     React.useState<TusRmfWaypointConfiguration | null>(null);
   const [waypointUpdateMessage, setWaypointUpdateMessage] = React.useState<string | null>(null);
-  const [networkDialogMode, setNetworkDialogMode] = React.useState<'add' | 'edit' | null>(
+  const [networkDialogMode, setNetworkDialogMode] = React.useState<'add' | 'edit' | null>(null);
+  const [selectedNetwork, setSelectedNetwork] = React.useState<TusNetworkConfiguration | null>(
     null,
   );
-  const [selectedNetwork, setSelectedNetwork] =
-    React.useState<TusNetworkConfiguration | null>(null);
-  const [deletingNetwork, setDeletingNetwork] =
-    React.useState<TusNetworkConfiguration | null>(null);
+  const [deletingNetwork, setDeletingNetwork] = React.useState<TusNetworkConfiguration | null>(
+    null,
+  );
   const [networkUpdateMessage, setNetworkUpdateMessage] = React.useState<string | null>(null);
   const [nodeSort, setNodeSort] = React.useState<ConfigurationSort<NodeSortKey>>({
     key: 'tusName',
@@ -178,6 +182,38 @@ export function AtasConfigurationPage({
     key: 'networkId',
     direction: 'asc',
   });
+
+  React.useEffect(() => {
+    const controller = new AbortController();
+
+    const loadReferenceData = async () => {
+      setReferenceDataLoading(true);
+      setReferenceDataError(null);
+      setRoleOptions([]);
+      setWaypointPurposeOptions([]);
+      try {
+        const data = await fetchConfiguration<TusReferenceData>(
+          normalizedServerUrl + '/api/reference-data',
+          controller.signal,
+        );
+        setRoleOptions(data.tus_roles.map(({ code }) => code));
+        setWaypointPurposeOptions(data.waypoint_purposes.map(({ code }) => code));
+        setReferenceDataError(null);
+      } catch (error) {
+        if ((error as Error).name !== 'AbortError') {
+          console.error('Failed to load TUS reference data:', error);
+          setReferenceDataError((error as Error).message);
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setReferenceDataLoading(false);
+        }
+      }
+    };
+
+    void loadReferenceData();
+    return () => controller.abort();
+  }, [normalizedServerUrl]);
 
   React.useEffect(() => {
     const controller = new AbortController();
@@ -348,9 +384,7 @@ export function AtasConfigurationPage({
   return (
     <section className="atas-configuration-page" aria-label="Configuration">
       <section className="atas-configuration-main">
-        <h2 className="atas-configuration-main-title">
-          Tub Distribution Modal Parameter Settings
-        </h2>
+        <h2 className="atas-configuration-main-title">Tub Distribution Modal Parameter Settings</h2>
 
         <div className="atas-configuration-grid">
           <div className="atas-configuration-left-stack">
@@ -480,13 +514,14 @@ export function AtasConfigurationPage({
               <div className="atas-configuration-table-wrapper">
                 <table className="atas-configuration-table atas-waypoint-table">
                   <colgroup>
-                    <col style={{ width: '10%' }} />
-                    <col style={{ width: '10%' }} />
-                    <col style={{ width: '17%' }} />
-                    <col style={{ width: '22%' }} />
-                    <col style={{ width: '18%' }} />
+                    <col style={{ width: '9%' }} />
                     <col style={{ width: '9%' }} />
                     <col style={{ width: '14%' }} />
+                    <col style={{ width: '18%' }} />
+                    <col style={{ width: '14%' }} />
+                    <col style={{ width: '15%' }} />
+                    <col style={{ width: '8%' }} />
+                    <col style={{ width: '13%' }} />
                   </colgroup>
                   <thead>
                     <tr>
@@ -521,26 +556,27 @@ export function AtasConfigurationPage({
                         setWaypointSort,
                       )}
                       {sortHeader(
+                        'Waypoint Purpose',
+                        'Waypoint Purpose',
+                        'waypointPurpose',
+                        waypointSort,
+                        setWaypointSort,
+                      )}
+                      {sortHeader(
                         'Waypoint Action',
                         'Waypoint Action',
                         'waypointAction',
                         waypointSort,
                         setWaypointSort,
                       )}
-                      {sortHeader(
-                        'Enabled',
-                        'Enabled',
-                        'enabled',
-                        waypointSort,
-                        setWaypointSort,
-                      )}
+                      {sortHeader('Enabled', 'Enabled', 'enabled', waypointSort, setWaypointSort)}
                       <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {sortedWaypoints.length === 0 ? (
                       <tr>
-                        <td className="atas-configuration-empty" colSpan={7}>
+                        <td className="atas-configuration-empty" colSpan={8}>
                           {waypointsLoading
                             ? 'Loading TUS RMF waypoints…'
                             : 'No TUS RMF waypoints configured'}
@@ -549,14 +585,13 @@ export function AtasConfigurationPage({
                     ) : (
                       sortedWaypoints.map((waypoint) => (
                         <tr key={waypoint.id}>
-                          <td className="atas-configuration-compact-column">
-                            {waypoint.tss_name}
-                          </td>
+                          <td className="atas-configuration-compact-column">{waypoint.tss_name}</td>
                           <td className="atas-configuration-name atas-configuration-compact-column">
                             {waypoint.tus_name}
                           </td>
                           <td>{optionalText(waypoint.nickname)}</td>
                           <td>{waypoint.waypoint_name}</td>
+                          <td>{waypoint.waypoint_purpose}</td>
                           <td>{optionalText(waypoint.action)}</td>
                           <td>{waypoint.enabled ? 'Yes' : 'No'}</td>
                           <td>
@@ -612,9 +647,7 @@ export function AtasConfigurationPage({
               <div className="atas-configuration-success">{networkUpdateMessage}</div>
             )}
             {networksError && (
-              <div className="atas-configuration-error">
-                Network configuration: {networksError}
-              </div>
+              <div className="atas-configuration-error">Network configuration: {networksError}</div>
             )}
             <div className="atas-configuration-table-wrapper">
               <table className="atas-configuration-table">
@@ -635,20 +668,8 @@ export function AtasConfigurationPage({
                       networkSort,
                       setNetworkSort,
                     )}
-                    {sortHeader(
-                      'From Node',
-                      'From Node',
-                      'fromNode',
-                      networkSort,
-                      setNetworkSort,
-                    )}
-                    {sortHeader(
-                      'To Node',
-                      'To Node',
-                      'toNode',
-                      networkSort,
-                      setNetworkSort,
-                    )}
+                    {sortHeader('From Node', 'From Node', 'fromNode', networkSort, setNetworkSort)}
+                    {sortHeader('To Node', 'To Node', 'toNode', networkSort, setNetworkSort)}
                     {sortHeader(
                       <>
                         Distance
@@ -680,9 +701,7 @@ export function AtasConfigurationPage({
                     sortedNetworks.map((network) => (
                       <tr key={network.id}>
                         <td>{network.id}</td>
-                        <td
-                          title={networkEndpointDisplayLabel(network, 'from', sortedNodes)}
-                        >
+                        <td title={networkEndpointDisplayLabel(network, 'from', sortedNodes)}>
                           {networkEndpointDisplayLabel(network, 'from', sortedNodes)}
                         </td>
                         <td title={networkEndpointDisplayLabel(network, 'to', sortedNodes)}>
@@ -746,6 +765,9 @@ export function AtasConfigurationPage({
       <AtasTusNodeEditDialog
         node={selectedNode}
         serverUrl={normalizedServerUrl}
+        roleOptions={roleOptions}
+        referenceDataLoading={referenceDataLoading}
+        referenceDataError={referenceDataError}
         onClose={() => setSelectedNode(null)}
         onSaved={(updatedNode) => {
           setNodes((current) =>
@@ -758,6 +780,9 @@ export function AtasConfigurationPage({
         mode={waypointDialogMode}
         waypoint={selectedWaypoint}
         nodes={sortedNodes}
+        waypointPurposeOptions={waypointPurposeOptions}
+        referenceDataLoading={referenceDataLoading}
+        referenceDataError={referenceDataError}
         serverUrl={normalizedServerUrl}
         onClose={() => {
           setWaypointDialogMode(null);
@@ -784,9 +809,7 @@ export function AtasConfigurationPage({
         serverUrl={normalizedServerUrl}
         onClose={() => setDeletingWaypoint(null)}
         onDeleted={(waypointId) => {
-          setWaypoints((current) =>
-            current.filter((waypoint) => waypoint.id !== waypointId),
-          );
+          setWaypoints((current) => current.filter((waypoint) => waypoint.id !== waypointId));
           setWaypointUpdateMessage('RMF waypoint deleted successfully.');
         }}
       />
@@ -803,9 +826,7 @@ export function AtasConfigurationPage({
           setNetworks((current) => {
             const exists = current.some((network) => network.id === savedNetwork.id);
             return exists
-              ? current.map((network) =>
-                  network.id === savedNetwork.id ? savedNetwork : network,
-                )
+              ? current.map((network) => (network.id === savedNetwork.id ? savedNetwork : network))
               : [...current, savedNetwork];
           });
           setNetworkUpdateMessage(

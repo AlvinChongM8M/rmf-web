@@ -19,6 +19,7 @@ export interface TusRmfWaypointConfiguration {
   tus_name: string;
   nickname: string | null;
   waypoint_name: string;
+  waypoint_purpose: string;
   action: string | null;
   enabled: boolean;
 }
@@ -29,6 +30,9 @@ interface WaypointFormDialogProps {
   mode: WaypointDialogMode | null;
   waypoint: TusRmfWaypointConfiguration | null;
   nodes: TusNodeConfiguration[];
+  waypointPurposeOptions: string[];
+  referenceDataLoading?: boolean;
+  referenceDataError?: string | null;
   serverUrl: string;
   onClose: () => void;
   onSaved: (waypoint: TusRmfWaypointConfiguration, mode: WaypointDialogMode) => void;
@@ -44,6 +48,7 @@ interface WaypointDeleteDialogProps {
 interface WaypointForm {
   tusNodeId: string;
   waypointName: string;
+  waypointPurpose: string;
   action: string;
   enabled: boolean;
 }
@@ -51,6 +56,7 @@ interface WaypointForm {
 interface WaypointWriteRequest {
   tus_node_id: number;
   waypoint_name: string;
+  waypoint_purpose: string;
   action: string | null;
   enabled: boolean;
 }
@@ -58,6 +64,7 @@ interface WaypointWriteRequest {
 const EMPTY_FORM: WaypointForm = {
   tusNodeId: '',
   waypointName: '',
+  waypointPurpose: '',
   action: '',
   enabled: true,
 };
@@ -70,6 +77,7 @@ function formFromWaypoint(waypoint: TusRmfWaypointConfiguration): WaypointForm {
   return {
     tusNodeId: String(waypoint.tus_node_id),
     waypointName: waypoint.waypoint_name,
+    waypointPurpose: waypoint.waypoint_purpose,
     action: waypoint.action ?? '',
     enabled: waypoint.enabled,
   };
@@ -81,7 +89,10 @@ async function responseError(response: Response): Promise<Error> {
       detail?: string | Array<{ msg?: string }>;
     };
     const detail = Array.isArray(body.detail)
-      ? body.detail.map((item) => item.msg).filter(Boolean).join('; ')
+      ? body.detail
+          .map((item) => item.msg)
+          .filter(Boolean)
+          .join('; ')
       : body.detail;
     if (detail) {
       return new Error(detail);
@@ -92,11 +103,7 @@ async function responseError(response: Response): Promise<Error> {
   return new Error('Request failed (' + response.status + ' ' + response.statusText + ')');
 }
 
-function WaypointDetails({
-  waypoint,
-}: {
-  waypoint: TusRmfWaypointConfiguration;
-}): JSX.Element {
+function WaypointDetails({ waypoint }: { waypoint: TusRmfWaypointConfiguration }): JSX.Element {
   return (
     <div className="atas-configuration-dialog-grid">
       <TextField label="Mapping ID" value={waypoint.id} InputProps={{ readOnly: true }} />
@@ -111,6 +118,11 @@ function WaypointDetails({
       <TextField
         label="RMF Waypoint"
         value={waypoint.waypoint_name}
+        InputProps={{ readOnly: true }}
+      />
+      <TextField
+        label="Waypoint Purpose"
+        value={waypoint.waypoint_purpose}
         InputProps={{ readOnly: true }}
       />
       <TextField
@@ -131,6 +143,9 @@ export function AtasTusWaypointFormDialog({
   mode,
   waypoint,
   nodes,
+  waypointPurposeOptions,
+  referenceDataLoading = false,
+  referenceDataError = null,
   serverUrl,
   onClose,
   onSaved,
@@ -162,10 +177,7 @@ export function AtasTusWaypointFormDialog({
     }
   }, [form.tusNodeId, mode, nodes]);
 
-  const updateForm = <K extends keyof WaypointForm>(
-    key: K,
-    value: WaypointForm[K],
-  ) => {
+  const updateForm = <K extends keyof WaypointForm>(key: K, value: WaypointForm[K]) => {
     setForm((current) => ({ ...current, [key]: value }));
   };
 
@@ -190,10 +202,15 @@ export function AtasTusWaypointFormDialog({
       setError('RMF Waypoint is required.');
       return;
     }
+    if (!form.waypointPurpose) {
+      setError('Waypoint Purpose is required.');
+      return;
+    }
 
     setPendingRequest({
       tus_node_id: tusNodeId,
       waypoint_name: waypointName,
+      waypoint_purpose: form.waypointPurpose,
       action: form.action.trim() || null,
       enabled: form.enabled,
     });
@@ -303,6 +320,33 @@ export function AtasTusWaypointFormDialog({
                 inputProps={{ maxLength: 150 }}
               />
               <TextField
+                select
+                required
+                label="Waypoint Purpose"
+                value={form.waypointPurpose}
+                onChange={(event) => updateForm('waypointPurpose', event.target.value)}
+                disabled={referenceDataLoading}
+                helperText={
+                  referenceDataLoading
+                    ? 'Loading purpose options…'
+                    : referenceDataError
+                      ? `Unable to load purpose options: ${referenceDataError}`
+                      : undefined
+                }
+              >
+                <MenuItem value="" disabled>
+                  Select waypoint purpose
+                </MenuItem>
+                {form.waypointPurpose && !waypointPurposeOptions.includes(form.waypointPurpose) && (
+                  <MenuItem value={form.waypointPurpose}>{form.waypointPurpose}</MenuItem>
+                )}
+                {waypointPurposeOptions.map((purpose) => (
+                  <MenuItem key={purpose} value={purpose}>
+                    {purpose}
+                  </MenuItem>
+                ))}
+              </TextField>
+              <TextField
                 label="Waypoint Action"
                 value={form.action}
                 onChange={(event) => updateForm('action', event.target.value)}
@@ -356,11 +400,7 @@ export function AtasTusWaypointFormDialog({
           >
             Back
           </Button>
-          <Button
-            variant="contained"
-            disabled={submitting}
-            onClick={() => void saveWaypoint()}
-          >
+          <Button variant="contained" disabled={submitting} onClick={() => void saveWaypoint()}>
             {submitting ? 'Saving…' : editing ? 'Confirm Save' : 'Confirm Add'}
           </Button>
         </DialogActions>
