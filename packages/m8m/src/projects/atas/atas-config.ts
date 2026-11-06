@@ -20,10 +20,10 @@ export const ATAS_CLIENT_LOGO_SRC = '/assets/img/logos/cag_logo.svg';
 // RMF server endpoints  —  update to match your deployment
 // ---------------------------------------------------------------------------
 
-export const ATAS_API_SERVER_URL = 'http://localhost:8000';
-export const ATAS_TRAJECTORY_SERVER_URL = 'http://localhost:8006';
+export const ATAS_API_SERVER_URL = 'http://10.0.0.51:8000';
+export const ATAS_TRAJECTORY_SERVER_URL = 'http://10.0.0.51:8006';
 export const ATAS_ALARM_SERVER_URL =
-  import.meta.env.VITE_ATAS_ALARM_SERVER_URL ?? 'http://localhost:10020';
+  import.meta.env.VITE_ATAS_ALARM_SERVER_URL ?? 'http://10.0.0.52:10020';
 export const ATAS_ALARM_REFRESH_INTERVAL_MS = 2500;
 export const ATAS_ALARM_RECORD_LIMIT = 1000;
 export const ATAS_TUS_SERVER_URL =

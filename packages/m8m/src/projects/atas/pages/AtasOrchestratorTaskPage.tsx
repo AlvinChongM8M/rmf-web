@@ -78,6 +78,7 @@ interface TaskSort {
 }
 
 type RecoveryDisposition = 'safe_to_release' | 'placement_completed';
+type SubmissionResolutionOutcome = 'confirmed_not_submitted' | 'link_rmf_task';
 
 // Keep the duration implementation available for when the column is restored.
 const SHOW_DURATION_COLUMN = false;
@@ -195,6 +196,10 @@ function isRecoveryRequired(task: OrchestratorTask): boolean {
   return task.status.toUpperCase() === 'RECOVERY_REQUIRED';
 }
 
+function isSubmissionUnknown(task: OrchestratorTask): boolean {
+  return task.status.toUpperCase() === 'SUBMISSION_UNKNOWN';
+}
+
 function isRecoveryProcessing(task: OrchestratorTask): boolean {
   return Boolean(
     task.recovery_resolved &&
@@ -216,6 +221,7 @@ function isTaskCancellable(task: OrchestratorTask): boolean {
   return (
     !TERMINAL_TASK_STATUSES.has(task.status.toUpperCase()) &&
     task.status.toUpperCase() !== 'CANCEL_REQUESTED' &&
+    !isSubmissionUnknown(task) &&
     !isRecoveryRequired(task) &&
     !isRecoveryProcessing(task) &&
     !task.cancel_requested
@@ -314,6 +320,15 @@ export function AtasOrchestratorTaskPage({
   const [recoveryError, setRecoveryError] = React.useState<string | null>(null);
   const [recoverySubmitting, setRecoverySubmitting] = React.useState(false);
   const recoverySubmitLock = React.useRef(false);
+  const [selectedSubmissionTask, setSelectedSubmissionTask] =
+    React.useState<OrchestratorTask | null>(null);
+  const [submissionOutcome, setSubmissionOutcome] =
+    React.useState<SubmissionResolutionOutcome | null>(null);
+  const [submissionRmfTaskId, setSubmissionRmfTaskId] = React.useState('');
+  const [submissionRemark, setSubmissionRemark] = React.useState('');
+  const [submissionError, setSubmissionError] = React.useState<string | null>(null);
+  const [submissionSubmitting, setSubmissionSubmitting] = React.useState(false);
+  const submissionSubmitLock = React.useRef(false);
 
   const apiFetch = React.useCallback(
     async (input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> => {
@@ -524,6 +539,78 @@ export function AtasOrchestratorTaskPage({
     }
   };
 
+  const openSubmissionDialog = (task: OrchestratorTask) => {
+    setSelectedSubmissionTask(task);
+    setSubmissionOutcome(null);
+    setSubmissionRmfTaskId('');
+    setSubmissionRemark('');
+    setSubmissionError(null);
+  };
+
+  const closeSubmissionDialog = () => {
+    if (submissionSubmitting) return;
+    setSelectedSubmissionTask(null);
+    setSubmissionOutcome(null);
+    setSubmissionRmfTaskId('');
+    setSubmissionRemark('');
+    setSubmissionError(null);
+  };
+
+  const resolveSubmission = async () => {
+    if (!selectedSubmissionTask || submissionSubmitting || submissionSubmitLock.current) return;
+
+    const remark = submissionRemark.trim();
+    const rmfTaskId = submissionRmfTaskId.trim();
+    if (!submissionOutcome || !remark) {
+      setSubmissionError('Select an outcome and enter a remark.');
+      return;
+    }
+    if (submissionOutcome === 'link_rmf_task' && !rmfTaskId) {
+      setSubmissionError('RMF task ID is required when linking an RMF task.');
+      return;
+    }
+
+    const body =
+      submissionOutcome === 'link_rmf_task'
+        ? { outcome: submissionOutcome, rmf_task_id: rmfTaskId, remark }
+        : { outcome: submissionOutcome, remark };
+
+    submissionSubmitLock.current = true;
+    setSubmissionSubmitting(true);
+    setSubmissionError(null);
+    try {
+      const response = await apiFetch(
+        `${normalizedServerUrl}/api/v1/tasks/${encodeURIComponent(
+          selectedSubmissionTask.id,
+        )}/submission-resolution`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        },
+      );
+      if (response.status !== 202) {
+        throw await responseError(response);
+      }
+
+      const taskLabel = taskDisplayId(selectedSubmissionTask);
+      setSelectedSubmissionTask(null);
+      setSubmissionOutcome(null);
+      setSubmissionRmfTaskId('');
+      setSubmissionRemark('');
+      appController.showAlert('success', `Submission resolution accepted for ${taskLabel}`);
+      await refreshTasks();
+    } catch (submitError) {
+      console.error('Failed to resolve uncertain task submission:', submitError);
+      const message = `Failed to resolve submission: ${(submitError as Error).message}`;
+      setSubmissionError(message);
+      appController.showAlert('error', message);
+    } finally {
+      submissionSubmitLock.current = false;
+      setSubmissionSubmitting(false);
+    }
+  };
+
   const sortHeader = (label: string, key: TaskSortKey) => {
     const active = sort.key === key;
     return (
@@ -584,6 +671,7 @@ export function AtasOrchestratorTaskPage({
                     const destination = destinationLabel(task);
                     const cancellable = isTaskCancellable(task);
                     const recoveryRequired = isRecoveryRequired(task);
+                    const submissionUnknown = isSubmissionUnknown(task);
                     return (
                       <tr key={task.id}>
                         <td className="atas-orchestrator-task-id" title={task.id}>
@@ -625,7 +713,16 @@ export function AtasOrchestratorTaskPage({
                           </span>
                         </td>
                         <td className="atas-orchestrator-task-actions">
-                          {recoveryRequired ? (
+                          {submissionUnknown ? (
+                            <button
+                              className="atas-orchestrator-task-recovery-button atas-orchestrator-task-submission-button"
+                              type="button"
+                              title={`Resolve submission for ${taskDisplayId(task)}`}
+                              onClick={() => openSubmissionDialog(task)}
+                            >
+                              Resolve Submission
+                            </button>
+                          ) : recoveryRequired ? (
                             <button
                               className="atas-orchestrator-task-recovery-button"
                               type="button"
@@ -707,6 +804,103 @@ export function AtasOrchestratorTaskPage({
             onClick={() => void cancelTask()}
           >
             {cancellationSubmitting ? 'Submitting…' : 'Confirm Cancellation'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={selectedSubmissionTask !== null}
+        onClose={closeSubmissionDialog}
+        maxWidth="sm"
+        fullWidth
+        aria-busy={submissionSubmitting}
+      >
+        <DialogTitle>
+          Resolve Submission {selectedSubmissionTask ? taskDisplayId(selectedSubmissionTask) : ''}
+        </DialogTitle>
+        <DialogContent dividers>
+          {submissionError && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {submissionError}
+            </Alert>
+          )}
+          <DialogContentText sx={{ mb: 2 }}>
+            Resolve the uncertain RMF submission only after verifying whether RMF created the task.
+          </DialogContentText>
+          <FormControl required disabled={submissionSubmitting} fullWidth>
+            <FormLabel id="atas-orchestrator-submission-outcome-label">Outcome</FormLabel>
+            <RadioGroup
+              aria-labelledby="atas-orchestrator-submission-outcome-label"
+              name="submission-resolution-outcome"
+              value={submissionOutcome ?? ''}
+              onChange={(event) => {
+                const outcome = event.target.value as SubmissionResolutionOutcome;
+                setSubmissionOutcome(outcome);
+                if (outcome !== 'link_rmf_task') {
+                  setSubmissionRmfTaskId('');
+                }
+              }}
+            >
+              <FormControlLabel
+                value="confirmed_not_submitted"
+                control={<Radio />}
+                label="Confirmed not submitted (confirmed_not_submitted)"
+              />
+              <FormControlLabel
+                value="link_rmf_task"
+                control={<Radio />}
+                label="Link RMF task (link_rmf_task)"
+              />
+            </RadioGroup>
+          </FormControl>
+
+          {submissionOutcome === 'link_rmf_task' && (
+            <TextField
+              required
+              fullWidth
+              label="RMF Task ID"
+              value={submissionRmfTaskId}
+              disabled={submissionSubmitting}
+              inputProps={{ maxLength: 200 }}
+              onChange={(event) => setSubmissionRmfTaskId(event.target.value)}
+              sx={{ mt: 2 }}
+            />
+          )}
+
+          <TextField
+            required
+            fullWidth
+            multiline
+            minRows={3}
+            label="Remark"
+            value={submissionRemark}
+            disabled={submissionSubmitting}
+            inputProps={{ maxLength: 2000 }}
+            onChange={(event) => setSubmissionRemark(event.target.value)}
+            sx={{ mt: 2 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button
+            variant="outlined"
+            disabled={submissionSubmitting}
+            onClick={closeSubmissionDialog}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="warning"
+            disabled={
+              submissionSubmitting ||
+              !submissionOutcome ||
+              !submissionRemark.trim() ||
+              (submissionOutcome === 'link_rmf_task' && !submissionRmfTaskId.trim())
+            }
+            onClick={() => void resolveSubmission()}
+          >
+            {submissionSubmitting && <CircularProgress size={16} color="inherit" sx={{ mr: 1 }} />}
+            {submissionSubmitting ? 'Submitting…' : 'Confirm Resolution'}
           </Button>
         </DialogActions>
       </Dialog>

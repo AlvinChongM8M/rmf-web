@@ -81,6 +81,10 @@ async function openRecoveryDialog(): Promise<void> {
   await userEvent.click(await screen.findByRole('button', { name: 'Resolve recovery' }));
 }
 
+async function openSubmissionDialog(): Promise<void> {
+  await userEvent.click(await screen.findByRole('button', { name: 'Resolve Submission' }));
+}
+
 async function completeRecoveryForm(optionName: RegExp): Promise<void> {
   const user = userEvent.setup();
   await user.click(screen.getByRole('radio', { name: optionName }));
@@ -345,6 +349,178 @@ describe('AtasOrchestratorTaskPage recovery actions', () => {
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
     expect(screen.getByText('Submitting…')).toBeTruthy();
     resolveSubmission(mockResponse(null, 202));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
+  });
+
+  it('shows Resolve Submission only for SUBMISSION_UNKNOWN and validates its fields', async () => {
+    const task = makeTask({
+      status: 'SUBMISSION_UNKNOWN',
+      cancel_requested: false,
+      cleanup_status: null,
+      recovery_resolved: false,
+    });
+    fetchMock.mockResolvedValueOnce(taskListResponse([task]));
+    renderPage([task]);
+
+    const taskRow = (await screen.findByText('ATAS-000042')).closest('tr');
+    expect(taskRow).not.toBeNull();
+    expect(within(taskRow!).getByRole('button', { name: 'Resolve Submission' })).toBeTruthy();
+    expect(within(taskRow!).queryByRole('button', { name: 'Cancel Task' })).toBeNull();
+    expect(within(taskRow!).queryByRole('button', { name: 'Resolve recovery' })).toBeNull();
+
+    await openSubmissionDialog();
+    const confirmButton = screen.getByRole('button', {
+      name: 'Confirm Resolution',
+    }) as HTMLButtonElement;
+    expect(confirmButton.disabled).toBe(true);
+    expect(screen.queryByRole('textbox', { name: 'RMF Task ID' })).toBeNull();
+
+    const outcomes = screen.getAllByRole('radio') as HTMLInputElement[];
+    expect(outcomes.every((outcome) => !outcome.checked)).toBe(true);
+
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('radio', { name: /link_rmf_task/ }));
+    expect(screen.getByRole('textbox', { name: 'RMF Task ID' })).toBeTruthy();
+    await user.type(screen.getByRole('textbox', { name: 'Remark' }), 'Verified matching task');
+    expect(confirmButton.disabled).toBe(true);
+    await user.type(screen.getByRole('textbox', { name: 'RMF Task ID' }), 'rmf-task-123');
+    expect(confirmButton.disabled).toBe(false);
+  });
+
+  it.each([
+    {
+      outcomeName: /confirmed_not_submitted/,
+      outcome: 'confirmed_not_submitted',
+      rmfTaskId: null,
+      nextStatus: 'CANCELLED',
+    },
+    {
+      outcomeName: /link_rmf_task/,
+      outcome: 'link_rmf_task',
+      rmfTaskId: 'actual-rmf-task-id',
+      nextStatus: 'RMF_PENDING',
+    },
+  ])(
+    'submits $outcome by internal UUID, closes the modal, refreshes, and notifies success',
+    async ({ outcomeName, outcome, rmfTaskId, nextStatus }) => {
+      const task = makeTask({
+        status: 'SUBMISSION_UNKNOWN',
+        cancel_requested: false,
+        cleanup_status: null,
+        recovery_resolved: false,
+      });
+      fetchMock
+        .mockResolvedValueOnce(taskListResponse([task]))
+        .mockResolvedValueOnce(mockResponse(null, 202))
+        .mockResolvedValueOnce(taskListResponse([makeTask({ ...task, status: nextStatus })]));
+      const { showAlert } = renderPage([task]);
+      const user = userEvent.setup();
+
+      await openSubmissionDialog();
+      await user.click(screen.getByRole('radio', { name: outcomeName }));
+      if (rmfTaskId) {
+        await user.type(screen.getByRole('textbox', { name: 'RMF Task ID' }), rmfTaskId);
+      }
+      await user.type(
+        screen.getByRole('textbox', { name: 'Remark' }),
+        'Operator verified submission state',
+      );
+      await user.click(screen.getByRole('button', { name: 'Confirm Resolution' }));
+
+      await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
+      const [requestUrl, requestInit] = fetchMock.mock.calls[1];
+      expect(String(requestUrl)).toBe(
+        `${SERVER_URL}/api/v1/tasks/${encodeURIComponent(task.id)}/submission-resolution`,
+      );
+      expect(requestInit?.method).toBe('POST');
+      expect(JSON.parse(String(requestInit?.body))).toEqual(
+        rmfTaskId
+          ? {
+              outcome,
+              rmf_task_id: rmfTaskId,
+              remark: 'Operator verified submission state',
+            }
+          : {
+              outcome,
+              remark: 'Operator verified submission state',
+            },
+      );
+      expect(new Headers(requestInit?.headers).get('Authorization')).toMatch(/^Bearer /);
+      await waitFor(() =>
+        expect(screen.queryByRole('button', { name: 'Confirm Resolution' })).toBeNull(),
+      );
+      expect(await screen.findByText(nextStatus.replace(/_/g, ' '))).toBeTruthy();
+      expect(showAlert).toHaveBeenCalledWith(
+        'success',
+        'Submission resolution accepted for ATAS-000042',
+      );
+    },
+  );
+
+  it('keeps the submission modal open and displays backend error details', async () => {
+    const task = makeTask({
+      status: 'SUBMISSION_UNKNOWN',
+      cancel_requested: false,
+      cleanup_status: null,
+      recovery_resolved: false,
+    });
+    fetchMock
+      .mockResolvedValueOnce(taskListResponse([task]))
+      .mockResolvedValueOnce(
+        mockResponse({ detail: 'RMF task does not carry the correlation label.' }, 409),
+      );
+    const { showAlert } = renderPage([task]);
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const user = userEvent.setup();
+
+    await openSubmissionDialog();
+    await user.click(screen.getByRole('radio', { name: /link_rmf_task/ }));
+    await user.type(screen.getByRole('textbox', { name: 'RMF Task ID' }), 'wrong-rmf-task');
+    await user.type(screen.getByRole('textbox', { name: 'Remark' }), 'Checked RMF');
+    await user.click(screen.getByRole('button', { name: 'Confirm Resolution' }));
+
+    expect(await screen.findByText(/does not carry the correlation label/)).toBeTruthy();
+    expect(screen.getByRole('dialog')).toBeTruthy();
+    expect(showAlert).toHaveBeenCalledWith(
+      'error',
+      'Failed to resolve submission: RMF task does not carry the correlation label.',
+    );
+    expect(consoleError).toHaveBeenCalled();
+  });
+
+  it('disables submission controls and prevents duplicate resolution requests', async () => {
+    const task = makeTask({
+      status: 'SUBMISSION_UNKNOWN',
+      cancel_requested: false,
+      cleanup_status: null,
+      recovery_resolved: false,
+    });
+    let resolveRequest: (response: Response) => void = () => {};
+    const pendingRequest = new Promise<Response>((resolve) => {
+      resolveRequest = resolve;
+    });
+    fetchMock
+      .mockResolvedValueOnce(taskListResponse([task]))
+      .mockImplementationOnce(() => pendingRequest)
+      .mockResolvedValueOnce(taskListResponse([makeTask({ ...task, status: 'CANCELLED' })]));
+    renderPage([task]);
+    const user = userEvent.setup();
+
+    await openSubmissionDialog();
+    await user.click(screen.getByRole('radio', { name: /confirmed_not_submitted/ }));
+    await user.type(screen.getByRole('textbox', { name: 'Remark' }), 'Confirmed in RMF logs');
+    const confirmButton = screen.getByRole('button', { name: 'Confirm Resolution' });
+    fireEvent.click(confirmButton);
+    fireEvent.click(confirmButton);
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    expect((confirmButton as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole('textbox', { name: 'Remark' }) as HTMLInputElement).disabled).toBe(
+      true,
+    );
+    expect(screen.getByText('Submitting…')).toBeTruthy();
+
+    resolveRequest(mockResponse(null, 202));
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
   });
 });
